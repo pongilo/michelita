@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Poetsen One', 'sans-serif';
+  --font-body: 'Nunito', 'sans-serif';
+
+  --color-michelita-purple: #593A93;
+  --color-michelita-yellow: #FFCE50;
+}
+
+.poetsen-one-regular {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: normal;
+}
+
+.nunito-regular {
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
