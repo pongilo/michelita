@@ -59,7 +59,7 @@ export function MenuSection({ id, title, items, description }: MenuSectionProps)
             key={item.name}
             className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-michelita-yellow cursor-default"
           >
-            <dt className="text-nowrap">{item.name}
+            <dt className="text-nowrap block">{item.name}
               {item.quantity && (
                 <span className="text-sm"> ({item.quantity} un.)</span>
               )}
