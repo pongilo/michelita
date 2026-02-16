@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DocinhosRouteImport } from './routes/docinhos'
+import { Route as BolosDePoteRouteImport } from './routes/bolos-de-pote'
+import { Route as BolosDeFestaRouteImport } from './routes/bolos-de-festa'
+import { Route as BolosCaseirosRouteImport } from './routes/bolos-caseiros'
 import { Route as IndexRouteImport } from './routes/index'
 
+const DocinhosRoute = DocinhosRouteImport.update({
+  id: '/docinhos',
+  path: '/docinhos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BolosDePoteRoute = BolosDePoteRouteImport.update({
+  id: '/bolos-de-pote',
+  path: '/bolos-de-pote',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BolosDeFestaRoute = BolosDeFestaRouteImport.update({
+  id: '/bolos-de-festa',
+  path: '/bolos-de-festa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BolosCaseirosRoute = BolosCaseirosRouteImport.update({
+  id: '/bolos-caseiros',
+  path: '/bolos-caseiros',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,88 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bolos-caseiros': typeof BolosCaseirosRoute
+  '/bolos-de-festa': typeof BolosDeFestaRoute
+  '/bolos-de-pote': typeof BolosDePoteRoute
+  '/docinhos': typeof DocinhosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bolos-caseiros': typeof BolosCaseirosRoute
+  '/bolos-de-festa': typeof BolosDeFestaRoute
+  '/bolos-de-pote': typeof BolosDePoteRoute
+  '/docinhos': typeof DocinhosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bolos-caseiros': typeof BolosCaseirosRoute
+  '/bolos-de-festa': typeof BolosDeFestaRoute
+  '/bolos-de-pote': typeof BolosDePoteRoute
+  '/docinhos': typeof DocinhosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/bolos-caseiros'
+    | '/bolos-de-festa'
+    | '/bolos-de-pote'
+    | '/docinhos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/bolos-caseiros'
+    | '/bolos-de-festa'
+    | '/bolos-de-pote'
+    | '/docinhos'
+  id:
+    | '__root__'
+    | '/'
+    | '/bolos-caseiros'
+    | '/bolos-de-festa'
+    | '/bolos-de-pote'
+    | '/docinhos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BolosCaseirosRoute: typeof BolosCaseirosRoute
+  BolosDeFestaRoute: typeof BolosDeFestaRoute
+  BolosDePoteRoute: typeof BolosDePoteRoute
+  DocinhosRoute: typeof DocinhosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/docinhos': {
+      id: '/docinhos'
+      path: '/docinhos'
+      fullPath: '/docinhos'
+      preLoaderRoute: typeof DocinhosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bolos-de-pote': {
+      id: '/bolos-de-pote'
+      path: '/bolos-de-pote'
+      fullPath: '/bolos-de-pote'
+      preLoaderRoute: typeof BolosDePoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bolos-de-festa': {
+      id: '/bolos-de-festa'
+      path: '/bolos-de-festa'
+      fullPath: '/bolos-de-festa'
+      preLoaderRoute: typeof BolosDeFestaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bolos-caseiros': {
+      id: '/bolos-caseiros'
+      path: '/bolos-caseiros'
+      fullPath: '/bolos-caseiros'
+      preLoaderRoute: typeof BolosCaseirosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +137,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BolosCaseirosRoute: BolosCaseirosRoute,
+  BolosDeFestaRoute: BolosDeFestaRoute,
+  BolosDePoteRoute: BolosDePoteRoute,
+  DocinhosRoute: DocinhosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
