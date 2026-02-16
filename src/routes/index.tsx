@@ -1,12 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-      import { Link } from "@tanstack/react-router";
-
-const menuItems = [
-  { id: "/bolos-caseiros", label: "Bolos Caseiros", description: 'Receitas de família, feitas com carinho e ingredientes selecionados'  },
-  { id: "/bolos-de-pote", label: "Bolos de Pote", description: 'Camadas de sabor para adoçar seu dia a qualquer momento' },
-  { id: "/bolos-de-festa", label: "Bolos de Festa", description: 'Para celebrar os momentos mais especiais com quem você ama' },
-  { id: "/docinhos", label: "Docinhos", description: 'Pequenas delícias que derretem na boca' },
-];
+import { Link } from "@tanstack/react-router";
+import { bolosCaseiros } from "../utils/content";
+import { bolosDeFesta } from "../utils/content";
+import { bolosDePote } from "../utils/content";
+import { docinhosDeFesta } from "../utils/content";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -44,7 +41,12 @@ function HomePage() {
           Conheça nossos sabores
         </h2>
         <ul className="space-y-4">
-          {menuItems.map((item) => (
+          {[
+            { id: bolosCaseiros.id, label: bolosCaseiros.title, description: bolosCaseiros.description },
+            { id: bolosDePote.id, label: bolosDePote.title, description: bolosDePote.description },
+            { id: bolosDeFesta.id, label: bolosDeFesta.title, description: bolosDeFesta.description },
+            { id: docinhosDeFesta.id, label: docinhosDeFesta.title, description: docinhosDeFesta.description },
+          ].map((item) => (
             <li key={item.id}>
               <Link
                 to={item.id}

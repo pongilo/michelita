@@ -52,7 +52,7 @@ export function MenuSection({ id, title, items, description }: MenuSectionProps)
         )}
       </header>
       <div className="max-w-2xl mx-auto" id={id}>
-        <p className="font-display text-michelita-yellow text-2xl px-5">{items.length} sabores</p>
+        <p className="font-display text-michelita-yellow text-2xl px-5">{filteredItems.length} sabores</p>
         <dl className="font-body text-michelita-yellow text-center mt-6 text-lg">
           {filteredItems.map((item) => (
             <div
