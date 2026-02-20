@@ -14,7 +14,7 @@ function RouteComponent() {
       id={docinhosDeFesta.id}
       title={docinhosDeFesta.title} 
       description={docinhosDeFesta.description} 
-      items={docinhosDeFesta.menu}  
+      menu={docinhosDeFesta.menu}  
     />
   )
 }

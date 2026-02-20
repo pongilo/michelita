@@ -1,27 +1,21 @@
-import { useState } from "react";
-
-interface MenuItem {
+interface Menu {
   name: string;
-  price: number;
-  quantity?: number;
-  category?: string;
+  description: string;
+  items: {
+    name: string
+    price: number
+    quantity?: number;
+  }[]
 }
 
 interface MenuSectionProps {
   id: string;
   title: string;
-  items: MenuItem[];
+  menu: Menu[];
   description: string;
 }
 
-export function MenuSection({ id, title, items, description }: MenuSectionProps) {
-  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))];
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const filteredItems = selectedCategory
-    ? items.filter((item) => item.category === selectedCategory)
-    : items;
-
+export function MenuSection({ id, title, menu, description }: MenuSectionProps) {
   return (
     <main className="py-16 space-y-16">
       <header className="mx-auto px-5 flex flex-col items-center justify-center">
@@ -29,7 +23,7 @@ export function MenuSection({ id, title, items, description }: MenuSectionProps)
           {title} 
         </h1>
         <p className="font-body text-base md:text-xl text-center text-michelita-yellow mt-2">{description}</p>
-        {categories.length > 0 && (
+        {/* {categories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2 mt-5">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -49,28 +43,34 @@ export function MenuSection({ id, title, items, description }: MenuSectionProps)
               </button>
             ))}
           </div>
-        )}
+        )} */}
       </header>
-      <div className="max-w-2xl mx-auto" id={id}>
-        <p className="font-display text-michelita-yellow text-2xl px-5">{filteredItems.length} sabores</p>
-        <dl className="font-body text-michelita-yellow text-center mt-6 text-lg">
-          {filteredItems.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-michelita-yellow cursor-default"
-            >
-              <dt className="text-nowrap block">{item.name}
-                {item.quantity && (
-                  <span className="text-sm"> ({item.quantity} un.)</span>
-                )}
-              </dt>
-              <hr className="w-full border-t border-michelita-yellow/50 border-dashed" />
-              <dd className="text-nowrap align-middle">
-                <span className="text-sm">R$</span> {item.price}
-              </dd>
+      <div className="max-w-2xl mx-auto space-y-10" id={id}>
+        {menu.map((m) => (
+          <div key={m.name} className="space-y-5">
+            <div className="px-5 space-y-1">
+              <h2 className="font-display text-michelita-yellow text-2xl">{m.name || `${m.items.length} Sabores`}</h2>
+              {m.description && (
+                <p className="font-body text-michelita-yellow text-base">{m.description}</p>
+              )}
             </div>
-          ))}
-        </dl>
+            <dl className="font-body text-michelita-yellow text-center text-lg">
+              {m.items.map(item => (
+                  <div
+                    key={item.name}
+                    className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-michelita-yellow cursor-default"
+                  >
+                    <dt className="text-nowrap block">{item.name}
+                    </dt>
+                    <hr className="w-full border-t border-michelita-yellow/50 border-dashed" />
+                    <dd className="text-nowrap align-middle">
+                      <span className="text-sm">R$</span> {item.price}
+                    </dd>
+                  </div>
+              ))}
+            </dl>
+          </div>
+        ))}
       </div>
     </main>
   );

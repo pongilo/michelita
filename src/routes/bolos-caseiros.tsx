@@ -12,7 +12,7 @@ function RouteComponent() {
       id={bolosCaseiros.id}
       title={bolosCaseiros.title} 
       description={bolosCaseiros.description} 
-      items={bolosCaseiros.menu} 
+      menu={bolosCaseiros.menu} 
     />
   )
 }
