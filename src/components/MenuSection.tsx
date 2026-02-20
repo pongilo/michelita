@@ -3,7 +3,7 @@ interface Menu {
   description: string;
   items: {
     name: string
-    price: number
+    price: string
     quantity?: number;
   }[]
 }
@@ -74,4 +74,25 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
       </div>
     </main>
   );
+}
+
+
+export function MenuList({ children }: { children: React.ReactNode }) {
+  return (
+    <dl className="font-body text-michelita-yellow text-center text-lg">
+      {children}
+    </dl>
+  )
+}
+
+export function MenuItem({ name, price }: { name: string, price: number }) {
+  return (
+    <div className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-michelita-yellow cursor-default">
+      <dt className="text-nowrap block">{name}</dt>
+      <hr className="w-full border-t border-michelita-yellow/50 border-dashed" />
+      <dd className="text-nowrap align-middle">
+        <span className="text-sm">R$</span> {price}
+      </dd>
+    </div>
+  )
 }
