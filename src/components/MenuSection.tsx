@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 interface Menu {
   name: string;
   description: string;
@@ -17,35 +19,31 @@ interface MenuSectionProps {
 
 export function MenuSection({ id, title, menu, description }: MenuSectionProps) {
   return (
-    <main className="py-16 space-y-16">
+    <main className="py-16">
       <header className="mx-auto px-5 flex flex-col items-center justify-center">
         <h1 className="font-display text-michelita-yellow text-5xl md:text-6xl text-center max-w-xl md:max-w-2xl">
           {title} 
         </h1>
-        <p className="font-body text-base md:text-xl text-center text-michelita-yellow mt-2">{description}</p>
-        {/* {categories.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              data-selected={selectedCategory === null}
-              className="font-body font-bold cursor-pointer text-sm px-4 py-2 rounded-full border border-michelita-yellow transition-colors text-michelita-yellow hover:bg-michelita-yellow/10 data-[selected=true]:bg-michelita-yellow data-[selected=true]:text-michelita-purple"
-            >
-              Todos
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category!)}
-                data-selected={selectedCategory === category}
-                className="font-body font-bold cursor-pointer text-sm px-4 py-2 rounded-full border border-michelita-yellow transition-colors text-michelita-yellow hover:bg-michelita-yellow/10 data-[selected=true]:bg-michelita-yellow data-[selected=true]:text-michelita-purple"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        )} */}
+        <p className="font-body text-base md:text-xl text-center text-michelita-yellow mt-2 mb-5">{description}</p>
       </header>
-      <div className="max-w-2xl mx-auto space-y-10" id={id}>
+      <div className="sticky top-5 flex items-center justify-center gap-2">
+        <Link
+          to="/"
+          className="cursor-pointer px-5 py-2.5 rounded-3xl transition-colors text-michelita-yellow bg-michelita-purple hover:bg-michelita-yellow/10 border-2 border-michelita-yellow inline-flex gap-5 items-center"
+          resetScroll={true}
+        >
+          <p className="font-body text-base text-michelita-yellow font-bold">Menu</p>
+        </Link>
+        <a
+          href="https://wa.me/5519981904593"
+          className="cursor-pointer px-5 py-2.5 rounded-3xl transition-colors text-michelita-yellow bg-michelita-purple hover:bg-michelita-yellow/10 border-2 border-michelita-yellow inline-flex gap-2.5 items-center"
+          target="_blank"
+        >
+          <img src="./icon-whatsapp.svg" alt="" className="flex-none size-5" />
+          <p className="font-body text-base text-michelita-yellow font-bold">Fazer meu pedido</p>
+        </a>
+      </div>
+      <div className="max-w-2xl mx-auto space-y-10 mt-16" id={id}>
         {menu.map((m) => (
           <div key={m.name} className="space-y-5">
             <div className="px-5 space-y-1">

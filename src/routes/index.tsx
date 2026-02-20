@@ -16,26 +16,33 @@ function HomePage() {
         <h1 className="font-display text-michelita-yellow text-5xl md:text-6xl text-center max-w-xl md:max-w-2xl">
           Um aconchego na alma, em forma de doce
         </h1>
-
-        <a
-          href="https://www.instagram.com/michelitaconfeitaria/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-body text-lg text-michelita-yellow text-center hover:underline"
-        >
-          <span className="block text-base">Instagram</span>
-          @michelitaconfeitaria
-        </a>
-        <a
-          href="https://wa.me/5519981904593"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-body text-lg text-michelita-yellow text-center hover:underline"
-        >
-          <span className="block text-base">WhatsApp</span>
-          (19) 98190-4593
-        </a>
       </div>
+      <nav className="max-w-2xl mx-auto p-5 space-y-5">
+        <h2 className="font-display text-michelita-yellow text-2xl">
+          
+        </h2>
+        <ul className="space-y-4">
+          {[
+            { href: 'https://wa.me/5519981904593', icon: './icon-whatsapp.svg', label: 'Faça seu pedido pelo WhatsApp', description: 'Entre em contato (19) 98190-4593' },
+            { href: 'https://www.instagram.com/michelitaconfeitaria/', icon: './icon-instagram.svg', label: 'Siga-nos no Instagram', description: 'Nos acompanhe no perfil @michelitaconfeitaria' },
+          ].map((item, index) => (
+            <li key={index}>
+              <a
+                href={item.href}
+                className="cursor-pointer p-5 rounded-3xl transition-colors text-michelita-yellow hover:bg-michelita-yellow/10 border-2 border-michelita-yellow flex gap-5 items-center"
+                target="_blank"
+              >
+                <img src={item.icon} alt="" className="flex-none" />
+                <div className="flex-1">
+                  <h3 className="font-body font-bold text-lg">{item.label}</h3>
+                  <p className="font-body text-base text-michelita-yellow">{item.description}</p>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <nav className="max-w-2xl mx-auto p-5 space-y-5">
         <h2 className="font-display text-michelita-yellow text-2xl">
           Conheça nossos sabores
@@ -51,6 +58,7 @@ function HomePage() {
               <Link
                 to={item.id}
                 className="cursor-pointer p-5 rounded-3xl transition-colors text-michelita-yellow hover:bg-michelita-yellow/10 block border-2 border-michelita-yellow"
+                resetScroll={true}
               >
                 <h3 className="font-body font-bold text-lg">{item.label}</h3>
                 <p className="font-body text-base text-michelita-yellow">{item.description}</p>
