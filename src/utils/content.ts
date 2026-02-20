@@ -58,14 +58,14 @@ export const bolosDeFesta = {
       name: 'Bolos com ingredientes nobres',
       description: 'Elaborados com ingredientes selecionados como Nutella, chocolates de marca, frutas vermelhas e castanhas. Sabores intensos, camadas generosas e acabamento refinado.',
       items: [
-        { name: "Morango c/ Nutella", price: '112/kg' },
+        { name: "Morango c/ Nutella", price: '106/kg' },
         { name: "Ninho c/ Nutella", price: '102/kg' },
-        { name: "Ninho c/ Morango", price: '102/kg' },
+        { name: "Ninho c/ Morango", price: '100/kg' },
         { name: "Ninho c/ Frutas Vermelhas", price: '102/kg' },
         { name: "Doce de leite c/ Nozes", price: '102/kg' },
-        { name: "Alpino", price: '102/kg' },
-        { name: "Laka Oreo", price: '102/kg' },
-        { name: "Suflair", price: '102/kg' },
+        { name: "Alpino", price: '100/kg' },
+        { name: "Laka Oreo", price: '100/kg' },
+        { name: "Suflair", price: '100/kg' },
       ]
     },
   ]
