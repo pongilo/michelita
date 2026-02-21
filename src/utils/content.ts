@@ -9,14 +9,14 @@ export const bolosCaseiros = {
       items: [
         { name: "Banana com canela", price: '26' },
         { name: "Cenoura", price: '26' },
-        { name: "Chocolate", price: '25' },
+        { name: "Chocolate", price: '28' },
         { name: "Coco molhado", price: '30' },
         { name: "Fubá", price: '26' },
         { name: "Fubá com goiabada", price: '28' },
         { name: "Fubá cremoso", price: '30' },
         { name: "Iogurte", price: '26' },
-        { name: "Laranja", price: '25' },
-        { name: "Limão", price: '25' },
+        { name: "Laranja", price: '27' },
+        { name: "Limão", price: '27' },
         { name: "Maça com canela", price: '30' },
         { name: "Milho", price: '30' },
       ]
