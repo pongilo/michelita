@@ -1,7 +1,7 @@
 export const bolosCaseiros = {
   id: "bolos-caseiros",
   title: "Bolos Caseiros",
-  description: "Receitas de família, feitas com carinho e ingredientes selecionados",
+  description: "Perfeito para acompanhar seu café.",
   menu: [
     {
       name: '',
@@ -27,7 +27,7 @@ export const bolosCaseiros = {
 export const bolosDeFesta = {
   id: "bolos-de-festa",
   title: "Bolos de Festa",
-  description: "Para celebrar os momentos mais especiais com quem você ama",
+  description: "Para celebrar os momentos mais especiais com quem você ama.",
   menu: [
     {
       name: 'Bolos tradicionais',
@@ -74,7 +74,7 @@ export const bolosDeFesta = {
 export const bolosDePote = {
   id: "bolos-de-pote",
   title: "Bolos de pote",
-  description: "Camadas de sabor para adoçar seu dia a qualquer momento",
+  description: "Camadas de sabor para adoçar seu dia a qualquer momento.",
   menu: [
     {
       name: '',
@@ -94,7 +94,7 @@ export const bolosDePote = {
 export const docinhosDeFesta = {
   id: "docinhos",
   title: "Docinhos",
-  description: "Pequenas delícias que derretem na boca",
+  description: "Pequenas delícias que derretem na boca.",
   menu: [
     {
       name: '',
