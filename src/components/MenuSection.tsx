@@ -37,7 +37,7 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
               {m.items.map(item => (
                   <div
                     key={item.name}
-                    className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-white hover:bg-white/20 cursor-default"
+                    className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:bg-white/20 cursor-default"
                   >
                     <p className="flex-none">{item.name}</p>
                     <hr className="flex-1 border-t border-white/50 border-dashed" />
