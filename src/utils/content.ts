@@ -18,10 +18,19 @@ export const bolosCaseiros = {
         { name: "Laranja", price: '27' },
         { name: "Limão", price: '27' },
         { name: "Maça com canela", price: '30' },
-        { name: "Milho", price: '30' },
+        { name: "Milho cremoso", price: '30' },
+      ]
+    },
+    {
+      name: 'Adicionais',
+      description: '',
+      items: [
+        { name: 'Gotas de chocolate', price: '8' },
+        { name: 'Cobertura de brigadeiro', price: '10' },
+        { name: 'Cobertura de limão', price: '10' },
       ]
     }
-  ]
+  ],
 };
 
 export const bolosDeFesta = {

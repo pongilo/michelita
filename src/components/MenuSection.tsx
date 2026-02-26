@@ -17,8 +17,8 @@ interface MenuSectionProps {
 
 export function MenuSection({ id, title, menu, description }: MenuSectionProps) {
   return (
-    <main className="py-16">
-      <header className="mx-auto px-5 flex flex-col items-center justify-center">
+    <main>
+      <header className="mx-auto px-5 flex flex-col items-center justify-center pt-16">
         <h1 className="font-display text-white text-5xl md:text-6xl text-center max-w-xl md:max-w-2xl">
           {title} 
         </h1>
@@ -39,9 +39,9 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
                     key={item.name}
                     className="flex items-center gap-4 py-3 px-5 rounded-full duration-200 hover:ring-2 hover:ring-white hover:bg-white/20 cursor-default"
                   >
-                    <p className="flex-none text-nowrap block">{item.name}</p>
+                    <p className="flex-none">{item.name}</p>
                     <hr className="flex-1 border-t border-white/50 border-dashed" />
-                    <p className="flex-none text-nowrap align-middle">
+                    <p className="flex-none align-middle">
                       <span className="text-sm">R$</span> {item.price}
                     </p>
                   </div>
