@@ -9,138 +9,225 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DocinhosRouteImport } from './routes/docinhos'
-import { Route as BolosDePoteRouteImport } from './routes/bolos-de-pote'
-import { Route as BolosDeFestaRouteImport } from './routes/bolos-de-festa'
-import { Route as BolosCaseirosRouteImport } from './routes/bolos-caseiros'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as SiteRouteImport } from './routes/_site'
+import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
+import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
+import { Route as SiteBolosDeFestaRouteImport } from './routes/_site/bolos-de-festa'
+import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-caseiros'
+import { Route as PublicRegisterRouteImport } from './routes/_public/register'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PrivateDashboardRouteImport } from './routes/_private/dashboard'
 
-const DocinhosRoute = DocinhosRouteImport.update({
-  id: '/docinhos',
-  path: '/docinhos',
+const SiteRoute = SiteRouteImport.update({
+  id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BolosDePoteRoute = BolosDePoteRouteImport.update({
-  id: '/bolos-de-pote',
-  path: '/bolos-de-pote',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BolosDeFestaRoute = BolosDeFestaRouteImport.update({
-  id: '/bolos-de-festa',
-  path: '/bolos-de-festa',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BolosCaseirosRoute = BolosCaseirosRouteImport.update({
-  id: '/bolos-caseiros',
-  path: '/bolos-caseiros',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
+const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
+  id: '/docinhos',
+  path: '/docinhos',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteBolosDePoteRoute = SiteBolosDePoteRouteImport.update({
+  id: '/bolos-de-pote',
+  path: '/bolos-de-pote',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteBolosDeFestaRoute = SiteBolosDeFestaRouteImport.update({
+  id: '/bolos-de-festa',
+  path: '/bolos-de-festa',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteBolosCaseirosRoute = SiteBolosCaseirosRouteImport.update({
+  id: '/bolos-caseiros',
+  path: '/bolos-caseiros',
+  getParentRoute: () => SiteRoute,
+} as any)
+const PublicRegisterRoute = PublicRegisterRouteImport.update({
+  id: '/_public/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLoginRoute = PublicLoginRouteImport.update({
+  id: '/_public/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateDashboardRoute = PrivateDashboardRouteImport.update({
+  id: '/_private/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/bolos-caseiros': typeof BolosCaseirosRoute
-  '/bolos-de-festa': typeof BolosDeFestaRoute
-  '/bolos-de-pote': typeof BolosDePoteRoute
-  '/docinhos': typeof DocinhosRoute
+  '/': typeof SiteIndexRoute
+  '/dashboard': typeof PrivateDashboardRoute
+  '/login': typeof PublicLoginRoute
+  '/register': typeof PublicRegisterRoute
+  '/bolos-caseiros': typeof SiteBolosCaseirosRoute
+  '/bolos-de-festa': typeof SiteBolosDeFestaRoute
+  '/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/docinhos': typeof SiteDocinhosRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/bolos-caseiros': typeof BolosCaseirosRoute
-  '/bolos-de-festa': typeof BolosDeFestaRoute
-  '/bolos-de-pote': typeof BolosDePoteRoute
-  '/docinhos': typeof DocinhosRoute
+  '/dashboard': typeof PrivateDashboardRoute
+  '/login': typeof PublicLoginRoute
+  '/register': typeof PublicRegisterRoute
+  '/bolos-caseiros': typeof SiteBolosCaseirosRoute
+  '/bolos-de-festa': typeof SiteBolosDeFestaRoute
+  '/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/docinhos': typeof SiteDocinhosRoute
+  '/': typeof SiteIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/bolos-caseiros': typeof BolosCaseirosRoute
-  '/bolos-de-festa': typeof BolosDeFestaRoute
-  '/bolos-de-pote': typeof BolosDePoteRoute
-  '/docinhos': typeof DocinhosRoute
+  '/_site': typeof SiteRouteWithChildren
+  '/_private/dashboard': typeof PrivateDashboardRoute
+  '/_public/login': typeof PublicLoginRoute
+  '/_public/register': typeof PublicRegisterRoute
+  '/_site/bolos-caseiros': typeof SiteBolosCaseirosRoute
+  '/_site/bolos-de-festa': typeof SiteBolosDeFestaRoute
+  '/_site/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/_site/docinhos': typeof SiteDocinhosRoute
+  '/_site/': typeof SiteIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
+    | '/login'
+    | '/register'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
     | '/docinhos'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/register'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
     | '/docinhos'
+    | '/'
   id:
     | '__root__'
-    | '/'
-    | '/bolos-caseiros'
-    | '/bolos-de-festa'
-    | '/bolos-de-pote'
-    | '/docinhos'
+    | '/_site'
+    | '/_private/dashboard'
+    | '/_public/login'
+    | '/_public/register'
+    | '/_site/bolos-caseiros'
+    | '/_site/bolos-de-festa'
+    | '/_site/bolos-de-pote'
+    | '/_site/docinhos'
+    | '/_site/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  BolosCaseirosRoute: typeof BolosCaseirosRoute
-  BolosDeFestaRoute: typeof BolosDeFestaRoute
-  BolosDePoteRoute: typeof BolosDePoteRoute
-  DocinhosRoute: typeof DocinhosRoute
+  SiteRoute: typeof SiteRouteWithChildren
+  PrivateDashboardRoute: typeof PrivateDashboardRoute
+  PublicLoginRoute: typeof PublicLoginRoute
+  PublicRegisterRoute: typeof PublicRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/docinhos': {
-      id: '/docinhos'
-      path: '/docinhos'
-      fullPath: '/docinhos'
-      preLoaderRoute: typeof DocinhosRouteImport
+    '/_site': {
+      id: '/_site'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof SiteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/bolos-de-pote': {
-      id: '/bolos-de-pote'
-      path: '/bolos-de-pote'
-      fullPath: '/bolos-de-pote'
-      preLoaderRoute: typeof BolosDePoteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bolos-de-festa': {
-      id: '/bolos-de-festa'
-      path: '/bolos-de-festa'
-      fullPath: '/bolos-de-festa'
-      preLoaderRoute: typeof BolosDeFestaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bolos-caseiros': {
-      id: '/bolos-caseiros'
-      path: '/bolos-caseiros'
-      fullPath: '/bolos-caseiros'
-      preLoaderRoute: typeof BolosCaseirosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_site/': {
+      id: '/_site/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/docinhos': {
+      id: '/_site/docinhos'
+      path: '/docinhos'
+      fullPath: '/docinhos'
+      preLoaderRoute: typeof SiteDocinhosRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/bolos-de-pote': {
+      id: '/_site/bolos-de-pote'
+      path: '/bolos-de-pote'
+      fullPath: '/bolos-de-pote'
+      preLoaderRoute: typeof SiteBolosDePoteRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/bolos-de-festa': {
+      id: '/_site/bolos-de-festa'
+      path: '/bolos-de-festa'
+      fullPath: '/bolos-de-festa'
+      preLoaderRoute: typeof SiteBolosDeFestaRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/bolos-caseiros': {
+      id: '/_site/bolos-caseiros'
+      path: '/bolos-caseiros'
+      fullPath: '/bolos-caseiros'
+      preLoaderRoute: typeof SiteBolosCaseirosRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_public/register': {
+      id: '/_public/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof PublicRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_private/dashboard': {
+      id: '/_private/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof PrivateDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface SiteRouteChildren {
+  SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
+  SiteBolosDeFestaRoute: typeof SiteBolosDeFestaRoute
+  SiteBolosDePoteRoute: typeof SiteBolosDePoteRoute
+  SiteDocinhosRoute: typeof SiteDocinhosRoute
+  SiteIndexRoute: typeof SiteIndexRoute
+}
+
+const SiteRouteChildren: SiteRouteChildren = {
+  SiteBolosCaseirosRoute: SiteBolosCaseirosRoute,
+  SiteBolosDeFestaRoute: SiteBolosDeFestaRoute,
+  SiteBolosDePoteRoute: SiteBolosDePoteRoute,
+  SiteDocinhosRoute: SiteDocinhosRoute,
+  SiteIndexRoute: SiteIndexRoute,
+}
+
+const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  BolosCaseirosRoute: BolosCaseirosRoute,
-  BolosDeFestaRoute: BolosDeFestaRoute,
-  BolosDePoteRoute: BolosDePoteRoute,
-  DocinhosRoute: DocinhosRoute,
+  SiteRoute: SiteRouteWithChildren,
+  PrivateDashboardRoute: PrivateDashboardRoute,
+  PublicLoginRoute: PublicLoginRoute,
+  PublicRegisterRoute: PublicRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

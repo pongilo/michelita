@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { MenuSection } from '../components/MenuSection';
-import { bolosCaseiros } from '../utils/content';
+import { MenuSection } from '@/components/menu-section';
+import { bolosCaseiros } from '@/lib/utils/content';
 
-export const Route = createFileRoute('/bolos-caseiros')({
+export const Route = createFileRoute('/_site/bolos-caseiros')({
   component: RouteComponent,
 })
 

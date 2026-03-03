@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "daisyui";
+@source "./**/*.{html,js,jsx,ts,tsx}";
 
 @theme {
   --font-display: 'Poetsen One', 'sans-serif';

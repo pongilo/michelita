@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { bolosCaseiros } from "../utils/content";
-import { bolosDeFesta } from "../utils/content";
-import { bolosDePote } from "../utils/content";
-import { docinhosDeFesta } from "../utils/content";
+import { bolosCaseiros } from '@/lib/utils/content';
+import { bolosDeFesta } from '@/lib/utils/content';
+import { bolosDePote } from '@/lib/utils/content';
+import { docinhosDeFesta } from '@/lib/utils/content';
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_site/")({
   component: HomePage,
 });
 
