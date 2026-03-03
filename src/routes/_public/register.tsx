@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
 
 export const Route = createFileRoute("/_public/register")({
   beforeLoad: async () => {
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_public/register")({
 
 const registerSchema = z
   .object({
-    email: z.string().email("Informe um e-mail valido."),
+    email: z.email("Informe um e-mail valido."),
     password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
     confirmPassword: z.string(),
   })
@@ -54,7 +54,7 @@ function RegisterPage() {
     },
   });
 
-  async function handleRegister(values: RegisterFormValues) {
+  async function onSubmit(values: RegisterFormValues) {
     setError("");
     setSuccess("");
 
@@ -88,22 +88,13 @@ function RegisterPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card card-border card-lg">
         <div className="card-body">
-          <h1 className="card-title text-3xl">Criar conta</h1>
+          <h1 className="card-title">Criar conta</h1>
 
-          <form onSubmit={handleSubmit(handleRegister)} className="space-y-4">
-            {!isSupabaseConfigured ? (
-              <div className="alert alert-error">
-                <span>
-                  Supabase nao configurado. Defina VITE_SUPABASE_URL e
-                  VITE_SUPABASE_ANON_KEY no .env.local.
-                </span>
-              </div>
-            ) : null}
-
-            <label className="form-control w-full gap-2">
-              <span className="label-text">E-mail</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <label className="space-y-1">
+              <span className="label">E-mail</span>
               <input
                 id="email"
                 type="email"
@@ -111,12 +102,12 @@ function RegisterPage() {
                 className="input input-bordered w-full"
               />
               {errors.email ? (
-                <span className="text-error text-sm">{errors.email.message}</span>
+                <span className="text-error-content text-sm">{errors.email.message}</span>
               ) : null}
             </label>
 
-            <label className="form-control w-full gap-2">
-              <span className="label-text">Senha</span>
+            <label className="space-y-1">
+              <span className="label">Senha</span>
               <input
                 id="password"
                 type="password"
@@ -124,12 +115,12 @@ function RegisterPage() {
                 className="input input-bordered w-full"
               />
               {errors.password ? (
-                <span className="text-error text-sm">{errors.password.message}</span>
+                <span className="text-error-content text-sm">{errors.password.message}</span>
               ) : null}
             </label>
 
-            <label className="form-control w-full gap-2">
-              <span className="label-text">Confirmar senha</span>
+            <label className="space-y-1">
+              <span className="label">Confirmar senha</span>
               <input
                 id="confirmPassword"
                 type="password"
@@ -137,7 +128,7 @@ function RegisterPage() {
                 className="input input-bordered w-full"
               />
               {errors.confirmPassword ? (
-                <span className="text-error text-sm">
+                <span className="text-error-content text-sm">
                   {errors.confirmPassword.message}
                 </span>
               ) : null}
@@ -156,7 +147,7 @@ function RegisterPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting || !isSupabaseConfigured}
+              disabled={isSubmitting}
               className="btn btn-primary w-full"
             >
               {isSubmitting ? "Criando conta..." : "Criar conta"}

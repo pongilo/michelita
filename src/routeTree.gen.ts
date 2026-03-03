@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SiteRouteImport } from './routes/_site'
+import { Route as PrivateRouteImport } from './routes/_private'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
 import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
@@ -21,6 +22,10 @@ import { Route as PrivateDashboardRouteImport } from './routes/_private/dashboar
 
 const SiteRoute = SiteRouteImport.update({
   id: '/_site',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateRoute = PrivateRouteImport.update({
+  id: '/_private',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SiteIndexRoute = SiteIndexRouteImport.update({
@@ -59,9 +64,9 @@ const PublicLoginRoute = PublicLoginRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivateDashboardRoute = PrivateDashboardRouteImport.update({
-  id: '/_private/dashboard',
+  id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PrivateRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -75,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/docinhos': typeof SiteDocinhosRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof SiteIndexRoute
   '/dashboard': typeof PrivateDashboardRoute
   '/login': typeof PublicLoginRoute
   '/register': typeof PublicRegisterRoute
@@ -82,10 +88,10 @@ export interface FileRoutesByTo {
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
   '/docinhos': typeof SiteDocinhosRoute
-  '/': typeof SiteIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_private': typeof PrivateRouteWithChildren
   '/_site': typeof SiteRouteWithChildren
   '/_private/dashboard': typeof PrivateDashboardRoute
   '/_public/login': typeof PublicLoginRoute
@@ -109,6 +115,7 @@ export interface FileRouteTypes {
     | '/docinhos'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/dashboard'
     | '/login'
     | '/register'
@@ -116,9 +123,9 @@ export interface FileRouteTypes {
     | '/bolos-de-festa'
     | '/bolos-de-pote'
     | '/docinhos'
-    | '/'
   id:
     | '__root__'
+    | '/_private'
     | '/_site'
     | '/_private/dashboard'
     | '/_public/login'
@@ -131,8 +138,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  PrivateRoute: typeof PrivateRouteWithChildren
   SiteRoute: typeof SiteRouteWithChildren
-  PrivateDashboardRoute: typeof PrivateDashboardRoute
   PublicLoginRoute: typeof PublicLoginRoute
   PublicRegisterRoute: typeof PublicRegisterRoute
 }
@@ -144,6 +151,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof SiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_private': {
+      id: '/_private'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PrivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site/': {
@@ -200,10 +214,21 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof PrivateDashboardRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PrivateRoute
     }
   }
 }
+
+interface PrivateRouteChildren {
+  PrivateDashboardRoute: typeof PrivateDashboardRoute
+}
+
+const PrivateRouteChildren: PrivateRouteChildren = {
+  PrivateDashboardRoute: PrivateDashboardRoute,
+}
+
+const PrivateRouteWithChildren =
+  PrivateRoute._addFileChildren(PrivateRouteChildren)
 
 interface SiteRouteChildren {
   SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
@@ -224,8 +249,8 @@ const SiteRouteChildren: SiteRouteChildren = {
 const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  PrivateRoute: PrivateRouteWithChildren,
   SiteRoute: SiteRouteWithChildren,
-  PrivateDashboardRoute: PrivateDashboardRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicRegisterRoute: PublicRegisterRoute,
 }

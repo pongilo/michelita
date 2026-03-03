@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
 
 export const Route = createFileRoute("/_public/login")({
   beforeLoad: async () => {
@@ -46,7 +46,7 @@ function LoginPage() {
     },
   });
 
-  async function handleLogin(values: LoginFormValues) {
+  async function onSubmit(values: LoginFormValues) {
     setError("");
 
     const supabase = getSupabaseClient();
@@ -72,22 +72,13 @@ function LoginPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card">
-        <div className="card-body space-y-4">
+      <div className="card card-border card-lg">
+        <div className="card-body">
           <h1 className="card-title">Login</h1>
 
-          <form onSubmit={handleSubmit(handleLogin)} className="flex flex-col gap-4">
-            {!isSupabaseConfigured ? (
-              <div className="alert alert-error">
-                <span>
-                  Supabase não configurado. Defina VITE_SUPABASE_URL e
-                  VITE_SUPABASE_ANON_KEY no .env.local.
-                </span>
-              </div>
-            ) : null}
-
-            <label className="form-control w-full gap-2">
-              <span className="label-text">E-mail</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <label className="space-y-1">
+              <span className="label">E-mail</span>
               <input
                 id="email"
                 type="email"
@@ -95,12 +86,12 @@ function LoginPage() {
                 className="input input-bordered w-full"
               />
               {errors.email ? (
-                <span className="text-error text-sm">{errors.email.message}</span>
+                <span className="text-error-content text-sm">{errors.email.message}</span>
               ) : null}
             </label>
 
-            <label className="form-control w-full gap-2">
-              <span className="label-text">Senha</span>
+            <label className="space-y-1">
+              <span className="label">Senha</span>
               <input
                 id="password"
                 type="password"
@@ -108,7 +99,7 @@ function LoginPage() {
                 className="input input-bordered w-full"
               />
               {errors.password ? (
-                <span className="text-error text-sm">{errors.password.message}</span>
+                <span className="text-error-content text-sm">{errors.password.message}</span>
               ) : null}
             </label>
 
@@ -117,10 +108,10 @@ function LoginPage() {
                 <span>{error}</span>
               </div>
             ) : null}
-
+            
             <button
               type="submit"
-              disabled={isSubmitting || !isSupabaseConfigured}
+              disabled={isSubmitting}
               className="btn btn-primary w-full"
             >
               {isSubmitting ? "Entrando..." : "Entrar"}
