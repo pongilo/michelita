@@ -1,7 +1,11 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_site")({
-  component: () => (
+  component: SiteLayout,
+});
+
+function SiteLayout() {
+  return (
     <div className="bg-michelita-purple min-h-screen pt-5">
       <div className="sticky top-0 z-30 bg-michelita-purple">
         <div className="max-w-7xl px-5 py-4 mx-auto flex justify-between items-center">
@@ -56,5 +60,5 @@ export const Route = createFileRoute("/_site")({
         </a>
       </footer>
     </div>
-  ),
-});
+  )
+}
