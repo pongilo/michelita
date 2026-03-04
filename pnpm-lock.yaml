@@ -14,6 +14,12 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.98.0
         version: 2.98.0
+      '@tanstack/react-query':
+        specifier: ^5.90.17
+        version: 5.90.17(react@19.2.4)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.91.2
+        version: 5.91.2(@tanstack/react-query@5.90.17(react@19.2.4))(react@19.2.4)
       '@tanstack/react-router':
         specifier: ^1.94.0
         version: 1.157.18(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -583,6 +589,23 @@ packages:
   '@tanstack/history@1.154.14':
     resolution: {integrity: sha512-xyIfof8eHBuub1CkBnbKNKQXeRZC4dClhmzePHVOEel4G7lk/dW+TQ16da7CFdeNLv6u6Owf5VoBQxoo6DFTSA==}
     engines: {node: '>=12'}
+
+  '@tanstack/query-core@5.90.17':
+    resolution: {integrity: sha512-hDww+RyyYhjhUfoYQ4es6pbgxY7LNiPWxt4l1nJqhByjndxJ7HIjDxTBtfvMr5HwjYavMrd+ids5g4Rfev3lVQ==}
+
+  '@tanstack/query-devtools@5.92.0':
+    resolution: {integrity: sha512-N8D27KH1vEpVacvZgJL27xC6yPFUy0Zkezn5gnB3L3gRCxlDeSuiya7fKge8Y91uMTnC8aSxBQhcK6ocY7alpQ==}
+
+  '@tanstack/react-query-devtools@5.91.2':
+    resolution: {integrity: sha512-ZJ1503ay5fFeEYFUdo7LMNFzZryi6B0Cacrgr2h1JRkvikK1khgIq6Nq2EcblqEdIlgB/r7XDW8f8DQ89RuUgg==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.90.14
+      react: ^18 || ^19
+
+  '@tanstack/react-query@5.90.17':
+    resolution: {integrity: sha512-PGc2u9KLwohDUSchjW9MZqeDQJfJDON7y4W7REdNBgiFKxQy+Pf7eGjiFWEj5xPqKzAeHYdAb62IWI1a9UJyGQ==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@tanstack/react-router-devtools@1.163.3':
     resolution: {integrity: sha512-42VMkV/2Z8ro7xzblPBRNZIEmCNXMzm2jD68G52p2qhjXm38wGpg46qneAESN9FtTQeVWk5aSXs47/jt7lkzmw==}
@@ -1579,6 +1602,21 @@ snapshots:
       vite: 7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)
 
   '@tanstack/history@1.154.14': {}
+
+  '@tanstack/query-core@5.90.17': {}
+
+  '@tanstack/query-devtools@5.92.0': {}
+
+  '@tanstack/react-query-devtools@5.91.2(@tanstack/react-query@5.90.17(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@tanstack/query-devtools': 5.92.0
+      '@tanstack/react-query': 5.90.17(react@19.2.4)
+      react: 19.2.4
+
+  '@tanstack/react-query@5.90.17(react@19.2.4)':
+    dependencies:
+      '@tanstack/query-core': 5.90.17
+      react: 19.2.4
 
   '@tanstack/react-router-devtools@1.163.3(@tanstack/react-router@1.157.18(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@tanstack/router-core@1.157.18)(csstype@3.2.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
