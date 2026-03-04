@@ -3,8 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { signIn } from "@/lib/api/auth/sign-in";
 import { getOrganization } from "@/lib/api/organization/get-organization";
+import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
 
 export const Route = createFileRoute("/_auth/login")({
   component: LoginPage,
@@ -21,6 +21,8 @@ function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+  const { mutateAsync: signIn } = useSignIn()
+
   const {
     register,
     handleSubmit,
@@ -32,16 +34,16 @@ function LoginPage() {
   async function onSubmit({ email, password }: LoginFormValues) {
     setError("");
 
-    const { error: signInError, data: signInData } = await signIn({ email, password })
-
-    if (signInError) {
-      setError(signInError.message);
-      return;
-    }
-
-    const organization = await getOrganization({ userId: signInData.user.id });
-    const to = !!organization ? "/app/dashboard" : "/organization/new";
-    await navigate({ to });
+    await signIn({ email, password }, {
+      onSuccess: async ({ user }) => {
+        const organization = await getOrganization({ userId: user.id });
+        const to = !!organization ? "/app/dashboard" : "/organization/new";
+        await navigate({ to });
+      },
+      onError: (error) => {
+        setError(error.message)
+      }
+    })    
   }
 
   return (

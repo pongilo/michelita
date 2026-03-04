@@ -1,12 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "@tanstack/react-router";
+import { getSession } from "@/lib/api/auth/get-session";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { session } = await getSession()
 
     if (!session) {
       throw redirect({ to: "/login" });

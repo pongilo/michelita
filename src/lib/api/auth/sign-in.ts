@@ -6,8 +6,14 @@ type signInProps = {
 }
 
 export async function signIn({ email, password }: signInProps) {
-  return await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
 }

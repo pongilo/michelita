@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
-export async function getUser() {
-  const { data, error } = await supabase.auth.getUser()
+export async function getSession() {
+  const { data, error } = await supabase.auth.getSession();
 
   if (error) {
     throw new Error(error.message)

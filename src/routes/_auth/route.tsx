@@ -1,15 +1,23 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
+import { getSession } from "@/lib/api/auth/get-session";
 
 export const Route = createFileRoute("/_auth")({
-  beforeLoad: async () => {
-    const { data: userData } = await getUser();
+  beforeLoad: async ({ location }) => {
+    const { session } = await getSession()
 
-    if (userData.user?.id) {
-      const organization = await getOrganization({ userId: userData.user.id });
-      const to = organization ? "/app/dashboard" : "/organization/new";
-      throw redirect({ to });
+    if (!session) {
+      return;
+    }
+
+    const organization = await getOrganization({ userId: session.user.id });
+
+    if (organization && location.pathname !== "/app/dashboard") {
+      throw redirect({ to: "/app/dashboard" });
+    }
+
+    if (!organization && location.pathname !== "/organization/new") {
+      throw redirect({ to: "/organization/new" });
     }
   },
   component: AuthLayout,

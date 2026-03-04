@@ -9,7 +9,11 @@ export const bolosCaseiros = {
       items: [
         { name: "Banana com canela", price: '26' },
         { name: "Cenoura", price: '26' },
+        { name: "Cenoura com cobertura de brigadeiro", price: '36' },
+        { name: "Cenoura com gotas de chocolate", price: '34' },
         { name: "Chocolate", price: '28' },
+        { name: "Chocolate com cobertura de brigadeiro", price: '38' },
+        { name: "Chocolate com gotas de chocolate", price: '36' },
         { name: "Coco molhado", price: '30' },
         { name: "Fubá", price: '26' },
         { name: "Fubá com goiabada", price: '28' },
@@ -18,6 +22,7 @@ export const bolosCaseiros = {
         { name: "Laranja", price: '27' },
         { name: "Limão", price: '27' },
         { name: "Maça com canela", price: '30' },
+        { name: "Maça com nozes", price: '38' },
         { name: "Milho cremoso", price: '30' },
       ]
     },

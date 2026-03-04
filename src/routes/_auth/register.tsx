@@ -3,8 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { signUp } from "@/lib/api/auth/sign-up";
 import { getOrganization } from "@/lib/api/organization/get-organization";
+import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
 
 export const Route = createFileRoute("/_auth/register")({
   component: RegisterPage,
@@ -26,6 +26,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const { mutateAsync: signUp } = useSignUp();
 
   const {
     register,
@@ -38,29 +39,20 @@ function RegisterPage() {
   async function onSubmit({ email, password }: RegisterFormValues) {
     setError("");
 
-    const { data: signUpData, error: signUpError } = await signUp({
-      email,
-      password,
-    });
+    await signUp(
+      { email, password },
+      {
+        onSuccess: async ({ user }) => {
+          const organization = await getOrganization({ userId: user!.id });
 
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-
-    if (!signUpData.user?.id) {
-      return
-    }
-    
-    const { data, error } = await getOrganization({ userId: signUpData.user.id });
-
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    const to = data ? "/app/dashboard" : "/organization/new";
-    await navigate({ to });
+          const to = !!organization ? "/app/dashboard" : "/organization/new";
+          await navigate({ to });
+        },
+        onError: (error) => {
+          setError(error.message);
+        }
+      }
+    );
   }
 
   return (

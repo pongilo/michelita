@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
+import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
+import { useGetUser } from "@/hooks/tanstack/auth/use-get-user";
+import { getUser } from "@/lib/api/auth/get-user";
+import { getOrganization } from "@/lib/api/organization/get-organization";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
@@ -12,12 +16,26 @@ const createOrganizationSchema = z.object({
 type CreateOrganizationFormValues = z.infer<typeof createOrganizationSchema>;
 
 export const Route = createFileRoute("/_auth/organization/new")({
+  beforeLoad: async () => {
+    const { user } = await getUser();
+
+    if (!user?.id) {
+      throw redirect({ to: "/login" });
+    }
+
+    const organization = await getOrganization({ userId: user.id });
+    if (organization) {
+      throw redirect({ to: "/app/dashboard" });
+    }
+  },
   component: CreateOrganizationPage,
 });
 
 function CreateOrganizationPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const { mutateAsync: createOrganization } = useCreateOrganization();
+  const { data: userData, error: userError } = useGetUser()
 
   const {
     register,
@@ -25,35 +43,27 @@ function CreateOrganizationPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateOrganizationFormValues>({
     resolver: zodResolver(createOrganizationSchema),
-    defaultValues: {
-      name: "",
-    },
   });
 
   async function onSubmit(values: CreateOrganizationFormValues) {
     setError("");
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      setError(userError?.message ?? "Usuario nao autenticado.");
+    if (userError) {
+      setError(userError.message);
       return;
     }
 
-    const { error: insertError } = await supabase.from("organization").insert({
-      name: values.name.trim(),
-      owner_id: user.id,
-    });
-
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-
-    await navigate({ to: "/app/dashboard" });
+    await createOrganization(
+      { name: values.name, ownerId: userData!.user.id },
+      {
+        onSuccess: async () => {
+          await navigate({ to: "/app/dashboard" });
+        },
+        onError: (error) => {
+          setError(error.message);
+        }
+      }
+    );
   }
 
   async function handleSignOut() {
