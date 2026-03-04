@@ -1,25 +1,12 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getSupabaseClient } from '@/lib/supabase';
+import { signIn } from "@/lib/api/auth/sign-in";
+import { getOrganization } from "@/lib/api/organization/get-organization";
 
-export const Route = createFileRoute("/_public/login")({
-  beforeLoad: async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
+export const Route = createFileRoute("/_auth/login")({
   component: LoginPage,
 });
 
@@ -40,39 +27,26 @@ function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
   });
 
-  async function onSubmit(values: LoginFormValues) {
+  async function onSubmit({ email, password }: LoginFormValues) {
     setError("");
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setError(
-        "Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local."
-      );
-      return;
-    }
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
+    const { error: signInError, data: signInData } = await signIn({ email, password })
 
     if (signInError) {
       setError(signInError.message);
       return;
     }
 
-    await navigate({ to: "/dashboard" });
+    const organization = await getOrganization({ userId: signInData.user.id });
+    const to = !!organization ? "/app/dashboard" : "/organization/new";
+    await navigate({ to });
   }
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card card-border card-lg">
+      <div className="card shadow-xs card-lg bg-base-100">
         <div className="card-body">
           <h1 className="card-title">Login</h1>
 

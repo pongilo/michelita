@@ -1,25 +1,12 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getSupabaseClient } from '@/lib/supabase';
+import { signUp } from "@/lib/api/auth/sign-up";
+import { getOrganization } from "@/lib/api/organization/get-organization";
 
-export const Route = createFileRoute("/_public/register")({
-  beforeLoad: async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
+export const Route = createFileRoute("/_auth/register")({
   component: RegisterPage,
 });
 
@@ -39,7 +26,6 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const {
     register,
@@ -47,28 +33,14 @@ function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
   });
 
-  async function onSubmit(values: RegisterFormValues) {
+  async function onSubmit({ email, password }: RegisterFormValues) {
     setError("");
-    setSuccess("");
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setError(
-        "Supabase nao configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local."
-      );
-      return;
-    }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
+    const { data: signUpData, error: signUpError } = await signUp({
+      email,
+      password,
     });
 
     if (signUpError) {
@@ -76,19 +48,24 @@ function RegisterPage() {
       return;
     }
 
-    if (data.session) {
-      await navigate({ to: "/dashboard" });
+    if (!signUpData.user?.id) {
+      return
+    }
+    
+    const { data, error } = await getOrganization({ userId: signUpData.user.id });
+
+    if (error) {
+      setError(error.message);
       return;
     }
 
-    setSuccess(
-      "Cadastro realizado. Verifique seu e-mail para confirmar a conta antes de fazer login."
-    );
+    const to = data ? "/app/dashboard" : "/organization/new";
+    await navigate({ to });
   }
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card card-border card-lg">
+      <div className="card shadow-xs card-lg bg-base-100">
         <div className="card-body">
           <h1 className="card-title">Criar conta</h1>
 
@@ -134,16 +111,11 @@ function RegisterPage() {
               ) : null}
             </label>
 
-            {error ? (
+            {error && (
               <div className="alert alert-error">
                 <span>{error}</span>
               </div>
-            ) : null}
-            {success ? (
-              <div className="alert alert-success">
-                <span>{success}</span>
-              </div>
-            ) : null}
+            )}
 
             <button
               type="submit"

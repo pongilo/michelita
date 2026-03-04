@@ -9,155 +9,185 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SiteRouteImport } from './routes/_site'
-import { Route as PrivateRouteImport } from './routes/_private'
+import { Route as AppRouteRouteImport } from './routes/app/route'
+import { Route as SiteRouteRouteImport } from './routes/_site/route'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
 import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
 import { Route as SiteBolosDeFestaRouteImport } from './routes/_site/bolos-de-festa'
 import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-caseiros'
-import { Route as PublicRegisterRouteImport } from './routes/_public/register'
-import { Route as PublicLoginRouteImport } from './routes/_public/login'
-import { Route as PrivateDashboardRouteImport } from './routes/_private/dashboard'
+import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
+import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthOrganizationNewRouteImport } from './routes/_auth/organization.new'
 
-const SiteRoute = SiteRouteImport.update({
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivateRoute = PrivateRouteImport.update({
-  id: '/_private',
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => SiteRoute,
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
   id: '/docinhos',
   path: '/docinhos',
-  getParentRoute: () => SiteRoute,
+  getParentRoute: () => SiteRouteRoute,
 } as any)
 const SiteBolosDePoteRoute = SiteBolosDePoteRouteImport.update({
   id: '/bolos-de-pote',
   path: '/bolos-de-pote',
-  getParentRoute: () => SiteRoute,
+  getParentRoute: () => SiteRouteRoute,
 } as any)
 const SiteBolosDeFestaRoute = SiteBolosDeFestaRouteImport.update({
   id: '/bolos-de-festa',
   path: '/bolos-de-festa',
-  getParentRoute: () => SiteRoute,
+  getParentRoute: () => SiteRouteRoute,
 } as any)
 const SiteBolosCaseirosRoute = SiteBolosCaseirosRouteImport.update({
   id: '/bolos-caseiros',
   path: '/bolos-caseiros',
-  getParentRoute: () => SiteRoute,
+  getParentRoute: () => SiteRouteRoute,
 } as any)
-const PublicRegisterRoute = PublicRegisterRouteImport.update({
-  id: '/_public/register',
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/register',
   path: '/register',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthRouteRoute,
 } as any)
-const PublicLoginRoute = PublicLoginRouteImport.update({
-  id: '/_public/login',
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthRouteRoute,
 } as any)
-const PrivateDashboardRoute = PrivateDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => PrivateRoute,
+const AuthOrganizationNewRoute = AuthOrganizationNewRouteImport.update({
+  id: '/organization/new',
+  path: '/organization/new',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteIndexRoute
-  '/dashboard': typeof PrivateDashboardRoute
-  '/login': typeof PublicLoginRoute
-  '/register': typeof PublicRegisterRoute
+  '/app': typeof AppRouteRouteWithChildren
+  '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
   '/docinhos': typeof SiteDocinhosRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/organization/new': typeof AuthOrganizationNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
-  '/dashboard': typeof PrivateDashboardRoute
-  '/login': typeof PublicLoginRoute
-  '/register': typeof PublicRegisterRoute
+  '/app': typeof AppRouteRouteWithChildren
+  '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
   '/docinhos': typeof SiteDocinhosRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/organization/new': typeof AuthOrganizationNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_private': typeof PrivateRouteWithChildren
-  '/_site': typeof SiteRouteWithChildren
-  '/_private/dashboard': typeof PrivateDashboardRoute
-  '/_public/login': typeof PublicLoginRoute
-  '/_public/register': typeof PublicRegisterRoute
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/_site': typeof SiteRouteRouteWithChildren
+  '/app': typeof AppRouteRouteWithChildren
+  '/_auth/login': typeof AuthLoginRoute
+  '/_auth/register': typeof AuthRegisterRoute
   '/_site/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/_site/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/_site/bolos-de-pote': typeof SiteBolosDePoteRoute
   '/_site/docinhos': typeof SiteDocinhosRoute
+  '/app/dashboard': typeof AppDashboardRoute
   '/_site/': typeof SiteIndexRoute
+  '/_auth/organization/new': typeof AuthOrganizationNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
+    | '/app'
     | '/login'
     | '/register'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
     | '/docinhos'
+    | '/app/dashboard'
+    | '/organization/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
+    | '/app'
     | '/login'
     | '/register'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
     | '/docinhos'
+    | '/app/dashboard'
+    | '/organization/new'
   id:
     | '__root__'
-    | '/_private'
+    | '/_auth'
     | '/_site'
-    | '/_private/dashboard'
-    | '/_public/login'
-    | '/_public/register'
+    | '/app'
+    | '/_auth/login'
+    | '/_auth/register'
     | '/_site/bolos-caseiros'
     | '/_site/bolos-de-festa'
     | '/_site/bolos-de-pote'
     | '/_site/docinhos'
+    | '/app/dashboard'
     | '/_site/'
+    | '/_auth/organization/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  PrivateRoute: typeof PrivateRouteWithChildren
-  SiteRoute: typeof SiteRouteWithChildren
-  PublicLoginRoute: typeof PublicLoginRoute
-  PublicRegisterRoute: typeof PublicRegisterRoute
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  SiteRouteRoute: typeof SiteRouteRouteWithChildren
+  AppRouteRoute: typeof AppRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_site': {
       id: '/_site'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof SiteRouteImport
+      preLoaderRoute: typeof SiteRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_private': {
-      id: '/_private'
+    '/_auth': {
+      id: '/_auth'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof PrivateRouteImport
+      preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site/': {
@@ -165,72 +195,84 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof SiteIndexRouteImport
-      parentRoute: typeof SiteRoute
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_site/docinhos': {
       id: '/_site/docinhos'
       path: '/docinhos'
       fullPath: '/docinhos'
       preLoaderRoute: typeof SiteDocinhosRouteImport
-      parentRoute: typeof SiteRoute
+      parentRoute: typeof SiteRouteRoute
     }
     '/_site/bolos-de-pote': {
       id: '/_site/bolos-de-pote'
       path: '/bolos-de-pote'
       fullPath: '/bolos-de-pote'
       preLoaderRoute: typeof SiteBolosDePoteRouteImport
-      parentRoute: typeof SiteRoute
+      parentRoute: typeof SiteRouteRoute
     }
     '/_site/bolos-de-festa': {
       id: '/_site/bolos-de-festa'
       path: '/bolos-de-festa'
       fullPath: '/bolos-de-festa'
       preLoaderRoute: typeof SiteBolosDeFestaRouteImport
-      parentRoute: typeof SiteRoute
+      parentRoute: typeof SiteRouteRoute
     }
     '/_site/bolos-caseiros': {
       id: '/_site/bolos-caseiros'
       path: '/bolos-caseiros'
       fullPath: '/bolos-caseiros'
       preLoaderRoute: typeof SiteBolosCaseirosRouteImport
-      parentRoute: typeof SiteRoute
+      parentRoute: typeof SiteRouteRoute
     }
-    '/_public/register': {
-      id: '/_public/register'
+    '/_auth/register': {
+      id: '/_auth/register'
       path: '/register'
       fullPath: '/register'
-      preLoaderRoute: typeof PublicRegisterRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
-    '/_public/login': {
-      id: '/_public/login'
+    '/_auth/login': {
+      id: '/_auth/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof PublicLoginRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
-    '/_private/dashboard': {
-      id: '/_private/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof PrivateDashboardRouteImport
-      parentRoute: typeof PrivateRoute
+    '/_auth/organization/new': {
+      id: '/_auth/organization/new'
+      path: '/organization/new'
+      fullPath: '/organization/new'
+      preLoaderRoute: typeof AuthOrganizationNewRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
   }
 }
 
-interface PrivateRouteChildren {
-  PrivateDashboardRoute: typeof PrivateDashboardRoute
+interface AuthRouteRouteChildren {
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthOrganizationNewRoute: typeof AuthOrganizationNewRoute
 }
 
-const PrivateRouteChildren: PrivateRouteChildren = {
-  PrivateDashboardRoute: PrivateDashboardRoute,
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
+  AuthOrganizationNewRoute: AuthOrganizationNewRoute,
 }
 
-const PrivateRouteWithChildren =
-  PrivateRoute._addFileChildren(PrivateRouteChildren)
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
 
-interface SiteRouteChildren {
+interface SiteRouteRouteChildren {
   SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
   SiteBolosDeFestaRoute: typeof SiteBolosDeFestaRoute
   SiteBolosDePoteRoute: typeof SiteBolosDePoteRoute
@@ -238,7 +280,7 @@ interface SiteRouteChildren {
   SiteIndexRoute: typeof SiteIndexRoute
 }
 
-const SiteRouteChildren: SiteRouteChildren = {
+const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteBolosCaseirosRoute: SiteBolosCaseirosRoute,
   SiteBolosDeFestaRoute: SiteBolosDeFestaRoute,
   SiteBolosDePoteRoute: SiteBolosDePoteRoute,
@@ -246,13 +288,26 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteIndexRoute: SiteIndexRoute,
 }
 
-const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
+const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
+  SiteRouteRouteChildren,
+)
+
+interface AppRouteRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  PrivateRoute: PrivateRouteWithChildren,
-  SiteRoute: SiteRouteWithChildren,
-  PublicLoginRoute: PublicLoginRoute,
-  PublicRegisterRoute: PublicRegisterRoute,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
+  SiteRouteRoute: SiteRouteRouteWithChildren,
+  AppRouteRoute: AppRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
