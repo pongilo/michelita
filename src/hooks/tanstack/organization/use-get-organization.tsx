@@ -7,7 +7,8 @@ type useGetOrganizationProps = {
 
 export function useGetOrganization({ userId }: useGetOrganizationProps) {
   return useQuery({
-    queryKey: ['organization'],
+    queryKey: ['organization', userId],
     queryFn: async () => getOrganization({ userId }),
+    enabled: !!userId,
   })
 }

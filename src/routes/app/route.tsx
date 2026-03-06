@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "@tanstack/react-router";
 import { getSession } from "@/lib/api/auth/get-session";
@@ -35,10 +35,16 @@ function PrivateLayout() {
         <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
         <ul className="menu bg-base-200 min-h-full w-80 p-4">
           <li>
-            <a>Sidebar Item 1</a>
+            <Link to="/app/dashboard">Dashboard</Link>
           </li>
           <li>
-            <a>Sidebar Item 2</a>
+            <Link to="/app/order">Pedidos</Link>
+          </li>
+          <li>
+            <Link to="/app/customer">Clientes</Link>
+          </li>
+          <li>
+            <Link to="/app/product">Produtos</Link>
           </li>
           <li>
             <button type="button" onClick={handleSignOut}>Sair</button>
