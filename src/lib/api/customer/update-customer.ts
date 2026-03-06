@@ -8,7 +8,7 @@ type UpdateCustomerProps = {
 };
 
 export async function updateCustomer({ id, name, phone, note }: UpdateCustomerProps) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("customer")
     .update({
       name: name.trim(),
@@ -20,6 +20,4 @@ export async function updateCustomer({ id, name, phone, note }: UpdateCustomerPr
   if (error) {
     throw new Error(error.message);
   }
-
-  return data;
 }

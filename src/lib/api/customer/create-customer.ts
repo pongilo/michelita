@@ -8,7 +8,7 @@ type CreateCustomerProps = {
 };
 
 export async function createCustomer({ organizationId, name, phone, note }: CreateCustomerProps) {
-  const { data, error } = await supabase.from("customer").insert({
+  const { error } = await supabase.from("customer").insert({
     organization_id: organizationId,
     name: name.trim(),
     phone: phone?.trim() ? phone.trim() : null,
@@ -18,6 +18,4 @@ export async function createCustomer({ organizationId, name, phone, note }: Crea
   if (error) {
     throw new Error(error.message);
   }
-
-  return data;
 }
