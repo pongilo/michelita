@@ -9,7 +9,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import '@/styles.css';
+import appCss from '@/styles.css?url'
 
 const queryClient = new QueryClient();
     
@@ -28,6 +28,10 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      { 
+        rel: 'stylesheet', 
+        href: appCss 
+      },
       {
         rel: 'icon',
         type: 'image/png',
