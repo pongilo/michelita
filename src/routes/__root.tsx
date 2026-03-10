@@ -23,9 +23,19 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
-      {
-        title: 'Michelita | Confeitaria artesanal feito em família em Americana',
-      },
+      { title: 'Michelita Confeitaria | Bolos Artesanais em Americana' },
+      { name: 'description', content: 'Encomende bolos artesanais em Americana e região. Bolos personalizados para aniversários, festas e ocasiões especiais.' },
+      // Open Graph
+      { property: 'og:title', content: 'Michelita Confeitaria | Bolos Artesanais em Americana' },
+      { property: 'og:description', content: 'Encomende bolos artesanais em Americana e região. Bolos personalizados para aniversários, festas e ocasiões especiais.' },
+      { property: 'og:image', content: 'https://michelita.com.br/social.png' },
+      { property: 'og:type', content: 'article' },
+      // Twitter Card
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Michelita Confeitaria | Bolos Artesanais em Americana' },
+      { name: 'twitter:description', content: 'Encomende bolos artesanais em Americana e região. Bolos personalizados para aniversários, festas e ocasiões especiais.' },
+      { name: 'twitter:image', content: 'https://michelita.com.br/social.png' },
+
     ],
     links: [
       { 
