@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import tsConfigPaths from 'vite-tsconfig-paths'
+import { tanstackStart } from "@tanstack/react-start/plugin/vite"
+import viteReact from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { fileURLToPath, URL } from "node:url";
-
 
 export default defineConfig({
   resolve: {
@@ -11,12 +11,20 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  server: {
+    port: 3000,
+  },
   plugins: [
-    tanstackRouter({
-      target: 'react',
-      autoCodeSplitting: true,
-    }), 
-    react(), 
-    tailwindcss()
+    tailwindcss(),
+    tsConfigPaths({
+      projects: ['./tsconfig.json'],
+    }),
+    tanstackStart({
+      srcDirectory: 'src',
+      prerender: {
+        enabled: true,
+      }
+    }),
+    viteReact()
   ],
 });
