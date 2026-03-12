@@ -38,6 +38,21 @@ export const bolosCaseiros = {
   ],
 };
 
+export const bolosFit = {
+  id: "bolos-fit",
+  title: "Bolos Fit",
+  description: "Massa integral e ingredientes naturais.",
+  menu: [
+    {
+      name: '',
+      description: '',
+      items: [
+        { name: "Bolo integral de banana com chocolate", price: 'R$ 49,00', img: '/bolos-fit/michelita-banana-com-chocolate.jpeg' },
+      ]
+    },
+  ],
+}
+
 export const bolosDeFesta = {
   id: "bolos-de-festa",
   title: "Bolos de Festa",

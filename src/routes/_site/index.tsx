@@ -1,8 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { bolosCaseiros } from '@/lib/utils/content';
-import { bolosDeFesta } from '@/lib/utils/content';
-import { bolosDePote } from '@/lib/utils/content';
-import { docinhosDeFesta } from '@/lib/utils/content';
+import { docinhosDeFesta, bolosDePote, bolosDeFesta, bolosCaseiros, bolosFit } from '@/lib/utils/content';
 
 export const Route = createFileRoute("/_site/")({
   component: HomePage,
@@ -41,6 +38,7 @@ function HomePage() {
       <div className="divide-y-4 divide-white border-y-4 border-white mt-5">
         {[
           { id: bolosCaseiros.id, label: bolosCaseiros.title, description: bolosCaseiros.description },
+          { id: bolosFit.id, label: bolosFit.title, description: bolosFit.description },
           { id: bolosDePote.id, label: bolosDePote.title, description: bolosDePote.description },
           { id: bolosDeFesta.id, label: bolosDeFesta.title, description: bolosDeFesta.description },
           { id: docinhosDeFesta.id, label: docinhosDeFesta.title, description: docinhosDeFesta.description },

@@ -18,6 +18,7 @@ import { Route as AppOrderRouteImport } from './routes/app/order'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppCustomerRouteImport } from './routes/app/customer'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
+import { Route as SiteBolosFitRouteImport } from './routes/_site/bolos-fit'
 import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
 import { Route as SiteBolosDeFestaRouteImport } from './routes/_site/bolos-de-festa'
 import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-caseiros'
@@ -68,6 +69,11 @@ const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
   path: '/docinhos',
   getParentRoute: () => SiteRouteRoute,
 } as any)
+const SiteBolosFitRoute = SiteBolosFitRouteImport.update({
+  id: '/bolos-fit',
+  path: '/bolos-fit',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
 const SiteBolosDePoteRoute = SiteBolosDePoteRouteImport.update({
   id: '/bolos-de-pote',
   path: '/bolos-de-pote',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/bolos-fit': typeof SiteBolosFitRoute
   '/docinhos': typeof SiteDocinhosRoute
   '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/bolos-fit': typeof SiteBolosFitRoute
   '/docinhos': typeof SiteDocinhosRoute
   '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_site/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/_site/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/_site/bolos-de-pote': typeof SiteBolosDePoteRoute
+  '/_site/bolos-fit': typeof SiteBolosFitRoute
   '/_site/docinhos': typeof SiteDocinhosRoute
   '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
+    | '/bolos-fit'
     | '/docinhos'
     | '/app/customer'
     | '/app/dashboard'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
+    | '/bolos-fit'
     | '/docinhos'
     | '/app/customer'
     | '/app/dashboard'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/_site/bolos-caseiros'
     | '/_site/bolos-de-festa'
     | '/_site/bolos-de-pote'
+    | '/_site/bolos-fit'
     | '/_site/docinhos'
     | '/app/customer'
     | '/app/dashboard'
@@ -268,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteDocinhosRouteImport
       parentRoute: typeof SiteRouteRoute
     }
+    '/_site/bolos-fit': {
+      id: '/_site/bolos-fit'
+      path: '/bolos-fit'
+      fullPath: '/bolos-fit'
+      preLoaderRoute: typeof SiteBolosFitRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
     '/_site/bolos-de-pote': {
       id: '/_site/bolos-de-pote'
       path: '/bolos-de-pote'
@@ -333,6 +352,7 @@ interface SiteRouteRouteChildren {
   SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
   SiteBolosDeFestaRoute: typeof SiteBolosDeFestaRoute
   SiteBolosDePoteRoute: typeof SiteBolosDePoteRoute
+  SiteBolosFitRoute: typeof SiteBolosFitRoute
   SiteDocinhosRoute: typeof SiteDocinhosRoute
   SiteIndexRoute: typeof SiteIndexRoute
 }
@@ -341,6 +361,7 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteBolosCaseirosRoute: SiteBolosCaseirosRoute,
   SiteBolosDeFestaRoute: SiteBolosDeFestaRoute,
   SiteBolosDePoteRoute: SiteBolosDePoteRoute,
+  SiteBolosFitRoute: SiteBolosFitRoute,
   SiteDocinhosRoute: SiteDocinhosRoute,
   SiteIndexRoute: SiteIndexRoute,
 }
