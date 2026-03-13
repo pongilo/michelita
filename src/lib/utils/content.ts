@@ -111,9 +111,9 @@ export const bolosDePote = {
       items: [
         { name: "Brigadeiro", price: 'R$ 23,00' },
         { name: "Cenoura com Ganache", price: 'R$ 23,00' },
-        { name: "Chocolimão", price: 'R$ 23,00' },
-        { name: "Mousse de Limão", price: 'R$ 23,00' },
-        { name: "Ninho com Nutella", price: 'R$ 23,00' },
+        { name: "Chocolimão", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-chocolimao.jpeg' },
+        { name: "Laka oreo", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-laka-oreo.jpeg' },
+        { name: "Ninho com Nutella", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-ninho-com-nutella.jpeg' },
         { name: "Prestígio", price: 'R$ 23,00' },
       ]
     }
