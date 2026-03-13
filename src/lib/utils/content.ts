@@ -53,6 +53,21 @@ export const bolosFit = {
   ],
 }
 
+export const bolosVulcao = {
+  id: "bolos-vulcao",
+  title: "Bolos Vulcão",
+  description: "Uma explosão de sabor que transborda em cada fatia.",
+  menu: [
+    {
+      name: '',
+      description: '',
+      items: [
+        { name: "Vulcão de ninho com morango", price: 'R$ 55,00', img: '/bolos-vulcao/michelita-ninho-com-morango.jpeg' },
+      ]
+    },
+  ],
+}
+
 export const bolosDeFesta = {
   id: "bolos-de-festa",
   title: "Bolos de Festa",
