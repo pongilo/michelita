@@ -10,10 +10,6 @@ datasource db {
 
 model User {
   id            String         @id @db.Uuid
-  name          String?        @db.VarChar(255)
-  email         String         @db.VarChar(255)
-  createdAt     DateTime?      @map("created_at") @db.Timestamptz
-  updatedAt     DateTime?      @map("updated_at") @db.Timestamptz
   organizations Organization[]
 
   @@map("user")
@@ -21,7 +17,7 @@ model User {
 }
 
 model Organization {
-  id        String   @id @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   ownerId   String   @unique @map("owner_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz

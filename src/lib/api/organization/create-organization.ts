@@ -1,19 +1,41 @@
-import { supabase } from "@/lib/supabase";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
-type CreateOrganizationProps = {
-  name: string;
-  ownerId: string;
-};
+const createOrganizationSchema = z.object({
+  name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
+  ownerId: z.uuid("ID de usuário invalido."),
+});
 
-export async function createOrganization({ name, ownerId }: CreateOrganizationProps) {
-  const { data, error } = await supabase.from("organization").insert({
-    name: name.trim(),
-    owner_id: ownerId,
+type CreateOrganizationProps = z.infer<typeof createOrganizationSchema>;
+
+const createOrganizationServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => createOrganizationSchema.parse(input))
+  .handler(async ({ data }) => {
+    const organization = await prisma.organization.create({
+      data: {
+        name: data.name,
+        ownerId: data.ownerId,
+      },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true,
+      },
+    });
+
+    if (!organization) {
+      return null
+    }
+
+    return organization
   });
 
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return data
+export async function createOrganization({ name, ownerId }: CreateOrganizationProps) {
+  return createOrganizationServerFn({
+    data: {
+      name,
+      ownerId,
+    },
+  });
 }

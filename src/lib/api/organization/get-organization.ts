@@ -1,25 +1,40 @@
-import { supabase } from "@/lib/supabase";
-
-export type Organization = {
-  id: string;
-  name: string;
-  owner_id: string;
-};
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 type GetOrganizationProps = {
   userId: string
 }
 
+const getOrganizationSchema = z.object({
+  userId: z.uuid("ID de usuario invalido."),
+});
+
+const getOrganizationServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => getOrganizationSchema.parse(input))
+  .handler(async ({ data }) => {
+    const organization = await prisma.organization.findUnique({
+      where: {
+        ownerId: data.userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true,
+      },
+    });
+
+    if (!organization) {
+      return null;
+    }
+
+    return organization;
+  });
+
 export async function getOrganization({ userId }: GetOrganizationProps) {
-  const { data, error } = await supabase
-    .from("organization")
-    .select("id, name, owner_id")
-    .eq("owner_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return data
+  return getOrganizationServerFn({
+    data: {
+      userId,
+    },
+  });
 }

@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
 
 export const Route = createFileRoute("/_auth/register")({
@@ -12,6 +11,7 @@ export const Route = createFileRoute("/_auth/register")({
 
 const registerSchema = z
   .object({
+    name: z.string().trim().min(1, "Informe seu nome."),
     email: z.email("Informe um e-mail valido."),
     password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
     confirmPassword: z.string(),
@@ -36,17 +36,14 @@ function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  async function onSubmit({ email, password }: RegisterFormValues) {
+  async function onSubmit({ name, email, password }: RegisterFormValues) {
     setError("");
 
     await signUp(
-      { email, password },
+      { name, email, password },
       {
-        onSuccess: async ({ user }) => {
-          const organization = await getOrganization({ userId: user!.id });
-
-          const to = !!organization ? "/app/dashboard" : "/organization/new";
-          await navigate({ to });
+        onSuccess: async () => {
+          await navigate({ to: "/app/dashboard" });
         },
         onError: (error) => {
           setError(error.message);
@@ -62,6 +59,19 @@ function RegisterPage() {
           <h1 className="card-title">Criar conta</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <label className="space-y-1">
+              <span className="label">Nome</span>
+              <input
+                id="name"
+                type="text"
+                {...register("name")}
+                className="input input-bordered w-full"
+              />
+              {errors.name ? (
+                <span className="text-error-content text-sm">{errors.name.message}</span>
+              ) : null}
+            </label>
+
             <label className="space-y-1">
               <span className="label">E-mail</span>
               <input
