@@ -20,8 +20,9 @@ export const bolosCaseiros = {
         { name: "Fubá cremoso", price: 'R$ 30,00' },
         { name: "Iogurte", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
         { name: "Laranja", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
-        { name: "Limão", price: 'R$ 27,00' },
-        { name: "Maçã com canela", price: 'R$ 30,00' },
+        { name: "Limão", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
+        { name: "Limão com mousse", price: 'R$ 37,00', img: '/bolos-caseiros/michelita-limao-com-mousse.jpeg' },
+        { name: "Maçã com canela", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-maca-com-canela.jpeg' },
         { name: "Maçã com nozes", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-maca-com-nozes.jpeg' },
         { name: "Milho cremoso", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
       ]
@@ -32,7 +33,7 @@ export const bolosCaseiros = {
       items: [
         { name: 'Gotas de chocolate', price: 'R$ 8,00' },
         { name: 'Cobertura de brigadeiro', price: 'R$ 10,00' },
-        { name: 'Cobertura de limão', price: 'R$ 10,00' },
+        { name: 'Cobertura de mousse de limão', price: 'R$ 10,00' },
       ]
     }
   ],
@@ -125,7 +126,7 @@ export const bolosDePote = {
       description: '',
       items: [
         { name: "Brigadeiro", price: 'R$ 23,00' },
-        { name: "Cenoura com Ganache", price: 'R$ 23,00' },
+        { name: "Cenoura com Chocolate", price: 'R$ 23,00' },
         { name: "Chocolimão", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-chocolimao.jpeg' },
         { name: "Laka oreo", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-laka-oreo.jpeg' },
         { name: "Ninho com Nutella", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-ninho-com-nutella.jpeg' },
