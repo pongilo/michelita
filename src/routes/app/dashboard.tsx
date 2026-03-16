@@ -6,12 +6,14 @@ export const Route = createFileRoute("/app/dashboard")({
   beforeLoad: async () => {
     const { user } = await getUser();
 
-    if (user.id) {
-      const organization = await getOrganization({ userId: user.id });
+    if (!user?.id) {
+      throw redirect({ to: "/login" });
+    }
 
-      if (!organization) {
-        throw redirect({ to: "/organization/new" });
-      }
+    const organization = await getOrganization();
+
+    if (!organization) {
+      throw redirect({ to: "/organization/new" });
     }
   },
   component: DashboardPage,

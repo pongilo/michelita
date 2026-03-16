@@ -42,7 +42,12 @@ function RegisterPage() {
     await signUp(
       { name, email, password },
       {
-        onSuccess: async () => {
+        onSuccess: async ({ session }) => {
+          if (!session) {
+            await navigate({ to: "/login" });
+            return;
+          }
+
           await navigate({ to: "/app/dashboard" });
         },
         onError: (error) => {

@@ -64,12 +64,14 @@ model Order {
 }
 
 model OrderItem {
-  id               String   @id @default(uuid()) @db.Uuid
-  orderId          String   @map("order_id") @db.Uuid
-  description      String
-  price            Decimal  @db.Decimal(10, 2)
-  deliveryDatetime DateTime @map("delivery_datetime") @db.Timestamptz
-  note             String
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @map("order_id") @db.Uuid
+  description String
+  unit_price  Decimal  @db.Decimal(10, 2)
+  quantity    Int
+  total       Decimal  @db.Decimal(10, 2)
+  deliveredAt DateTime @map("delivered_at") @db.Timestamptz
+  note        String
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -78,11 +80,12 @@ model OrderItem {
 }
 
 model Transaction {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @map("organization_id") @db.Uuid
-  orderId        String  @map("order_id") @db.Uuid
-  value          Decimal @db.Decimal(10, 2)
-  method         String
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  orderId        String            @map("order_id") @db.Uuid
+  amount         Decimal           @db.Decimal(10, 2)
+  method         TransactionMethod
+  madeAt         DateTime          @map("madeAt") @db.Timestamptz
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -100,5 +103,16 @@ enum OrderStatus {
   CANCELLED @map("cancelled")
 
   @@map("order_status")
+  @@schema("public")
+}
+
+enum TransactionMethod {
+  PIX         @map("pix")
+  CASH        @map("cash")
+  CREDIT_CARD @map("credit_card")
+  DEBIT_CARD  @map("debit_card")
+  TRANSFER    @map("transfer")
+
+  @@map("transaction_method")
   @@schema("public")
 }

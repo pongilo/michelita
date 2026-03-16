@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -49,22 +50,9 @@ export const Route = createRootRoute({
         href: '/favicon.png',
       }
     ],
-    scripts: [
-      {
-        src: "https://www.googletagmanager.com/gtag/js?id=G-X2XZPB717X",
-        async: true,
-      },
-      {
-        children: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-X2XZPB717X');
-        `,
-      },
-    ],
   }),
   component: RootComponent,
+  notFoundComponent: NotFoundComponent,
 })
 
 function RootComponent() {
@@ -74,6 +62,7 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body>
+        <GoogleAnalytics />
         <QueryClientProvider client={queryClient}>
           <NuqsAdapter>
             <Outlet />
@@ -84,5 +73,45 @@ function RootComponent() {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function GoogleAnalytics() {
+  useEffect(() => {
+    const gaScriptSrc = 'https://www.googletagmanager.com/gtag/js?id=G-X2XZPB717X'
+    const gaInitScriptId = 'ga-gtag-init'
+
+    if (!document.querySelector(`script[src="${gaScriptSrc}"]`)) {
+      const gaScript = document.createElement('script')
+      gaScript.async = true
+      gaScript.src = gaScriptSrc
+      document.head.appendChild(gaScript)
+    }
+
+    if (!document.getElementById(gaInitScriptId)) {
+      const gaInitScript = document.createElement('script')
+      gaInitScript.id = gaInitScriptId
+      gaInitScript.text = [
+        'window.dataLayer = window.dataLayer || [];',
+        'function gtag(){dataLayer.push(arguments);}',
+        "gtag('js', new Date());",
+        "gtag('config', 'G-X2XZPB717X');",
+      ].join('')
+      document.head.appendChild(gaInitScript)
+    }
+  }, [])
+
+  return null
+}
+
+function NotFoundComponent() {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-3 px-6 text-center">
+      <h1 className="text-2xl font-bold">Pagina nao encontrada</h1>
+      <p className="text-base-content/70">A pagina que voce tentou acessar nao existe.</p>
+      <a href="/" className="btn btn-primary">
+        Voltar para o inicio
+      </a>
+    </main>
   )
 }

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/lib/supabase";
 import { useNavigate } from "@tanstack/react-router";
 import { getSession } from "@/lib/api/auth/get-session";
+import { signOut } from "@/lib/api/auth/sign-out";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -18,7 +18,7 @@ function PrivateLayout() {
   const navigate = useNavigate();
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await signOut();
     await navigate({ to: "/login" });
   }
 

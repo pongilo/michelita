@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { supabase } from "@/lib/supabase";
+import { signOut } from "@/lib/api/auth/sign-out";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
 import { useGetUser } from "@/hooks/tanstack/auth/use-get-user";
 import { getUser } from "@/lib/api/auth/get-user";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_auth/organization/new")({
       throw redirect({ to: "/login" });
     }
 
-    const organization = await getOrganization({ userId: user.id });
+    const organization = await getOrganization();
     if (organization) {
       throw redirect({ to: "/app/dashboard" });
     }
@@ -53,8 +53,13 @@ function CreateOrganizationPage() {
       return;
     }
 
+    if (!userData?.user?.id) {
+      setError("Sessao expirada. Faca login novamente.");
+      return;
+    }
+
     await createOrganization(
-      { name: values.name, ownerId: userData!.user.id },
+      { name: values.name },
       {
         onSuccess: async () => {
           await navigate({ to: "/app/dashboard" });
@@ -67,7 +72,7 @@ function CreateOrganizationPage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await signOut();
     await navigate({ to: "/login" });
   }
 
