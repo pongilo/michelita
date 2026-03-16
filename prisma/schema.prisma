@@ -23,8 +23,82 @@ model Organization {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customers    Customer[]
+  orders       Order[]
+  transactions Transaction[]
 
   @@map("organization")
+  @@schema("public")
+}
+
+model Customer {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name           String
+  phone          String
+  address        String
+  note           String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orders       Order[]
+
+  @@map("customer")
+  @@schema("public")
+}
+
+model Order {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  customerId     String      @map("customer_id") @db.Uuid
+  status         OrderStatus
+  orderedAt      DateTime    @map("ordered_at") @db.Timestamptz
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items        OrderItem[]
+  transactions Transaction[]
+
+  @@map("order")
+  @@schema("public")
+}
+
+model OrderItem {
+  id               String   @id @default(uuid()) @db.Uuid
+  orderId          String   @map("order_id") @db.Uuid
+  description      String
+  price            Decimal  @db.Decimal(10, 2)
+  deliveryDatetime DateTime @map("delivery_datetime") @db.Timestamptz
+  note             String
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_item")
+  @@schema("public")
+}
+
+model Transaction {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  orderId        String  @map("order_id") @db.Uuid
+  value          Decimal @db.Decimal(10, 2)
+  method         String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("transaction")
+  @@schema("public")
+}
+
+enum OrderStatus {
+  PENDING   @map("pending")
+  CONFIRMED @map("confirmed")
+  PREPARING @map("preparing")
+  READY     @map("ready")
+  DELIVERED @map("delivered")
+  CANCELLED @map("cancelled")
+
+  @@map("order_status")
   @@schema("public")
 }
