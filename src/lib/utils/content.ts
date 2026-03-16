@@ -17,7 +17,7 @@ export const bolosCaseiros = {
         { name: "Coco molhado", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
         { name: "Fubá", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
         { name: "Fubá com goiabada", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
-        { name: "Fubá cremoso", price: 'R$ 30,00' },
+        { name: "Fubá cremoso", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
         { name: "Iogurte", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
         { name: "Laranja", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
         { name: "Limão", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
