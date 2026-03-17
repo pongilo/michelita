@@ -6,7 +6,7 @@ const getOrganizationSchema = z.object({
   ownerId: z.uuid(),
 });
 
-type GetOrganizationProps = z.infer<typeof getOrganizationSchema>;
+export type GetOrganizationProps = z.infer<typeof getOrganizationSchema>;
 
 const getOrganizationServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => getOrganizationSchema.parse(input))

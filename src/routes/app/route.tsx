@@ -35,6 +35,13 @@ function PrivateLayout() {
   }
 
   return (
+    <div>
+      <Outlet />
+      <button type="button" onClick={handleSignOut}>Sair</button>
+    </div>
+  )
+
+  return (
     <div className="drawer lg:drawer-open">
       <input id="my-drawer-3" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content">

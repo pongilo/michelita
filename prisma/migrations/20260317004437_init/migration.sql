@@ -27,9 +27,9 @@ CREATE TABLE "customer" (
     "id" UUID NOT NULL,
     "organization_id" UUID NOT NULL,
     "name" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "note" TEXT NOT NULL,
+    "phone" TEXT,
+    "address" TEXT,
+    "note" TEXT,
 
     CONSTRAINT "customer_pkey" PRIMARY KEY ("id")
 );
@@ -54,7 +54,7 @@ CREATE TABLE "order_item" (
     "quantity" INTEGER NOT NULL,
     "total" DECIMAL(10,2) NOT NULL,
     "delivered_at" TIMESTAMPTZ NOT NULL,
-    "note" TEXT NOT NULL,
+    "note" TEXT,
 
     CONSTRAINT "order_item_pkey" PRIMARY KEY ("id")
 );

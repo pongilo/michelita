@@ -23,6 +23,7 @@ import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-case
 import { Route as SiteBolosBombomRouteImport } from './routes/_site/bolos-bombom'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AppOrderFormRouteImport } from './routes/app/order.form'
 import { Route as AuthOrganizationNewRouteImport } from './routes/_auth/organization.new'
 
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -93,6 +94,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AppOrderFormRoute = AppOrderFormRouteImport.update({
+  id: '/order/form',
+  path: '/order/form',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AuthOrganizationNewRoute = AuthOrganizationNewRouteImport.update({
   id: '/organization/new',
   path: '/organization/new',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/organization/new': typeof AuthOrganizationNewRoute
+  '/app/order/form': typeof AppOrderFormRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/organization/new': typeof AuthOrganizationNewRoute
+  '/app/order/form': typeof AppOrderFormRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/app/dashboard': typeof AppDashboardRoute
   '/_site/': typeof SiteIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
+  '/app/order/form': typeof AppOrderFormRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/dashboard'
     | '/organization/new'
+    | '/app/order/form'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/dashboard'
     | '/organization/new'
+    | '/app/order/form'
   id:
     | '__root__'
     | '/_auth'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/_site/'
     | '/_auth/organization/new'
+    | '/app/order/form'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -303,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/app/order/form': {
+      id: '/app/order/form'
+      path: '/order/form'
+      fullPath: '/app/order/form'
+      preLoaderRoute: typeof AppOrderFormRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_auth/organization/new': {
       id: '/_auth/organization/new'
       path: '/organization/new'
@@ -357,10 +376,12 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppOrderFormRoute: typeof AppOrderFormRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppOrderFormRoute: AppOrderFormRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
