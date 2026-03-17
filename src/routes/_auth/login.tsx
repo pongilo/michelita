@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
 
 export const Route = createFileRoute("/_auth/login")({
@@ -35,10 +34,8 @@ function LoginPage() {
     setError("");
 
     await signIn({ email, password }, {
-      onSuccess: async ({ user }) => {
-        const organization = await getOrganization({ userId: user.id });
-        const to = !!organization ? "/app/dashboard" : "/organization/new";
-        await navigate({ to });
+      onSuccess: async () => {
+        await navigate({ to: "/app/dashboard" });
       },
       onError: (error) => {
         setError(error.message)

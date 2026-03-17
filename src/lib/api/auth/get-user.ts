@@ -5,21 +5,11 @@ const getUserServerFn = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase.auth.getUser();
 
-  const authSessionMissing =
-    !!error && error.message.toLowerCase().includes("auth session missing");
-
-  if (error && !authSessionMissing) {
+  if (error) {
     throw new Error(error.message);
   }
 
-  return {
-    user: data.user
-      ? {
-          id: data.user.id,
-          email: data.user.email ?? null,
-        }
-      : null,
-  };
+  return data;
 });
 
 export async function getUser() {

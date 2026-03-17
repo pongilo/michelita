@@ -4,21 +4,30 @@ import { getSession } from "@/lib/api/auth/get-session";
 
 export const Route = createFileRoute("/_auth")({
   beforeLoad: async ({ location }) => {
-    const { session } = await getSession()
+    const { session } = await getSession();
 
     if (!session) {
-      return;
+      if (location.pathname === '/organization/new') {
+        throw redirect({ to: "/login" });
+      }
+      return {
+        userId: 'asdas'
+      };
     }
 
-    const organization = await getOrganization({ userId: session.user.id });
+    const organization = await getOrganization({ ownerId: session.user.id });
 
-    if (organization && location.pathname !== "/app/dashboard") {
+    if (organization) {
       throw redirect({ to: "/app/dashboard" });
     }
 
-    if (!organization && location.pathname !== "/organization/new") {
+    if (location.pathname !== "/organization/new") {
       throw redirect({ to: "/organization/new" });
     }
+
+    return {
+      userId: session.user.id
+    };
   },
   component: AuthLayout,
 });

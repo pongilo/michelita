@@ -1,14 +1,26 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
-import { getSession } from "@/lib/api/auth/get-session";
 import { signOut } from "@/lib/api/auth/sign-out";
+import { getOrganization } from "@/lib/api/organization/get-organization";
+import { getSession } from "@/lib/api/auth/get-session";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
-    const { session } = await getSession()
+    const { session } = await getSession();
 
     if (!session) {
       throw redirect({ to: "/login" });
+    }
+
+    const organization = await getOrganization({ ownerId: session.user.id });
+
+    if (!organization) {
+      throw redirect({ to: "/organization/new" });
+    }
+
+    return {
+      user: session.user,
+      organization
     }
   },
   component: PrivateLayout,
@@ -36,15 +48,6 @@ function PrivateLayout() {
         <ul className="menu bg-base-200 min-h-full w-80 p-4">
           <li>
             <Link to="/app/dashboard">Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/app/order">Pedidos</Link>
-          </li>
-          <li>
-            <Link to="/app/customer">Clientes</Link>
-          </li>
-          <li>
-            <Link to="/app/product">Produtos</Link>
           </li>
           <li>
             <button type="button" onClick={handleSignOut}>Sair</button>

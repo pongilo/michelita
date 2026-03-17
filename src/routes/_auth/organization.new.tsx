@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
-import { useGetUser } from "@/hooks/tanstack/auth/use-get-user";
-import { getUser } from "@/lib/api/auth/get-user";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
@@ -16,26 +13,20 @@ const createOrganizationSchema = z.object({
 type CreateOrganizationFormValues = z.infer<typeof createOrganizationSchema>;
 
 export const Route = createFileRoute("/_auth/organization/new")({
-  beforeLoad: async () => {
-    const { user } = await getUser();
-
-    if (!user?.id) {
-      throw redirect({ to: "/login" });
-    }
-
-    const organization = await getOrganization();
-    if (organization) {
-      throw redirect({ to: "/app/dashboard" });
+  component: CreateOrganizationPage,
+  beforeLoad({ context }) {
+    return {
+      userId: context.userId
     }
   },
-  component: CreateOrganizationPage,
 });
 
 function CreateOrganizationPage() {
   const navigate = useNavigate();
+  const { userId } = Route.useRouteContext();
+  
   const [error, setError] = useState("");
   const { mutateAsync: createOrganization } = useCreateOrganization();
-  const { data: userData, error: userError } = useGetUser()
 
   const {
     register,
@@ -48,18 +39,8 @@ function CreateOrganizationPage() {
   async function onSubmit(values: CreateOrganizationFormValues) {
     setError("");
 
-    if (userError) {
-      setError(userError.message);
-      return;
-    }
-
-    if (!userData?.user?.id) {
-      setError("Sessao expirada. Faca login novamente.");
-      return;
-    }
-
     await createOrganization(
-      { name: values.name },
+      { name: values.name, ownerId: userId },
       {
         onSuccess: async () => {
           await navigate({ to: "/app/dashboard" });

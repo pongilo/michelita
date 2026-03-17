@@ -3,25 +3,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const getSessionServerFn = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getSession();
 
-  const authSessionMissing =
-    !!error && error.message.toLowerCase().includes("auth session missing");
-
-  if (error && !authSessionMissing) {
+  if (error) {
     throw new Error(error.message);
   }
 
-  return {
-    session: data.user
-      ? {
-          user: {
-            id: data.user.id,
-            email: data.user.email ?? null,
-          },
-        }
-      : null,
-  };
+  return data;
 });
 
 export async function getSession() {

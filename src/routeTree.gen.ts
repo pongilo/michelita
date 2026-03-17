@@ -13,10 +13,7 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
-import { Route as AppProductRouteImport } from './routes/app/product'
-import { Route as AppOrderRouteImport } from './routes/app/order'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
-import { Route as AppCustomerRouteImport } from './routes/app/customer'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
 import { Route as SiteBolosVulcaoRouteImport } from './routes/_site/bolos-vulcao'
 import { Route as SiteBolosFitRouteImport } from './routes/_site/bolos-fit'
@@ -46,24 +43,9 @@ const SiteIndexRoute = SiteIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SiteRouteRoute,
 } as any)
-const AppProductRoute = AppProductRouteImport.update({
-  id: '/product',
-  path: '/product',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppOrderRoute = AppOrderRouteImport.update({
-  id: '/order',
-  path: '/order',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppCustomerRoute = AppCustomerRouteImport.update({
-  id: '/customer',
-  path: '/customer',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
@@ -129,10 +111,7 @@ export interface FileRoutesByFullPath {
   '/bolos-fit': typeof SiteBolosFitRoute
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
-  '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/order': typeof AppOrderRoute
-  '/app/product': typeof AppProductRoute
   '/organization/new': typeof AuthOrganizationNewRoute
 }
 export interface FileRoutesByTo {
@@ -147,10 +126,7 @@ export interface FileRoutesByTo {
   '/bolos-fit': typeof SiteBolosFitRoute
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
-  '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/order': typeof AppOrderRoute
-  '/app/product': typeof AppProductRoute
   '/organization/new': typeof AuthOrganizationNewRoute
 }
 export interface FileRoutesById {
@@ -167,10 +143,7 @@ export interface FileRoutesById {
   '/_site/bolos-fit': typeof SiteBolosFitRoute
   '/_site/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/_site/docinhos': typeof SiteDocinhosRoute
-  '/app/customer': typeof AppCustomerRoute
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/order': typeof AppOrderRoute
-  '/app/product': typeof AppProductRoute
   '/_site/': typeof SiteIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
 }
@@ -188,10 +161,7 @@ export interface FileRouteTypes {
     | '/bolos-fit'
     | '/bolos-vulcao'
     | '/docinhos'
-    | '/app/customer'
     | '/app/dashboard'
-    | '/app/order'
-    | '/app/product'
     | '/organization/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -206,10 +176,7 @@ export interface FileRouteTypes {
     | '/bolos-fit'
     | '/bolos-vulcao'
     | '/docinhos'
-    | '/app/customer'
     | '/app/dashboard'
-    | '/app/order'
-    | '/app/product'
     | '/organization/new'
   id:
     | '__root__'
@@ -225,10 +192,7 @@ export interface FileRouteTypes {
     | '/_site/bolos-fit'
     | '/_site/bolos-vulcao'
     | '/_site/docinhos'
-    | '/app/customer'
     | '/app/dashboard'
-    | '/app/order'
-    | '/app/product'
     | '/_site/'
     | '/_auth/organization/new'
   fileRoutesById: FileRoutesById
@@ -269,32 +233,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteIndexRouteImport
       parentRoute: typeof SiteRouteRoute
     }
-    '/app/product': {
-      id: '/app/product'
-      path: '/product'
-      fullPath: '/app/product'
-      preLoaderRoute: typeof AppProductRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/app/order': {
-      id: '/app/order'
-      path: '/order'
-      fullPath: '/app/order'
-      preLoaderRoute: typeof AppOrderRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/dashboard': {
       id: '/app/dashboard'
       path: '/dashboard'
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/app/customer': {
-      id: '/app/customer'
-      path: '/customer'
-      fullPath: '/app/customer'
-      preLoaderRoute: typeof AppCustomerRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_site/docinhos': {
@@ -413,17 +356,11 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
-  AppCustomerRoute: typeof AppCustomerRoute
   AppDashboardRoute: typeof AppDashboardRoute
-  AppOrderRoute: typeof AppOrderRoute
-  AppProductRoute: typeof AppProductRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppCustomerRoute: AppCustomerRoute,
   AppDashboardRoute: AppDashboardRoute,
-  AppOrderRoute: AppOrderRoute,
-  AppProductRoute: AppProductRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

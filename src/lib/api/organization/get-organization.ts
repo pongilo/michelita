@@ -1,26 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
-const getOrganizationServerFn = createServerFn({ method: "POST" }).handler(async () => {
-    const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase.auth.getUser();
-    const userId = data.user?.id;
+const getOrganizationSchema = z.object({
+  ownerId: z.uuid(),
+});
 
-    const authSessionMissing =
-      !!error && error.message.toLowerCase().includes("auth session missing");
+type GetOrganizationProps = z.infer<typeof getOrganizationSchema>;
 
-    if (error && !authSessionMissing) {
-      throw new Error(error.message);
-    }
-
-    if (!userId) {
-      throw new Error("Usuario nao autenticado.");
-    }
-
+const getOrganizationServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => getOrganizationSchema.parse(input))
+  .handler(async ({ data }) => {
     const organization = await prisma.organization.findUnique({
       where: {
-        ownerId: userId,
+        ownerId: data.ownerId,
       },
       select: {
         id: true,
@@ -36,6 +29,10 @@ const getOrganizationServerFn = createServerFn({ method: "POST" }).handler(async
     return organization;
   });
 
-export async function getOrganization() {
-  return getOrganizationServerFn();
+export async function getOrganization({ ownerId }: GetOrganizationProps) {
+  return getOrganizationServerFn({
+    data: { 
+      ownerId 
+    }
+  });
 }
