@@ -1,25 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
-
-const transactionFormSchema = z.object({
-  type: z.enum(["entry", "exit"]),
-  amount: z.number().min(0.01, "Informe um valor maior que zero."),
-  method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
-  madeAt: z.string().trim().min(1, "Data/hora da transacao e obrigatoria."),
-  customerId: z.union([z.uuid(), z.literal("")]).optional(),
-  description: z.string().trim().max(500, "A descricao deve ter no maximo 500 caracteres.").optional(),
-});
-
-type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 const methodLabel: Record<string, string> = {
   pix: "PIX",
@@ -45,18 +32,7 @@ function toLocalDatetimeInput(value: string | Date) {
   return local.toISOString().slice(0, 16);
 }
 
-function getDefaultTransactionFormValues(): TransactionFormValues {
-  return {
-    type: "entry",
-    amount: 0,
-    method: "pix",
-    madeAt: localDatetimeNow(),
-    customerId: "",
-    description: "",
-  };
-}
-
-export const Route = createFileRoute("/app/transactions")({
+export const Route = createFileRoute("/app/_analytics/transactions")({
   component: TransactionsPage,
 });
 
@@ -77,22 +53,17 @@ function TransactionsPage() {
   const { mutateAsync: deleteTransaction, isPending: isDeletingTransaction } = useDeleteTransaction({
     organizationId: organization.id,
   });
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
-  const isEditing = !!editingTransactionId;
+  const editingTransaction = useMemo(
+    () => transactions.find((transaction) => transaction.id === editingTransactionId) ?? null,
+    [editingTransactionId, transactions],
+  );
+  const isEditing = !!editingTransaction;
   const isSubmittingForm = isCreatingTransaction || isUpdatingTransaction;
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionFormSchema),
-    defaultValues: getDefaultTransactionFormValues(),
-  });
 
   const totals = useMemo(() => {
     const entry = transactions
@@ -114,9 +85,9 @@ function TransactionsPage() {
     setFormSuccess("");
 
     try {
-      if (editingTransactionId) {
+      if (editingTransaction) {
         await updateTransaction({
-          id: editingTransactionId,
+          id: editingTransaction.id,
           organizationId: organization.id,
           type: values.type,
           amount: values.amount,
@@ -127,7 +98,6 @@ function TransactionsPage() {
         });
 
         setFormSuccess("Transacao atualizada com sucesso.");
-        setEditingTransactionId(null);
       } else {
         const transaction = await createTransaction({
           organizationId: organization.id,
@@ -142,7 +112,8 @@ function TransactionsPage() {
         setFormSuccess(`Transacao ${transaction.id.slice(0, 8)} registrada com sucesso.`);
       }
 
-      reset(getDefaultTransactionFormValues());
+      setEditingTransactionId(null);
+      setIsFormModalOpen(false);
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -157,23 +128,19 @@ function TransactionsPage() {
   function handleStartEdit(transaction: (typeof transactions)[number]) {
     setEditingTransactionId(transaction.id);
     setFormError("");
-    setFormSuccess("");
-
-    reset({
-      type: transaction.type as TransactionFormValues["type"],
-      amount: Math.abs(transaction.amount),
-      method: transaction.method as TransactionFormValues["method"],
-      madeAt: toLocalDatetimeInput(transaction.madeAt),
-      customerId: transaction.customerId ?? "",
-      description: transaction.description ?? "",
-    });
+    setIsFormModalOpen(true);
   }
 
   function handleCancelEdit() {
+    setIsFormModalOpen(false);
     setEditingTransactionId(null);
     setFormError("");
-    setFormSuccess("");
-    reset(getDefaultTransactionFormValues());
+  }
+
+  function handleOpenCreateModal() {
+    setEditingTransactionId(null);
+    setFormError("");
+    setIsFormModalOpen(true);
   }
 
   async function handleDeleteTransaction(transactionId: string) {
@@ -204,6 +171,9 @@ function TransactionsPage() {
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Transacoes</h1>
+        <button type="button" className="btn btn-primary" onClick={handleOpenCreateModal}>
+          Nova transacao
+        </button>
       </div>
 
       <section className="grid gap-3 md:grid-cols-3">
@@ -212,101 +182,11 @@ function TransactionsPage() {
         <MetricCard title="Saldo" value={currencyFormatter.format(totals.balance)} />
       </section>
 
-      <section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
-        <div className="card-body">
-          <h2 className="card-title text-base">{isEditing ? "Editar transacao" : "Nova transacao"}</h2>
-          <p className="text-sm opacity-70">
-            {isEditing
-              ? "Atualize os dados da transacao selecionada."
-              : "Cadastre entradas e saidas, com ou sem cliente vinculado."}
-          </p>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 md:grid-cols-2">
-            <label className="space-y-1">
-              <span className="label">Tipo</span>
-              <select className="select select-bordered w-full" {...register("type")}>
-                <option value="entry">Entrada</option>
-                <option value="exit">Saida</option>
-              </select>
-            </label>
-
-            <label className="space-y-1">
-              <span className="label">Valor</span>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                className="input input-bordered w-full"
-                {...register("amount", { valueAsNumber: true })}
-              />
-              {errors.amount ? <span className="text-error-content text-sm">{errors.amount.message}</span> : null}
-            </label>
-
-            <label className="space-y-1">
-              <span className="label">Metodo</span>
-              <select className="select select-bordered w-full" {...register("method")}>
-                <option value="pix">PIX</option>
-                <option value="cash">Dinheiro</option>
-                <option value="credit_card">Cartao de credito</option>
-                <option value="debit_card">Cartao de debito</option>
-              </select>
-            </label>
-
-            <label className="space-y-1">
-              <span className="label">Data/hora</span>
-              <input type="datetime-local" className="input input-bordered w-full" {...register("madeAt")} />
-              {errors.madeAt ? <span className="text-error-content text-sm">{errors.madeAt.message}</span> : null}
-            </label>
-
-            <label className="space-y-1 md:col-span-2">
-              <span className="label">Descricao (opcional)</span>
-              <input type="text" className="input input-bordered w-full" placeholder="Descricao" {...register("description")} />
-              {errors.description ? (
-                <span className="text-error-content text-sm">{errors.description.message}</span>
-              ) : null}
-            </label>
-
-            <label className="space-y-1 md:col-span-2">
-              <span className="label">Cliente vinculado (opcional)</span>
-              <select className="select select-bordered w-full" {...register("customerId")}>
-                <option value="">Sem cliente vinculado</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {formError ? (
-              <div className="alert alert-error md:col-span-2">
-                <span>{formError}</span>
-              </div>
-            ) : null}
-
-            {formSuccess ? (
-              <div className="alert alert-success md:col-span-2">
-                <span>{formSuccess}</span>
-              </div>
-            ) : null}
-
-            <div className="md:col-span-2 flex justify-end">
-              {isEditing ? (
-                <button type="button" className="btn btn-ghost" onClick={handleCancelEdit}>
-                  Cancelar edicao
-                </button>
-              ) : null}
-              <button type="submit" className="btn btn-primary" disabled={isSubmittingForm}>
-                {isSubmittingForm
-                  ? "Salvando..."
-                  : isEditing
-                    ? "Salvar alteracoes"
-                    : "Registrar transacao"}
-              </button>
-            </div>
-          </form>
+      {formSuccess ? (
+        <div className="alert alert-success mt-4">
+          <span>{formSuccess}</span>
         </div>
-      </section>
+      ) : null}
 
       <section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
         <div className="card-body">
@@ -383,6 +263,31 @@ function TransactionsPage() {
         </div>
       </section>
 
+      <TransactionFormModal
+        isOpen={isFormModalOpen}
+        mode={isEditing ? "edit" : "create"}
+        isSubmitting={isSubmittingForm}
+        customers={customers.map((customer) => ({
+          id: customer.id,
+          name: customer.name,
+        }))}
+        errorMessage={formError}
+        successMessage=""
+        initialValues={
+          editingTransaction
+            ? {
+                type: editingTransaction.type as TransactionFormValues["type"],
+                amount: Math.abs(editingTransaction.amount),
+                method: editingTransaction.method as TransactionFormValues["method"],
+                madeAt: toLocalDatetimeInput(editingTransaction.madeAt),
+                customerId: editingTransaction.customerId ?? "",
+                description: editingTransaction.description ?? "",
+              }
+            : undefined
+        }
+        onClose={handleCancelEdit}
+        onSubmit={onSubmit}
+      />
     </main>
   );
 }

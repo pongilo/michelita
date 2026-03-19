@@ -1,20 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
+import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
-
-const updateCustomerFormSchema = z.object({
-  name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do cliente."),
-  phone: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  note: z.string().trim().optional(),
-});
-
-type UpdateCustomerFormValues = z.infer<typeof updateCustomerFormSchema>;
 
 const transactionMethodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -30,9 +20,11 @@ export const Route = createFileRoute("/app/customers/$customerId")({
 function CustomerDetailsPage() {
   const { organization } = Route.useRouteContext();
   const { customerId } = Route.useParams();
-  const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
     organizationId: organization.id,
@@ -41,38 +33,21 @@ function CustomerDetailsPage() {
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization.id,
   });
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<UpdateCustomerFormValues>({
-    resolver: zodResolver(updateCustomerFormSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      address: "",
-      note: "",
-    },
+  const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
+    organizationId: organization.id,
   });
 
   function handleStartEdit() {
-    if (!data) {
-      return;
-    }
-
-    reset({
-      name: data.customer.name,
-      phone: data.customer.phone ?? "",
-      address: data.customer.address ?? "",
-      note: data.customer.note ?? "",
-    });
     setFormError("");
-    setFormSuccess("");
-    setIsEditing(true);
+    setIsEditModalOpen(true);
   }
 
-  async function onSubmit(values: UpdateCustomerFormValues) {
+  function handleCloseEditModal() {
+    setFormError("");
+    setIsEditModalOpen(false);
+  }
+
+  async function onSubmit(values: CustomerFormValues) {
     if (!data) {
       return;
     }
@@ -90,9 +65,37 @@ function CustomerDetailsPage() {
       });
 
       setFormSuccess("Cliente atualizado com sucesso.");
-      setIsEditing(false);
+      setIsEditModalOpen(false);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Erro ao atualizar cliente.");
+    }
+  }
+
+  async function handleDeleteCustomer() {
+    if (!data) {
+      return;
+    }
+
+    setActionError("");
+
+    const confirmed = window.confirm(
+      "Deseja realmente excluir este cliente? Esta acao nao pode ser desfeita.",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteCustomer({
+        id: data.customer.id,
+        organizationId: organization.id,
+      });
+
+      await navigate({
+        to: "/app/customers",
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Erro ao excluir cliente.");
     }
   }
 
@@ -107,6 +110,11 @@ function CustomerDetailsPage() {
 
       {isLoading ? <p>Carregando cliente...</p> : null}
       {isError ? <p className="text-error">{error.message}</p> : null}
+      {actionError ? (
+        <div className="alert alert-error mb-4">
+          <span>{actionError}</span>
+        </div>
+      ) : null}
 
       {data ? (
         <div className="space-y-4">
@@ -114,99 +122,45 @@ function CustomerDetailsPage() {
             <div className="card-body">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="card-title">{data.customer.name}</h2>
-                {!isEditing ? (
+                <div className="flex gap-2">
                   <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
                     Editar cliente
                   </button>
-                ) : null}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline btn-error"
+                    disabled={isDeletingCustomer}
+                    onClick={handleDeleteCustomer}
+                  >
+                    Excluir cliente
+                  </button>
+                </div>
               </div>
 
-              {formSuccess && !isEditing ? (
+              {formSuccess ? (
                 <div className="alert alert-success">
                   <span>{formSuccess}</span>
                 </div>
               ) : null}
 
-              {!isEditing ? (
-                <>
-                  <p className="text-sm">Telefone: {data.customer.phone ?? "-"}</p>
-                  <p className="text-sm">Endereco: {data.customer.address ?? "-"}</p>
-                  <p className="text-sm">Observacao: {data.customer.note ?? "-"}</p>
-                </>
-              ) : (
-                <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1 md:col-span-2">
-                    <input type="text" className="input input-bordered w-full" placeholder="Nome" {...register("name")} />
-                    {errors.name ? <span className="text-sm text-error">{errors.name.message}</span> : null}
-                  </label>
-                  <input
-                    type="text"
-                    className="input input-bordered w-full"
-                    placeholder="Telefone (opcional)"
-                    {...register("phone")}
-                  />
-                  <input
-                    type="text"
-                    className="input input-bordered w-full"
-                    placeholder="Endereco (opcional)"
-                    {...register("address")}
-                  />
-                  <textarea
-                    className="textarea textarea-bordered w-full md:col-span-2"
-                    rows={3}
-                    placeholder="Observacao (opcional)"
-                    {...register("note")}
-                  />
-
-                  {formError ? (
-                    <div className="alert alert-error md:col-span-2">
-                      <span>{formError}</span>
-                    </div>
-                  ) : null}
-
-                  {formSuccess ? (
-                    <div className="alert alert-success md:col-span-2">
-                      <span>{formSuccess}</span>
-                    </div>
-                  ) : null}
-
-                  <div className="md:col-span-2 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setFormError("");
-                        setFormSuccess("");
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-primary" disabled={isUpdatingCustomer}>
-                      {isUpdatingCustomer ? "Salvando..." : "Salvar alteracoes"}
-                    </button>
-                  </div>
-                </form>
-              )}
+              <p className="text-sm">Telefone: {data.customer.phone ?? "-"}</p>
+              <p className="text-sm">Endereco: {data.customer.address ?? "-"}</p>
+              <p className="text-sm">Observacao: {data.customer.note ?? "-"}</p>
             </div>
           </section>
 
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard title="Pedidos totais" value={String(data.metrics.totalOrders)} />
-            <MetricCard title="Pedidos ativos" value={String(data.metrics.activeOrders)} />
+          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <MetricCard title="Total de pedidos" value={String(data.metrics.totalOrders)} />
             <MetricCard title="Pedidos cancelados" value={String(data.metrics.canceledOrders)} />
-            <MetricCard title="Faturado" value={currencyFormatter.format(data.metrics.totalInvoiced)} />
+            <MetricCard title="Último pedido" value={data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "-"} />
+            <MetricCard title="Vendas confirmadas" value={currencyFormatter.format(data.metrics.totalInvoiced)} />
             <MetricCard title="Recebido" value={currencyFormatter.format(data.metrics.totalReceived)} />
             <MetricCard title="Saldo" value={currencyFormatter.format(data.metrics.balance)} />
-            <MetricCard
-              title="Ultimo pedido"
-              value={data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "-"}
-            />
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
             <div className="card-body">
-              <h2 className="card-title text-base">Pedidos recentes</h2>
+              <h2 className="card-title text-base">Pedidos</h2>
 
               {data.recentOrders.length === 0 ? (
                 <p className="text-sm opacity-70">Este cliente ainda nao possui pedidos.</p>
@@ -267,20 +221,20 @@ function CustomerDetailsPage() {
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
             <div className="card-body">
-              <h2 className="card-title text-base">Transacoes recentes do cliente</h2>
+              <h2 className="card-title text-base">Transações</h2>
 
               {data.recentTransactions.length === 0 ? (
-                <p className="text-sm opacity-70">Sem transacoes para este cliente.</p>
+                <p className="text-sm opacity-70">Sem transações para este cliente.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Transacao</th>
+                        <th>Transação</th>
                         <th>Data</th>
                         <th>Tipo</th>
-                        <th>Metodo</th>
-                        <th>Descricao</th>
+                        <th>Método</th>
+                        <th>Descrição</th>
                         <th>Valor</th>
                       </tr>
                     </thead>
@@ -307,6 +261,26 @@ function CustomerDetailsPage() {
           </section>
         </div>
       ) : null}
+
+      <CustomerFormModal
+        isOpen={isEditModalOpen}
+        mode="edit"
+        isSubmitting={isUpdatingCustomer}
+        errorMessage={formError}
+        successMessage=""
+        initialValues={
+          data
+            ? {
+                name: data.customer.name,
+                phone: data.customer.phone ?? "",
+                address: data.customer.address ?? "",
+                note: data.customer.note ?? "",
+              }
+            : undefined
+        }
+        onClose={handleCloseEditModal}
+        onSubmit={onSubmit}
+      />
     </main>
   );
 }

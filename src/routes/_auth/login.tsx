@@ -35,7 +35,7 @@ function LoginPage() {
 
     await signIn({ email, password }, {
       onSuccess: async () => {
-        await navigate({ to: "/app/dashboard" });
+        await navigate({ to: "/app/overview" });
       },
       onError: (error) => {
         setError(error.message)

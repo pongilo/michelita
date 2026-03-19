@@ -5,7 +5,7 @@ import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
 
-export const Route = createFileRoute("/app/orders")({
+export const Route = createFileRoute("/app/_analytics/orders")({
   component: OrdersPage,
 });
 

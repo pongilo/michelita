@@ -113,7 +113,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
         canceledOrders,
         totalInvoiced: Number(totalInvoiced.toFixed(2)),
         totalReceived: Number(totalReceived.toFixed(2)),
-        balance: Number((totalInvoiced - totalReceived).toFixed(2)),
+        balance: Number((totalReceived - totalInvoiced).toFixed(2)),
         lastOrderAt: orderSummaries[0]?.orderedAt ?? null,
       },
       recentOrders: orderSummaries.slice(0, 15),

@@ -57,7 +57,7 @@ function PrivateLayout() {
           <ul className="menu w-full grow gap-1 p-2">
             <li>
               <Link
-                to="/app/dashboard"
+                to="/app/overview"
                 data-tip="Dashboard"
                 activeOptions={{ exact: true }}
                 activeProps={{ className: "menu-active is-drawer-close:tooltip is-drawer-close:tooltip-right" }}

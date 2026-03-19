@@ -43,7 +43,7 @@ function CreateOrganizationPage() {
       { name: values.name, ownerId: userId },
       {
         onSuccess: async () => {
-          await navigate({ to: "/app/dashboard" });
+          await navigate({ to: "/app/overview" });
         },
         onError: (error) => {
           setError(error.message);

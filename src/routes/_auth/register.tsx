@@ -48,7 +48,7 @@ function RegisterPage() {
             return;
           }
 
-          await navigate({ to: "/app/dashboard" });
+          await navigate({ to: "/app/overview" });
         },
         onError: (error) => {
           setError(error.message);

@@ -20,7 +20,7 @@ function currentDateInputValue() {
   return local.toISOString().slice(0, 10);
 }
 
-export const Route = createFileRoute("/app/dashboard")({
+export const Route = createFileRoute("/app/_analytics/overview")({
   component: DashboardPage,
 });
 

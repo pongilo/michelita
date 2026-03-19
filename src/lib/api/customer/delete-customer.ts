@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 const deleteCustomerSchema = z.object({
   id: z.uuid(),
+  organizationId: z.uuid(),
 });
 
 export type DeleteCustomerProps = z.infer<typeof deleteCustomerSchema>;
@@ -14,6 +15,7 @@ const deleteCustomerServerFn = createServerFn({ method: "POST" })
     const orderCount = await prisma.order.count({
       where: {
         customerId: data.id,
+        organizationId: data.organizationId,
       },
     });
 
@@ -21,11 +23,16 @@ const deleteCustomerServerFn = createServerFn({ method: "POST" })
       throw new Error("Nao e possivel excluir um cliente com pedidos vinculados.");
     }
 
-    await prisma.customer.delete({
+    const deleted = await prisma.customer.deleteMany({
       where: {
         id: data.id,
+        organizationId: data.organizationId,
       },
     });
+
+    if (deleted.count === 0) {
+      throw new Error("Cliente nao encontrado para a organizacao informada.");
+    }
 
     return {
       id: data.id,
