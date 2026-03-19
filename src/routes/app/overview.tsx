@@ -108,7 +108,7 @@ function DashboardPage() {
           <section>
             <div className="card border border-base-300 bg-base-100 shadow-sm">
               <div className="p-4 border-b border-base-300">
-                <h2 className="card-title text-base">Recebimentos por método de pagamento</h2>
+                <h2 className="card-title text-base">Método de pagamento</h2>
               </div>
                 <div className="space-y-2 text-sm">
                   <table className="table table-zebra">

@@ -159,7 +159,7 @@ function CustomerDetailsPage() {
               <h2 className="card-title text-base">Pedidos</h2>
             </div>
               {data.recentOrders.length === 0 ? (
-                <p className="text-sm opacity-70">Este cliente ainda nao possui pedidos.</p>
+                <p className="text-sm opacity-70 p-4">Este cliente ainda nao possui pedidos.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table">
@@ -168,10 +168,10 @@ function CustomerDetailsPage() {
                         <th>Pedido</th>
                         <th>Data</th>
                         <th>Pagamento</th>
-                        <th>Observacao</th>
+                        <th>Observação</th>
                         <th>Itens</th>
                         <th>Total itens</th>
-                        <th className="text-right">Acoes</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -214,7 +214,7 @@ function CustomerDetailsPage() {
             </div>
 
               {data.recentTransactions.length === 0 ? (
-                <p className="text-sm opacity-70">Sem transações para este cliente.</p>
+                <p className="text-sm opacity-70 p-4">Sem transações para este cliente.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table">

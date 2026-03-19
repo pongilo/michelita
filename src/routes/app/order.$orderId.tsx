@@ -17,7 +17,14 @@ function OrderDetailsPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Pedido</h1>
+        <div className="flex gap-2 items-center">
+          <h1 className="text-2xl font-semibold">Pedido #{order?.id.slice(0, 8)}</h1>
+          {order && (
+            <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+              {order.isPaid ? "Pago" : "Pendente"}
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           <Link to="/app/orders" className="btn btn-sm btn-outline">
             Voltar para pedidos
@@ -37,39 +44,25 @@ function OrderDetailsPage() {
         <div className="space-y-4">
           <section className="card border border-base-300 bg-base-100 shadow-sm">
             <div className="card-body">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="card-title">Resumo do pedido</h2>
-                  <p className="text-sm opacity-70">ID: {order.id}</p>
-                </div>
-                <div className="flex gap-2">
-                  <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                    {order.isPaid ? "Pago" : "Pendente"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <p className="text-sm">
-                  <strong>Data/hora:</strong> {datetimeFormatter.format(new Date(order.orderedAt))}
-                </p>
-                <p className="text-sm">
-                  <strong>Cliente:</strong>{" "}
-                  {order.customer ? (
-                    <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
-                      {order.customer.name}
-                    </Link>
-                  ) : (
-                    "Sem cliente"
-                  )}
-                </p>
-                <p className="text-sm">
-                  <strong>Telefone:</strong> {order.customer?.phone ?? "-"}
-                </p>
-                <p className="text-sm md:col-span-2">
-                  <strong>Observacao:</strong> {order.note ?? "-"}
-                </p>
-              </div>
+              <p>
+                <strong>Data:</strong> {datetimeFormatter.format(new Date(order.orderedAt))}
+              </p>
+              <p>
+                <strong>Cliente:</strong>{" "}
+                {order.customer ? (
+                  <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
+                    {order.customer.name}
+                  </Link>
+                ) : (
+                  "Sem cliente"
+                )}
+              </p>
+              <p>
+                <strong>Telefone:</strong> {order.customer?.phone ?? "-"}
+              </p>
+              <p>
+                <strong>Observação:</strong> {order.note ?? "-"}
+              </p>
 
               <div className="rounded-box bg-base-200 p-4 text-sm">
                 <div className="flex justify-between">
@@ -85,40 +78,40 @@ function OrderDetailsPage() {
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
+            <div className="p-4 border-b border-base-300">
               <h2 className="card-title text-base">Itens do pedido</h2>
-
-              {order.item.length === 0 ? (
-                <p className="text-sm opacity-70">Nenhum item cadastrado.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Descricao</th>
-                        <th>Qtd.</th>
-                        <th>Unitario</th>
-                        <th>Total</th>
-                        <th>Entrega</th>
-                        <th>Observacao</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.item.map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.description}</td>
-                          <td>{item.quantity}</td>
-                          <td>{currencyFormatter.format(item.unitPrice)}</td>
-                          <td>{currencyFormatter.format(item.total)}</td>
-                          <td>{datetimeFormatter.format(new Date(item.deliveredAt))}</td>
-                          <td>{item.note ?? "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
+
+            {order.item.length === 0 ? (
+              <p className="text-sm opacity-70 p-4">Nenhum item cadastrado.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Descrição</th>
+                      <th>Qtd.</th>
+                      <th>Preço</th>
+                      <th>Total</th>
+                      <th>Entrega</th>
+                      <th>Observação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.item.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.description}</td>
+                        <td>{item.quantity}</td>
+                        <td>{currencyFormatter.format(item.unitPrice)}</td>
+                        <td>{currencyFormatter.format(item.total)}</td>
+                        <td>{datetimeFormatter.format(new Date(item.deliveredAt))}</td>
+                        <td>{item.note ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
         </div>
