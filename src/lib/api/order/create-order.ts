@@ -14,7 +14,6 @@ const transactionSchema = z.object({
   amount: z.number().min(0.01, "Valor da transacao deve ser maior que zero."),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
-  accountId: z.uuid().optional(),
 });
 
 export const createOrderSchema = z.object({
@@ -99,7 +98,6 @@ const createOrderServerFn = createServerFn({ method: "POST" })
                 amount: transaction.amount,
                 method: transactionMethodToPrisma[transaction.method],
                 madeAt: toDateOrThrow(transaction.madeAt, "Data da transacao"),
-                accountId: transaction.accountId ?? null,
               })),
             }
           : undefined,

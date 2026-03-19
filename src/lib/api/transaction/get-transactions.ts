@@ -31,7 +31,6 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
         amount: true,
         method: true,
         madeAt: true,
-        accountId: true,
         order: {
           select: {
             id: true,
@@ -53,7 +52,6 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
       type: Number(transaction.amount) >= 0 ? "entry" : "exit",
       method: transactionMethodFromPrisma[transaction.method],
       madeAt: transaction.madeAt,
-      accountId: transaction.accountId,
       order: transaction.order,
     }));
   });

@@ -10,7 +10,6 @@ const updateTransactionSchema = z.object({
   type: z.enum(["entry", "exit"]),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
-  accountId: z.uuid().optional(),
 });
 
 export type UpdateTransactionProps = z.infer<typeof updateTransactionSchema>;
@@ -76,7 +75,6 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
         amount: normalizedAmount,
         method: transactionMethodToPrisma[data.method],
         madeAt: toDateOrThrow(data.madeAt, "Data da transacao"),
-        accountId: data.accountId ?? null,
       },
     });
 

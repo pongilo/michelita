@@ -1,8 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+
+const updateCustomerFormSchema = z.object({
+  name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do cliente."),
+  phone: z.string().trim().optional(),
+  address: z.string().trim().optional(),
+  note: z.string().trim().optional(),
+});
+
+type UpdateCustomerFormValues = z.infer<typeof updateCustomerFormSchema>;
 
 const transactionMethodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -19,10 +31,6 @@ function CustomerDetailsPage() {
   const { organization } = Route.useRouteContext();
   const { customerId } = Route.useParams();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
 
@@ -33,22 +41,38 @@ function CustomerDetailsPage() {
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization.id,
   });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UpdateCustomerFormValues>({
+    resolver: zodResolver(updateCustomerFormSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      address: "",
+      note: "",
+    },
+  });
 
   function handleStartEdit() {
     if (!data) {
       return;
     }
 
-    setName(data.customer.name);
-    setPhone(data.customer.phone ?? "");
-    setAddress(data.customer.address ?? "");
-    setNote(data.customer.note ?? "");
+    reset({
+      name: data.customer.name,
+      phone: data.customer.phone ?? "",
+      address: data.customer.address ?? "",
+      note: data.customer.note ?? "",
+    });
     setFormError("");
     setFormSuccess("");
     setIsEditing(true);
   }
 
-  async function handleSaveCustomer() {
+  async function onSubmit(values: UpdateCustomerFormValues) {
     if (!data) {
       return;
     }
@@ -56,18 +80,13 @@ function CustomerDetailsPage() {
     setFormError("");
     setFormSuccess("");
 
-    if (name.trim().length < 2) {
-      setFormError("Informe ao menos 2 caracteres para o nome do cliente.");
-      return;
-    }
-
     try {
       await updateCustomer({
         id: data.customer.id,
-        name: name.trim(),
-        phone: phone.trim() || undefined,
-        address: address.trim() || undefined,
-        note: note.trim() || undefined,
+        name: values.name.trim(),
+        phone: values.phone?.trim() || undefined,
+        address: values.address?.trim() || undefined,
+        note: values.note?.trim() || undefined,
       });
 
       setFormSuccess("Cliente atualizado com sucesso.");
@@ -115,34 +134,28 @@ function CustomerDetailsPage() {
                   <p className="text-sm">Observacao: {data.customer.note ?? "-"}</p>
                 </>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
+                <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1 md:col-span-2">
+                    <input type="text" className="input input-bordered w-full" placeholder="Nome" {...register("name")} />
+                    {errors.name ? <span className="text-sm text-error">{errors.name.message}</span> : null}
+                  </label>
                   <input
                     type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className="input input-bordered w-full md:col-span-2"
-                    placeholder="Nome"
-                  />
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
                     className="input input-bordered w-full"
                     placeholder="Telefone (opcional)"
+                    {...register("phone")}
                   />
                   <input
                     type="text"
-                    value={address}
-                    onChange={(event) => setAddress(event.target.value)}
                     className="input input-bordered w-full"
                     placeholder="Endereco (opcional)"
+                    {...register("address")}
                   />
                   <textarea
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
                     className="textarea textarea-bordered w-full md:col-span-2"
                     rows={3}
                     placeholder="Observacao (opcional)"
+                    {...register("note")}
                   />
 
                   {formError ? (
@@ -169,11 +182,11 @@ function CustomerDetailsPage() {
                     >
                       Cancelar
                     </button>
-                    <button type="button" className="btn btn-primary" disabled={isUpdatingCustomer} onClick={handleSaveCustomer}>
+                    <button type="submit" className="btn btn-primary" disabled={isUpdatingCustomer}>
                       {isUpdatingCustomer ? "Salvando..." : "Salvar alteracoes"}
                     </button>
                   </div>
-                </div>
+                </form>
               )}
             </div>
           </section>

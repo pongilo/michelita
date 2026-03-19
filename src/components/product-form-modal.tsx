@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
-import type { Database } from "@/lib/database.types";
 
 const productSchema = z.object({
   name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),

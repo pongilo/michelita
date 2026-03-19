@@ -4,7 +4,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
-import type { Database } from "@/lib/database.types";
 import { currencyFormatter } from "@/lib/utils/formatter";
 import type {
   DeliveryType,

@@ -36,7 +36,9 @@ CREATE TABLE "order" (
     "organization_id" UUID NOT NULL,
     "customer_id" UUID,
     "is_canceled" BOOLEAN NOT NULL DEFAULT false,
+    "is_paid" BOOLEAN NOT NULL DEFAULT false,
     "ordered_at" TIMESTAMPTZ NOT NULL,
+    "note" TEXT,
 
     CONSTRAINT "order_pkey" PRIMARY KEY ("id")
 );
@@ -63,7 +65,6 @@ CREATE TABLE "transaction" (
     "amount" DECIMAL(10,2) NOT NULL,
     "method" "transaction_method" NOT NULL,
     "made_at" TIMESTAMPTZ NOT NULL,
-    "account_id" UUID,
 
     CONSTRAINT "transaction_pkey" PRIMARY KEY ("id")
 );

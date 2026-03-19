@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import type { Database } from "@/lib/database.types";
 
 const customerSchema = z.object({
   name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
