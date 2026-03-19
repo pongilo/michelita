@@ -10,9 +10,12 @@ export function useUpdateCustomer({ organizationId }: UseUpdateCustomerProps) {
 
   return useMutation({
     mutationFn: updateCustomer,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["customers", organizationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["customer", organizationId, variables.id],
       });
     },
   });

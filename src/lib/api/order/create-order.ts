@@ -7,40 +7,33 @@ const orderItemSchema = z.object({
   unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
   quantity: z.number().int().min(1, "Quantidade minima: 1."),
   deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
-  note: z.string().trim().min(1, "Observacao do item e obrigatoria."),
+  note: z.string().trim().optional(),
 });
 
 const transactionSchema = z.object({
   amount: z.number().min(0.01, "Valor da transacao deve ser maior que zero."),
-  method: z.enum(["pix", "cash", "credit_card", "debit_card", "transfer"]),
+  method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
+  accountId: z.uuid().optional(),
 });
 
 export const createOrderSchema = z.object({
-  organizationId: z.string().uuid("Organizacao invalida."),
-  status: z.enum(["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"]),
+  organizationId: z.uuid(),
+  customerId: z.uuid().nullable().optional(),
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
+  isPaid: z.boolean().default(false),
+  note: z.string().trim().optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item."),
-  transactions: z.array(transactionSchema),
+  transactions: z.array(transactionSchema).default([]),
 });
 
 export type CreateOrderProps = z.infer<typeof createOrderSchema>;
-
-const orderStatusToPrisma = {
-  pending: "PENDING",
-  confirmed: "CONFIRMED",
-  preparing: "PREPARING",
-  ready: "READY",
-  delivered: "DELIVERED",
-  cancelled: "CANCELLED",
-} as const;
 
 const transactionMethodToPrisma = {
   pix: "PIX",
   cash: "CASH",
   credit_card: "CREDIT_CARD",
   debit_card: "DEBIT_CARD",
-  transfer: "TRANSFER",
 } as const;
 
 function toDateOrThrow(value: string, fieldLabel: string) {
@@ -53,32 +46,60 @@ function toDateOrThrow(value: string, fieldLabel: string) {
   return date;
 }
 
+function toOptionalString(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
 const createOrderServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createOrderSchema.parse(input))
   .handler(async ({ data }) => {
+    if (data.customerId) {
+      const customer = await prisma.customer.findFirst({
+        where: {
+          id: data.customerId,
+          organizationId: data.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!customer) {
+        throw new Error("Cliente nao encontrado para a organizacao informada.");
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         organizationId: data.organizationId,
-        customerId: "",
-        status: orderStatusToPrisma[data.status],
+        customerId: data.customerId ?? null,
         orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
-        items: {
+        isCanceled: false,
+        isPaid: data.isPaid,
+        note: toOptionalString(data.note),
+        item: {
           create: data.items.map((item) => ({
             description: item.description,
             unit_price: item.unitPrice,
             quantity: item.quantity,
             total: Number((item.unitPrice * item.quantity).toFixed(2)),
             deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
-            note: item.note,
+            note: toOptionalString(item.note),
           })),
         },
-        transactions: data.transactions.length
+        transaction: data.transactions.length
           ? {
               create: data.transactions.map((transaction) => ({
                 organizationId: data.organizationId,
                 amount: transaction.amount,
                 method: transactionMethodToPrisma[transaction.method],
                 madeAt: toDateOrThrow(transaction.madeAt, "Data da transacao"),
+                accountId: transaction.accountId ?? null,
               })),
             }
           : undefined,

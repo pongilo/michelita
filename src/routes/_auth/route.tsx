@@ -7,11 +7,12 @@ export const Route = createFileRoute("/_auth")({
     const { session } = await getSession();
 
     if (!session) {
-      if (location.pathname === '/organization/new') {
+      if (location.pathname === "/organization/new") {
         throw redirect({ to: "/login" });
       }
+
       return {
-        userId: 'asdas'
+        userId: "",
       };
     }
 
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_auth")({
     }
 
     return {
-      userId: session.user.id
+      userId: session.user.id,
     };
   },
   component: AuthLayout,
@@ -37,5 +38,5 @@ function AuthLayout() {
     <div className="h-screen bg-base-200">
       <Outlet />
     </div>
-  )
+  );
 }

@@ -1,16 +1,19 @@
-import { deleteOrder } from "@/lib/api/order/delete-order";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateTransaction } from "@/lib/api/transaction/update-transaction";
 
-type UseDeleteOrderProps = {
+type UseUpdateTransactionProps = {
   organizationId: string;
 };
 
-export function useDeleteOrder({ organizationId }: UseDeleteOrderProps) {
+export function useUpdateTransaction({ organizationId }: UseUpdateTransactionProps) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteOrder,
+    mutationFn: updateTransaction,
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["transactions", organizationId],
+      });
       queryClient.invalidateQueries({
         queryKey: ["orders", organizationId],
       });

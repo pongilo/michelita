@@ -10,9 +10,15 @@ export function useUpdateOrder({ organizationId }: UseUpdateOrderProps) {
 
   return useMutation({
     mutationFn: updateOrder,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["orders", organizationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["order", organizationId, variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", organizationId, "daily"],
       });
     },
   });

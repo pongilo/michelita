@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
-import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
+import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
+import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 
 const TRANSACTION_METHOD_OPTIONS = [
   { value: "pix", label: "PIX" },
@@ -14,10 +15,11 @@ const TRANSACTION_METHOD_OPTIONS = [
   { value: "debit_card", label: "Cartao de debito" },
 ] as const;
 
-const createOrderFormSchema = z.object({
+const updateOrderFormSchema = z.object({
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
-  isPaid: z.boolean().default(false),
+  isCanceled: z.boolean(),
+  isPaid: z.boolean(),
   note: z.string().trim().optional(),
   items: z
     .array(
@@ -39,7 +41,7 @@ const createOrderFormSchema = z.object({
   ),
 });
 
-type CreateOrderFormValues = z.infer<typeof createOrderFormSchema>;
+type UpdateOrderFormValues = z.infer<typeof updateOrderFormSchema>;
 
 function localDatetimeNow() {
   const now = new Date();
@@ -47,7 +49,18 @@ function localDatetimeNow() {
   return local.toISOString().slice(0, 16);
 }
 
-function emptyItem(): CreateOrderFormValues["items"][number] {
+function toLocalDatetimeInput(value: string | Date) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return localDatetimeNow();
+  }
+
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function emptyItem(): UpdateOrderFormValues["items"][number] {
   return {
     description: "",
     unitPrice: 0,
@@ -57,7 +70,7 @@ function emptyItem(): CreateOrderFormValues["items"][number] {
   };
 }
 
-function emptyTransaction(): CreateOrderFormValues["transactions"][number] {
+function emptyTransaction(): UpdateOrderFormValues["transactions"][number] {
   return {
     amount: 0,
     method: "pix",
@@ -65,24 +78,36 @@ function emptyTransaction(): CreateOrderFormValues["transactions"][number] {
   };
 }
 
-export const Route = createFileRoute("/app/order/form")({
-  component: OrderFormRoute,
+export const Route = createFileRoute("/app/order/edit/$orderId")({
+  component: EditOrderRoute,
 });
 
-function OrderFormRoute() {
+function EditOrderRoute() {
+  const { organization } = Route.useRouteContext();
+  const { orderId } = Route.useParams();
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickCustomerPhone, setQuickCustomerPhone] = useState("");
   const [quickCustomerError, setQuickCustomerError] = useState("");
   const [quickCustomerSuccess, setQuickCustomerSuccess] = useState("");
-  const { organization } = Route.useRouteContext();
 
   const { data: customers = [], isLoading: isLoadingCustomers } = useGetCustomers({
     organizationId: organization.id,
   });
+  const {
+    data: order,
+    isLoading: isLoadingOrder,
+    isError: isOrderError,
+    error: orderError,
+  } = useGetOrder({
+    organizationId: organization.id,
+    orderId,
+  });
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
-  const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({
+    organizationId: organization.id,
+  });
 
   const {
     control,
@@ -92,11 +117,12 @@ function OrderFormRoute() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<CreateOrderFormValues>({
-    resolver: zodResolver(createOrderFormSchema),
+  } = useForm<UpdateOrderFormValues>({
+    resolver: zodResolver(updateOrderFormSchema),
     defaultValues: {
       customerId: "",
       orderedAt: localDatetimeNow(),
+      isCanceled: false,
       isPaid: false,
       note: "",
       items: [emptyItem()],
@@ -133,6 +159,34 @@ function OrderFormRoute() {
     return watchedTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   }, [watchedTransactions]);
 
+  useEffect(() => {
+    if (!order) {
+      return;
+    }
+
+    reset({
+      customerId: order.customerId ?? "",
+      orderedAt: toLocalDatetimeInput(order.orderedAt),
+      isCanceled: order.isCanceled,
+      isPaid: order.isPaid,
+      note: order.note ?? "",
+      items: order.item.length
+        ? order.item.map((item) => ({
+            description: item.description,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            deliveredAt: toLocalDatetimeInput(item.deliveredAt),
+            note: item.note ?? "",
+          }))
+        : [emptyItem()],
+      transactions: order.transaction.map((entry) => ({
+        amount: entry.amount,
+        method: entry.method,
+        madeAt: toLocalDatetimeInput(entry.madeAt),
+      })),
+    });
+  }, [order, reset]);
+
   async function handleQuickCreateCustomer() {
     setQuickCustomerError("");
     setQuickCustomerSuccess("");
@@ -160,15 +214,21 @@ function OrderFormRoute() {
     }
   }
 
-  async function onSubmit(values: CreateOrderFormValues) {
+  async function onSubmit(values: UpdateOrderFormValues) {
+    if (!order) {
+      return;
+    }
+
     setErrorMessage("");
     setSuccessMessage("");
 
     try {
-      const order = await createOrder({
+      await updateOrder({
+        id: order.id,
         organizationId: organization.id,
-        customerId: values.customerId ? values.customerId : undefined,
+        customerId: values.customerId ? values.customerId : null,
         orderedAt: values.orderedAt,
+        isCanceled: values.isCanceled,
         isPaid: values.isPaid,
         note: values.note,
         items: values.items.map((item) => ({
@@ -185,26 +245,46 @@ function OrderFormRoute() {
         })),
       });
 
-      setSuccessMessage(`Pedido criado com sucesso. ID: ${order.id}`);
-      reset({
-        customerId: "",
-        orderedAt: localDatetimeNow(),
-        isPaid: false,
-        note: "",
-        items: [emptyItem()],
-        transactions: [],
-      });
+      setSuccessMessage("Pedido atualizado com sucesso.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao registrar pedido.");
+      setErrorMessage(error instanceof Error ? error.message : "Erro ao atualizar pedido.");
     }
+  }
+
+  if (isLoadingOrder) {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-5 py-8">
+        <p>Carregando pedido...</p>
+      </main>
+    );
+  }
+
+  if (isOrderError) {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-5 py-8">
+        <div className="alert alert-error">
+          <span>{orderError.message}</span>
+        </div>
+      </main>
+    );
+  }
+
+  if (!order) {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-5 py-8">
+        <div className="alert alert-warning">
+          <span>Pedido nao encontrado.</span>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-8">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Novo pedido</h1>
+        <h1 className="text-2xl font-semibold">Editar pedido</h1>
         <Link to="/app/orders" className="btn btn-sm btn-outline">
-          Ver pedidos
+          Voltar para pedidos
         </Link>
       </div>
 
@@ -236,29 +316,9 @@ function OrderFormRoute() {
               </label>
             </section>
 
-            <section className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-box border border-base-300 p-4">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input type="checkbox" className="checkbox" {...register("isPaid")} />
-                  <span className="label-text">Pedido pago</span>
-                </label>
-                <p className="text-xs opacity-70">Marque quando o pedido ja estiver quitado.</p>
-              </div>
-
-              <label className="space-y-1">
-                <span className="label">Observacao do pedido</span>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  placeholder="Observacoes gerais do pedido (opcional)"
-                  {...register("note")}
-                />
-              </label>
-            </section>
-
             <section className="rounded-box border border-base-300 p-4">
               <h2 className="text-base font-medium">Cadastro rapido de cliente</h2>
-              <p className="mt-1 text-sm opacity-70">Crie e vincule o cliente sem sair da tela de pedido.</p>
+              <p className="mt-1 text-sm opacity-70">Crie e vincule o cliente sem sair da edicao.</p>
 
               <div className="mt-3 grid gap-3 md:grid-cols-[1fr_220px_auto]">
                 <input
@@ -287,6 +347,29 @@ function OrderFormRoute() {
 
               {quickCustomerError ? <p className="mt-2 text-sm text-error">{quickCustomerError}</p> : null}
               {quickCustomerSuccess ? <p className="mt-2 text-sm text-success">{quickCustomerSuccess}</p> : null}
+            </section>
+
+            <section className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-box border border-base-300 p-4">
+                <label className="label cursor-pointer justify-start gap-3">
+                  <input type="checkbox" className="checkbox" {...register("isCanceled")} />
+                  <span className="label-text">Pedido cancelado</span>
+                </label>
+                <label className="label cursor-pointer justify-start gap-3">
+                  <input type="checkbox" className="checkbox" {...register("isPaid")} />
+                  <span className="label-text">Pedido pago</span>
+                </label>
+              </div>
+
+              <label className="space-y-1">
+                <span className="label">Observacao do pedido</span>
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  rows={3}
+                  placeholder="Observacoes gerais do pedido (opcional)"
+                  {...register("note")}
+                />
+              </label>
             </section>
 
             <section className="space-y-3">
@@ -497,8 +580,8 @@ function OrderFormRoute() {
             ) : null}
 
             <div className="flex justify-end">
-              <button type="submit" disabled={isCreatingOrder} className="btn btn-primary">
-                {isCreatingOrder ? "Salvando..." : "Registrar pedido"}
+              <button type="submit" disabled={isUpdatingOrder} className="btn btn-primary">
+                {isUpdatingOrder ? "Salvando..." : "Salvar alteracoes"}
               </button>
             </div>
           </form>

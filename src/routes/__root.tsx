@@ -57,7 +57,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <html lang="pt-BR" className="scroll-smooth scroll-pt-20" data-theme="bumblebee">
+    <html lang="pt-BR" className="scroll-smooth scroll-pt-20" data-theme="light">
       <head>
         <HeadContent />
       </head>

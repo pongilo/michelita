@@ -1,8 +1,5 @@
 -- CreateEnum
-CREATE TYPE "order_status" AS ENUM ('pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled');
-
--- CreateEnum
-CREATE TYPE "transaction_method" AS ENUM ('pix', 'cash', 'credit_card', 'debit_card', 'transfer');
+CREATE TYPE "transaction_method" AS ENUM ('pix', 'cash', 'credit_card', 'debit_card');
 
 -- CreateTable
 CREATE TABLE "user" (
@@ -17,7 +14,6 @@ CREATE TABLE "organization" (
     "name" TEXT NOT NULL,
     "owner_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "organization_pkey" PRIMARY KEY ("id")
 );
@@ -38,8 +34,8 @@ CREATE TABLE "customer" (
 CREATE TABLE "order" (
     "id" UUID NOT NULL,
     "organization_id" UUID NOT NULL,
-    "customer_id" UUID NOT NULL,
-    "status" "order_status" NOT NULL,
+    "customer_id" UUID,
+    "is_canceled" BOOLEAN NOT NULL DEFAULT false,
     "ordered_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "order_pkey" PRIMARY KEY ("id")
@@ -63,10 +59,11 @@ CREATE TABLE "order_item" (
 CREATE TABLE "transaction" (
     "id" UUID NOT NULL,
     "organization_id" UUID NOT NULL,
-    "order_id" UUID NOT NULL,
+    "order_id" UUID,
     "amount" DECIMAL(10,2) NOT NULL,
     "method" "transaction_method" NOT NULL,
-    "madeAt" TIMESTAMPTZ NOT NULL,
+    "made_at" TIMESTAMPTZ NOT NULL,
+    "account_id" UUID,
 
     CONSTRAINT "transaction_pkey" PRIMARY KEY ("id")
 );

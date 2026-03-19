@@ -21,12 +21,11 @@ model Organization {
   name      String
   ownerId   String   @unique @map("owner_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
-  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  customers    Customer[]
-  orders       Order[]
-  transactions Transaction[]
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customer    Customer[]
+  order       Order[]
+  transaction Transaction[]
 
   @@map("organization")
   @@schema("public")
@@ -41,23 +40,25 @@ model Customer {
   note           String?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  orders       Order[]
+  order        Order[]
 
   @@map("customer")
   @@schema("public")
 }
 
 model Order {
-  id             String      @id @default(uuid()) @db.Uuid
-  organizationId String      @map("organization_id") @db.Uuid
-  customerId     String      @map("customer_id") @db.Uuid
-  status         OrderStatus
-  orderedAt      DateTime    @map("ordered_at") @db.Timestamptz
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  customerId     String?  @map("customer_id") @db.Uuid
+  isCanceled     Boolean  @default(false) @map("is_canceled")
+  isPaid         Boolean  @default(false) @map("is_paid")
+  orderedAt      DateTime @map("ordered_at") @db.Timestamptz
+  note           String?
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  items        OrderItem[]
-  transactions Transaction[]
+  customer     Customer?     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  item         OrderItem[]
+  transaction  Transaction[]
 
   @@map("order")
   @@schema("public")
@@ -82,27 +83,16 @@ model OrderItem {
 model Transaction {
   id             String            @id @default(uuid()) @db.Uuid
   organizationId String            @map("organization_id") @db.Uuid
-  orderId        String            @map("order_id") @db.Uuid
+  orderId        String?           @map("order_id") @db.Uuid
   amount         Decimal           @db.Decimal(10, 2)
   method         TransactionMethod
-  madeAt         DateTime          @map("madeAt") @db.Timestamptz
+  madeAt         DateTime          @map("made_at") @db.Timestamptz
+  accountId      String?           @map("account_id") @db.Uuid
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("transaction")
-  @@schema("public")
-}
-
-enum OrderStatus {
-  PENDING   @map("pending")
-  CONFIRMED @map("confirmed")
-  PREPARING @map("preparing")
-  READY     @map("ready")
-  DELIVERED @map("delivered")
-  CANCELLED @map("cancelled")
-
-  @@map("order_status")
   @@schema("public")
 }
 
@@ -111,7 +101,6 @@ enum TransactionMethod {
   CASH        @map("cash")
   CREDIT_CARD @map("credit_card")
   DEBIT_CARD  @map("debit_card")
-  TRANSFER    @map("transfer")
 
   @@map("transaction_method")
   @@schema("public")

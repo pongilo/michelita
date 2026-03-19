@@ -1,8 +1,7 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { signOut } from "@/lib/api/auth/sign-out";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 import { getSession } from "@/lib/api/auth/get-session";
+import { getOrganization } from "@/lib/api/organization/get-organization";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -20,14 +19,15 @@ export const Route = createFileRoute("/app")({
 
     return {
       user: session.user,
-      organization
-    }
+      organization,
+    };
   },
   component: PrivateLayout,
 });
 
 function PrivateLayout() {
   const navigate = useNavigate();
+  const { organization } = Route.useRouteContext();
 
   async function handleSignOut() {
     await signOut();
@@ -35,32 +35,72 @@ function PrivateLayout() {
   }
 
   return (
-    <div>
-      <Outlet />
-      <button type="button" onClick={handleSignOut}>Sair</button>
-    </div>
-  )
+    <div className="min-h-screen bg-base-200">
+      <header className="sticky top-0 z-20 border-b border-base-300 bg-base-100/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide opacity-70">Organizacao</p>
+            <p className="font-semibold">{organization.name}</p>
+          </div>
 
-  return (
-    <div className="drawer lg:drawer-open">
-      <input id="my-drawer-3" type="checkbox" className="drawer-toggle" />
-      <div className="drawer-content">
-        <label htmlFor="my-drawer-3" className="btn drawer-button lg:hidden">
-          Open drawer
-        </label>
-        <Outlet />
-      </div>
-      <div className="drawer-side">
-        <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
-        <ul className="menu bg-base-200 min-h-full w-80 p-4">
-          <li>
-            <Link to="/app/dashboard">Dashboard</Link>
-          </li>
-          <li>
-            <button type="button" onClick={handleSignOut}>Sair</button>
-          </li>
-        </ul>
-      </div>
+          <nav className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/app/dashboard"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/app/orders"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Pedidos
+            </Link>
+            <Link
+              to="/app/encomendas-do-dia"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Entregas
+            </Link>
+            <Link
+              to="/app/customers"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Clientes
+            </Link>
+            <Link
+              to="/app/transactions"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Transacoes
+            </Link>
+            <Link
+              to="/app/order/form"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "btn btn-sm btn-primary" }}
+              className="btn btn-sm btn-ghost"
+            >
+              Novo pedido
+            </Link>
+          </nav>
+
+          <button type="button" onClick={handleSignOut} className="btn btn-sm btn-outline">
+            Sair
+          </button>
+        </div>
+      </header>
+
+      <Outlet />
     </div>
-  )
+  );
 }

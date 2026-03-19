@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import type { Database } from "@/lib/database.types";
+import { currencyFormatter } from "@/lib/utils/formatter";
 import type {
   DeliveryType,
   OrderStatus,
@@ -129,11 +130,6 @@ function toIsoDatetime(localDatetime: string | undefined) {
 
   return date.toISOString();
 }
-
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 type OrderFormModalProps = {
   isOpen: boolean;
