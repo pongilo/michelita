@@ -17,7 +17,7 @@ const TRANSACTION_METHOD_OPTIONS = [
 const createOrderFormSchema = z.object({
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
-  isPaid: z.boolean().default(false),
+  isPaid: z.boolean(),
   note: z.string().trim().optional(),
   items: z
     .array(

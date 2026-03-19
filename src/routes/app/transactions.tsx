@@ -147,9 +147,9 @@ function TransactionsPage() {
     setEditFormSuccess("");
 
     resetEdit({
-      type: transaction.type,
+      type: transaction.type as TransactionFormValues["type"],
       amount: Math.abs(transaction.amount),
-      method: transaction.method,
+      method: transaction.method as TransactionFormValues["method"],
       madeAt: toLocalDatetimeInput(transaction.madeAt),
       orderId: transaction.orderId ?? "",
     });
