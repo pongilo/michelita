@@ -10,12 +10,6 @@ const orderItemSchema = z.object({
   note: z.string().trim().optional(),
 });
 
-const transactionSchema = z.object({
-  amount: z.number().min(0.01, "Valor da transacao deve ser maior que zero."),
-  method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
-  madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
-});
-
 export const createOrderSchema = z.object({
   organizationId: z.uuid(),
   customerId: z.uuid().nullable().optional(),
@@ -23,17 +17,9 @@ export const createOrderSchema = z.object({
   isPaid: z.boolean().default(false),
   note: z.string().trim().optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item."),
-  transactions: z.array(transactionSchema).default([]),
 });
 
 export type CreateOrderProps = z.infer<typeof createOrderSchema>;
-
-const transactionMethodToPrisma = {
-  pix: "PIX",
-  cash: "CASH",
-  credit_card: "CREDIT_CARD",
-  debit_card: "DEBIT_CARD",
-} as const;
 
 function toDateOrThrow(value: string, fieldLabel: string) {
   const date = new Date(value);
@@ -91,16 +77,6 @@ const createOrderServerFn = createServerFn({ method: "POST" })
             note: toOptionalString(item.note),
           })),
         },
-        transaction: data.transactions.length
-          ? {
-              create: data.transactions.map((transaction) => ({
-                organizationId: data.organizationId,
-                amount: transaction.amount,
-                method: transactionMethodToPrisma[transaction.method],
-                madeAt: toDateOrThrow(transaction.madeAt, "Data da transacao"),
-              })),
-            }
-          : undefined,
       },
       select: {
         id: true,

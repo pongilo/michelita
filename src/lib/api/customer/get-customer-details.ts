@@ -30,43 +30,52 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
       throw new Error("Cliente nao encontrado para a organizacao informada.");
     }
 
-    const orders = await prisma.order.findMany({
-      where: {
-        organizationId: data.organizationId,
-        customerId: data.customerId,
-      },
-      orderBy: {
-        orderedAt: "desc",
-      },
-      select: {
-        id: true,
-        isCanceled: true,
-        isPaid: true,
-        orderedAt: true,
-        note: true,
-        item: {
-          select: {
-            id: true,
-            description: true,
-            quantity: true,
-            total: true,
-            deliveredAt: true,
+    const [orders, transactions] = await Promise.all([
+      prisma.order.findMany({
+        where: {
+          organizationId: data.organizationId,
+          customerId: data.customerId,
+        },
+        orderBy: {
+          orderedAt: "desc",
+        },
+        select: {
+          id: true,
+          isCanceled: true,
+          isPaid: true,
+          orderedAt: true,
+          note: true,
+          item: {
+            select: {
+              id: true,
+              description: true,
+              quantity: true,
+              total: true,
+              deliveredAt: true,
+            },
           },
         },
-        transaction: {
-          select: {
-            id: true,
-            amount: true,
-            method: true,
-            madeAt: true,
-          },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          organizationId: data.organizationId,
+          customerId: data.customerId,
         },
-      },
-    });
+        orderBy: {
+          madeAt: "desc",
+        },
+        select: {
+          id: true,
+          amount: true,
+          method: true,
+          madeAt: true,
+          description: true,
+        },
+      }),
+    ]);
 
     const orderSummaries = orders.map((order) => {
       const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
-      const transactionTotal = order.transaction.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
       return {
         id: order.id,
@@ -76,8 +85,6 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
         note: order.note,
         itemCount: order.item.length,
         itemTotal: Number(itemTotal.toFixed(2)),
-        transactionTotal: Number(transactionTotal.toFixed(2)),
-        balance: Number((itemTotal - transactionTotal).toFixed(2)),
       };
     });
 
@@ -87,23 +94,16 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
     const totalInvoiced = orderSummaries
       .filter((order) => !order.isCanceled)
       .reduce((sum, order) => sum + order.itemTotal, 0);
-    const totalReceived = orderSummaries
-      .filter((order) => !order.isCanceled)
-      .reduce((sum, order) => sum + order.transactionTotal, 0);
+    const totalReceived = transactions.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
-    const recentTransactions = orders
-      .flatMap((order) =>
-        order.transaction.map((transaction) => ({
-          id: transaction.id,
-          orderId: order.id,
-          amount: Number(transaction.amount),
-          method: transaction.method,
-          madeAt: transaction.madeAt,
-          type: Number(transaction.amount) >= 0 ? "entry" : "exit",
-        }))
-      )
-      .sort((a, b) => new Date(b.madeAt).getTime() - new Date(a.madeAt).getTime())
-      .slice(0, 20);
+    const recentTransactions = transactions.slice(0, 20).map((transaction) => ({
+      id: transaction.id,
+      amount: Number(transaction.amount),
+      method: transaction.method,
+      madeAt: transaction.madeAt,
+      description: transaction.description,
+      type: Number(transaction.amount) >= 0 ? "entry" : "exit",
+    }));
 
     return {
       customer,

@@ -15,7 +15,7 @@ export function useUpdateTransaction({ organizationId }: UseUpdateTransactionPro
         queryKey: ["transactions", organizationId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["orders", organizationId],
+        queryKey: ["customer", organizationId],
       });
       queryClient.invalidateQueries({
         queryKey: ["dashboard", organizationId, "daily"],

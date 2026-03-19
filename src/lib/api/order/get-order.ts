@@ -9,13 +9,6 @@ const getOrderSchema = z.object({
 
 export type GetOrderProps = z.infer<typeof getOrderSchema>;
 
-const transactionMethodFromPrisma = {
-  PIX: "pix",
-  CASH: "cash",
-  CREDIT_CARD: "credit_card",
-  DEBIT_CARD: "debit_card",
-} as const;
-
 const getOrderServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => getOrderSchema.parse(input))
   .handler(async ({ data }) => {
@@ -53,17 +46,6 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             note: true,
           },
         },
-        transaction: {
-          orderBy: {
-            madeAt: "asc",
-          },
-          select: {
-            id: true,
-            amount: true,
-            method: true,
-            madeAt: true,
-          },
-        },
       },
     });
 
@@ -72,7 +54,6 @@ const getOrderServerFn = createServerFn({ method: "POST" })
     }
 
     const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
-    const transactionTotal = order.transaction.reduce((sum, entry) => sum + Number(entry.amount), 0);
 
     return {
       id: order.id,
@@ -92,15 +73,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         deliveredAt: item.deliveredAt,
         note: item.note,
       })),
-      transaction: order.transaction.map((entry) => ({
-        id: entry.id,
-        amount: Number(entry.amount),
-        method: transactionMethodFromPrisma[entry.method],
-        madeAt: entry.madeAt,
-      })),
       itemTotal,
-      transactionTotal,
-      balance: Number((itemTotal - transactionTotal).toFixed(2)),
     };
   });
 

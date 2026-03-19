@@ -27,19 +27,15 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
       },
       select: {
         id: true,
-        orderId: true,
+        customerId: true,
         amount: true,
         method: true,
         madeAt: true,
-        order: {
+        description: true,
+        customer: {
           select: {
             id: true,
-            customer: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+            name: true,
           },
         },
       },
@@ -47,12 +43,13 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
 
     return transactions.map((transaction) => ({
       id: transaction.id,
-      orderId: transaction.orderId,
+      customerId: transaction.customerId,
       amount: Number(transaction.amount),
       type: Number(transaction.amount) >= 0 ? "entry" : "exit",
       method: transactionMethodFromPrisma[transaction.method],
       madeAt: transaction.madeAt,
-      order: transaction.order,
+      description: transaction.description,
+      customer: transaction.customer,
     }));
   });
 

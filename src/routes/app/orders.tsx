@@ -102,8 +102,6 @@ function OrdersPage() {
                     <th>Data</th>
                     <th>Itens</th>
                     <th>Total itens</th>
-                    <th>Total transacoes</th>
-                    <th>Saldo</th>
                     <th>Status</th>
                     <th>Pagamento</th>
                     <th>Observacao</th>
@@ -118,8 +116,6 @@ function OrdersPage() {
                       <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
                       <td>{order.item.length}</td>
                       <td>{currencyFormatter.format(order.itemTotal)}</td>
-                      <td>{currencyFormatter.format(order.transactionTotal)}</td>
-                      <td>{currencyFormatter.format(order.balance)}</td>
                       <td>
                         <span className={`badge ${order.isCanceled ? "badge-error" : "badge-success"}`}>
                           {order.isCanceled ? "Cancelado" : "Ativo"}

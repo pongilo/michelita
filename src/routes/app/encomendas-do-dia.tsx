@@ -90,7 +90,6 @@ function DailyOrdersPage() {
                         </div>
                         <div className="text-right text-sm">
                           <p>Total do dia: {currencyFormatter.format(order.itemsTotal)}</p>
-                          <p>Saldo: {currencyFormatter.format(order.balance)}</p>
                           <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
                             {order.isPaid ? "Pago" : "Pendente"}
                           </span>

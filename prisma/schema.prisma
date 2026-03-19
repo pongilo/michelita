@@ -39,8 +39,9 @@ model Customer {
   address        String?
   note           String?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   order        Order[]
+  transactions Transaction[]
 
   @@map("customer")
   @@schema("public")
@@ -55,10 +56,9 @@ model Order {
   orderedAt      DateTime @map("ordered_at") @db.Timestamptz
   note           String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer     Customer?     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   item         OrderItem[]
-  transaction  Transaction[]
 
   @@map("order")
   @@schema("public")
@@ -83,13 +83,14 @@ model OrderItem {
 model Transaction {
   id             String            @id @default(uuid()) @db.Uuid
   organizationId String            @map("organization_id") @db.Uuid
-  orderId        String?           @map("order_id") @db.Uuid
+  customerId     String?           @map("customer_id") @db.Uuid
+  description    String?
   amount         Decimal           @db.Decimal(10, 2)
   method         TransactionMethod
   madeAt         DateTime          @map("made_at") @db.Timestamptz
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  order        Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("transaction")
   @@schema("public")

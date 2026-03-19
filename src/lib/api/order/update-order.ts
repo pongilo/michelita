@@ -10,12 +10,6 @@ const orderItemSchema = z.object({
   note: z.string().trim().optional(),
 });
 
-const transactionSchema = z.object({
-  amount: z.number().min(0.01, "Valor da transacao deve ser maior que zero."),
-  method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
-  madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
-});
-
 const updateOrderSchema = z.object({
   id: z.uuid(),
   organizationId: z.uuid(),
@@ -25,7 +19,6 @@ const updateOrderSchema = z.object({
   isPaid: z.boolean().optional(),
   note: z.string().trim().optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item.").optional(),
-  transactions: z.array(transactionSchema).optional(),
 }).superRefine((value, ctx) => {
   const hasDataToUpdate =
     value.customerId !== undefined ||
@@ -33,8 +26,7 @@ const updateOrderSchema = z.object({
     value.isCanceled !== undefined ||
     value.isPaid !== undefined ||
     value.note !== undefined ||
-    value.items !== undefined ||
-    value.transactions !== undefined;
+    value.items !== undefined;
 
   if (!hasDataToUpdate) {
     ctx.addIssue({
@@ -45,13 +37,6 @@ const updateOrderSchema = z.object({
 });
 
 export type UpdateOrderProps = z.infer<typeof updateOrderSchema>;
-
-const transactionMethodToPrisma = {
-  pix: "PIX",
-  cash: "CASH",
-  credit_card: "CREDIT_CARD",
-  debit_card: "DEBIT_CARD",
-} as const;
 
 function toDateOrThrow(value: string, fieldLabel: string) {
   const date = new Date(value);
@@ -161,26 +146,6 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
             note: toOptionalString(item.note),
           })),
         });
-      }
-
-      if (data.transactions !== undefined) {
-        await transaction.transaction.deleteMany({
-          where: {
-            orderId: data.id,
-          },
-        });
-
-        if (data.transactions.length > 0) {
-          await transaction.transaction.createMany({
-            data: data.transactions.map((entry) => ({
-              organizationId: data.organizationId,
-              orderId: data.id,
-              amount: entry.amount,
-              method: transactionMethodToPrisma[entry.method],
-              madeAt: toDateOrThrow(entry.madeAt, "Data da transacao"),
-            })),
-          });
-        }
       }
     });
 

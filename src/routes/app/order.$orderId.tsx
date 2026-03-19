@@ -2,13 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
 
-const transactionMethodLabel: Record<string, string> = {
-  pix: "PIX",
-  cash: "Dinheiro",
-  credit_card: "Cartao de credito",
-  debit_card: "Cartao de debito",
-};
-
 export const Route = createFileRoute("/app/order/$orderId")({
   component: OrderDetailsPage,
 });
@@ -87,12 +80,8 @@ function OrderDetailsPage() {
                   <strong>{currencyFormatter.format(order.itemTotal)}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span>Total em transacoes</span>
-                  <strong>{currencyFormatter.format(order.transactionTotal)}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saldo</span>
-                  <strong>{currencyFormatter.format(order.balance)}</strong>
+                  <span>Total do pedido</span>
+                  <strong>{currencyFormatter.format(order.itemTotal)}</strong>
                 </div>
               </div>
             </div>
@@ -135,38 +124,6 @@ function OrderDetailsPage() {
             </div>
           </section>
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title text-base">Transacoes do pedido</h2>
-
-              {order.transaction.length === 0 ? (
-                <p className="text-sm opacity-70">Nenhuma transacao vinculada.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Transacao</th>
-                        <th>Data</th>
-                        <th>Metodo</th>
-                        <th>Valor</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.transaction.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td className="font-mono text-xs">{transaction.id.slice(0, 8)}</td>
-                          <td>{datetimeFormatter.format(new Date(transaction.madeAt))}</td>
-                          <td>{transactionMethodLabel[transaction.method] ?? transaction.method}</td>
-                          <td>{currencyFormatter.format(transaction.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </section>
         </div>
       ) : null}
     </main>

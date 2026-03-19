@@ -8,13 +8,6 @@ import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 
-const TRANSACTION_METHOD_OPTIONS = [
-  { value: "pix", label: "PIX" },
-  { value: "cash", label: "Dinheiro" },
-  { value: "credit_card", label: "Cartao de credito" },
-  { value: "debit_card", label: "Cartao de debito" },
-] as const;
-
 const updateOrderFormSchema = z.object({
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
@@ -32,13 +25,6 @@ const updateOrderFormSchema = z.object({
       })
     )
     .min(1, "Adicione pelo menos um item."),
-  transactions: z.array(
-    z.object({
-      amount: z.number().min(0.01, "Valor da transacao deve ser maior que zero."),
-      method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
-      madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
-    })
-  ),
 });
 
 type UpdateOrderFormValues = z.infer<typeof updateOrderFormSchema>;
@@ -67,14 +53,6 @@ function emptyItem(): UpdateOrderFormValues["items"][number] {
     quantity: 1,
     deliveredAt: localDatetimeNow(),
     note: "",
-  };
-}
-
-function emptyTransaction(): UpdateOrderFormValues["transactions"][number] {
-  return {
-    amount: 0,
-    method: "pix",
-    madeAt: localDatetimeNow(),
   };
 }
 
@@ -126,7 +104,6 @@ function EditOrderRoute() {
       isPaid: false,
       note: "",
       items: [emptyItem()],
-      transactions: [],
     },
   });
 
@@ -139,25 +116,11 @@ function EditOrderRoute() {
     name: "items",
   });
 
-  const {
-    fields: transactionFields,
-    append: appendTransaction,
-    remove: removeTransaction,
-  } = useFieldArray({
-    control,
-    name: "transactions",
-  });
-
   const watchedItems = watch("items");
-  const watchedTransactions = watch("transactions");
 
   const subtotal = useMemo(() => {
     return watchedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }, [watchedItems]);
-
-  const transactionTotal = useMemo(() => {
-    return watchedTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-  }, [watchedTransactions]);
 
   useEffect(() => {
     if (!order) {
@@ -179,11 +142,6 @@ function EditOrderRoute() {
             note: item.note ?? "",
           }))
         : [emptyItem()],
-      transactions: order.transaction.map((entry) => ({
-        amount: entry.amount,
-        method: entry.method,
-        madeAt: toLocalDatetimeInput(entry.madeAt),
-      })),
     });
   }, [order, reset]);
 
@@ -237,11 +195,6 @@ function EditOrderRoute() {
           quantity: item.quantity,
           deliveredAt: item.deliveredAt,
           note: item.note?.trim() ? item.note.trim() : undefined,
-        })),
-        transactions: values.transactions.map((transaction) => ({
-          amount: transaction.amount,
-          method: transaction.method,
-          madeAt: transaction.madeAt,
         })),
       });
 
@@ -475,95 +428,10 @@ function EditOrderRoute() {
               })}
             </section>
 
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Transacoes (opcional)</h2>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={() => appendTransaction(emptyTransaction())}
-                >
-                  Adicionar transacao
-                </button>
-              </div>
-
-              {transactionFields.length === 0 ? (
-                <p className="text-sm opacity-70">Nenhuma transacao adicionada.</p>
-              ) : null}
-
-              {transactionFields.map((field, index) => (
-                <div key={field.id} className="card border border-base-300 bg-base-100">
-                  <div className="card-body gap-3 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Transacao {index + 1}</span>
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-ghost text-error"
-                        onClick={() => removeTransaction(index)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <label className="space-y-1">
-                        <span className="label">Valor</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="input input-bordered w-full"
-                          {...register(`transactions.${index}.amount`, { valueAsNumber: true })}
-                        />
-                        {errors.transactions?.[index]?.amount ? (
-                          <span className="text-error-content text-sm">
-                            {errors.transactions[index]?.amount?.message}
-                          </span>
-                        ) : null}
-                      </label>
-
-                      <label className="space-y-1">
-                        <span className="label">Metodo</span>
-                        <select className="select select-bordered w-full" {...register(`transactions.${index}.method`)}>
-                          {TRANSACTION_METHOD_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="space-y-1">
-                        <span className="label">Data/hora</span>
-                        <input
-                          type="datetime-local"
-                          className="input input-bordered w-full"
-                          {...register(`transactions.${index}.madeAt`)}
-                        />
-                        {errors.transactions?.[index]?.madeAt ? (
-                          <span className="text-error-content text-sm">
-                            {errors.transactions[index]?.madeAt?.message}
-                          </span>
-                        ) : null}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </section>
-
             <section className="rounded-box bg-base-200 p-4 text-sm">
               <div className="flex justify-between">
                 <span>Total dos itens</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total em transacoes</span>
-                <span>R$ {transactionTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-medium">
-                <span>Saldo do pedido</span>
-                <span>R$ {(subtotal - transactionTotal).toFixed(2)}</span>
               </div>
             </section>
 

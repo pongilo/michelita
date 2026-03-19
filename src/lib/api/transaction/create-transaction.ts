@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 
 const createTransactionSchema = z.object({
   organizationId: z.uuid(),
-  orderId: z.uuid().optional(),
+  customerId: z.uuid().optional(),
   amount: z.number().min(0.01, "O valor deve ser maior que zero."),
   type: z.enum(["entry", "exit"]),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data da transacao e obrigatoria."),
+  description: z.string().trim().max(500, "A descricao deve ter no maximo 500 caracteres.").optional(),
 });
 
 export type CreateTransactionProps = z.infer<typeof createTransactionSchema>;
@@ -33,10 +34,10 @@ function toDateOrThrow(value: string, fieldLabel: string) {
 const createTransactionServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createTransactionSchema.parse(input))
   .handler(async ({ data }) => {
-    if (data.orderId) {
-      const order = await prisma.order.findFirst({
+    if (data.customerId) {
+      const customer = await prisma.customer.findFirst({
         where: {
-          id: data.orderId,
+          id: data.customerId,
           organizationId: data.organizationId,
         },
         select: {
@@ -44,8 +45,8 @@ const createTransactionServerFn = createServerFn({ method: "POST" })
         },
       });
 
-      if (!order) {
-        throw new Error("Pedido nao encontrado para a organizacao informada.");
+      if (!customer) {
+        throw new Error("Cliente nao encontrado para a organizacao informada.");
       }
     }
 
@@ -54,10 +55,11 @@ const createTransactionServerFn = createServerFn({ method: "POST" })
     const transaction = await prisma.transaction.create({
       data: {
         organizationId: data.organizationId,
-        orderId: data.orderId ?? null,
+        customerId: data.customerId ?? null,
         amount: normalizedAmount,
         method: transactionMethodToPrisma[data.method],
         madeAt: toDateOrThrow(data.madeAt, "Data da transacao"),
+        description: data.description || null,
       },
       select: {
         id: true,

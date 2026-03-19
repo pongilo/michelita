@@ -222,8 +222,6 @@ function CustomerDetailsPage() {
                         <th>Observacao</th>
                         <th>Itens</th>
                         <th>Total itens</th>
-                        <th>Total transacoes</th>
-                        <th>Saldo</th>
                         <th className="text-right">Acoes</th>
                       </tr>
                     </thead>
@@ -247,8 +245,6 @@ function CustomerDetailsPage() {
                           </td>
                           <td>{order.itemCount}</td>
                           <td>{currencyFormatter.format(order.itemTotal)}</td>
-                          <td>{currencyFormatter.format(order.transactionTotal)}</td>
-                          <td>{currencyFormatter.format(order.balance)}</td>
                           <td>
                             <div className="flex justify-end">
                               <Link
@@ -284,8 +280,8 @@ function CustomerDetailsPage() {
                         <th>Data</th>
                         <th>Tipo</th>
                         <th>Metodo</th>
+                        <th>Descricao</th>
                         <th>Valor</th>
-                        <th>Pedido</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -299,8 +295,8 @@ function CustomerDetailsPage() {
                             </span>
                           </td>
                           <td>{transactionMethodLabel[transaction.method] ?? transaction.method}</td>
+                          <td>{transaction.description ?? "-"}</td>
                           <td>{currencyFormatter.format(transaction.amount)}</td>
-                          <td className="font-mono text-xs">{transaction.orderId.slice(0, 8)}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -68,26 +68,11 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
             note: true,
           },
         },
-        transaction: {
-          orderBy: {
-            madeAt: "asc",
-          },
-          select: {
-            id: true,
-            amount: true,
-            method: true,
-            madeAt: true,
-          },
-        },
       },
     });
 
     return orders.map((order) => {
       const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
-      const transactionTotal = order.transaction.reduce(
-        (sum, transaction) => sum + Number(transaction.amount),
-        0
-      );
 
       return {
         id: order.id,
@@ -107,15 +92,7 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
           deliveredAt: item.deliveredAt,
           note: item.note,
         })),
-        transaction: order.transaction.map((transaction) => ({
-          id: transaction.id,
-          amount: Number(transaction.amount),
-          method: transaction.method,
-          madeAt: transaction.madeAt,
-        })),
         itemTotal,
-        transactionTotal,
-        balance: Number((itemTotal - transactionTotal).toFixed(2)),
       };
     });
   });
