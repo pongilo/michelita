@@ -41,7 +41,6 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
         },
         select: {
           id: true,
-          isCanceled: true,
           isPaid: true,
           orderedAt: true,
           note: true,
@@ -79,7 +78,6 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
 
       return {
         id: order.id,
-        isCanceled: order.isCanceled,
         isPaid: order.isPaid,
         orderedAt: order.orderedAt,
         note: order.note,
@@ -89,11 +87,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
     });
 
     const totalOrders = orderSummaries.length;
-    const canceledOrders = orderSummaries.filter((order) => order.isCanceled).length;
-    const activeOrders = totalOrders - canceledOrders;
-    const totalInvoiced = orderSummaries
-      .filter((order) => !order.isCanceled)
-      .reduce((sum, order) => sum + order.itemTotal, 0);
+    const totalInvoiced = orderSummaries.reduce((sum, order) => sum + order.itemTotal, 0);
     const totalReceived = transactions.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
     const recentTransactions = transactions.slice(0, 20).map((transaction) => ({
@@ -109,8 +103,6 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
       customer,
       metrics: {
         totalOrders,
-        activeOrders,
-        canceledOrders,
         totalInvoiced: Number(totalInvoiced.toFixed(2)),
         totalReceived: Number(totalReceived.toFixed(2)),
         balance: Number((totalReceived - totalInvoiced).toFixed(2)),

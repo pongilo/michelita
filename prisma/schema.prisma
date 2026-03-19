@@ -51,7 +51,6 @@ model Order {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
   customerId     String?  @map("customer_id") @db.Uuid
-  isCanceled     Boolean  @default(false) @map("is_canceled")
   isPaid         Boolean  @default(false) @map("is_paid")
   orderedAt      DateTime @map("ordered_at") @db.Timestamptz
   note           String?

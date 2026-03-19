@@ -32,7 +32,7 @@ function toLocalDatetimeInput(value: string | Date) {
   return local.toISOString().slice(0, 16);
 }
 
-export const Route = createFileRoute("/app/_analytics/transactions")({
+export const Route = createFileRoute("/app/transactions")({
   component: TransactionsPage,
 });
 
@@ -64,21 +64,6 @@ function TransactionsPage() {
   );
   const isEditing = !!editingTransaction;
   const isSubmittingForm = isCreatingTransaction || isUpdatingTransaction;
-
-  const totals = useMemo(() => {
-    const entry = transactions
-      .filter((transaction) => transaction.amount >= 0)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-    const exit = transactions
-      .filter((transaction) => transaction.amount < 0)
-      .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
-
-    return {
-      entry: Number(entry.toFixed(2)),
-      exit: Number(exit.toFixed(2)),
-      balance: Number((entry - exit).toFixed(2)),
-    };
-  }, [transactions]);
 
   async function onSubmit(values: TransactionFormValues) {
     setFormError("");
@@ -170,17 +155,11 @@ function TransactionsPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Transacoes</h1>
+        <h1 className="text-2xl font-semibold">Transações</h1>
         <button type="button" className="btn btn-primary" onClick={handleOpenCreateModal}>
-          Nova transacao
+          Nova transação
         </button>
       </div>
-
-      <section className="grid gap-3 md:grid-cols-3">
-        <MetricCard title="Entradas" value={currencyFormatter.format(totals.entry)} />
-        <MetricCard title="Saidas" value={currencyFormatter.format(totals.exit)} />
-        <MetricCard title="Saldo" value={currencyFormatter.format(totals.balance)} />
-      </section>
 
       {formSuccess ? (
         <div className="alert alert-success mt-4">
@@ -189,9 +168,6 @@ function TransactionsPage() {
       ) : null}
 
       <section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
-        <div className="card-body">
-          <h2 className="card-title text-base">Historico de transacoes</h2>
-
           {actionError ? (
             <div className="alert alert-error">
               <span>{actionError}</span>
@@ -210,11 +186,10 @@ function TransactionsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Transacao</th>
                     <th>Data</th>
                     <th>Tipo</th>
-                    <th>Metodo</th>
-                    <th>Descricao</th>
+                    <th>Método</th>
+                    <th>Descrição</th>
                     <th>Valor</th>
                     <th>Cliente</th>
                     <th className="text-right">Acoes</th>
@@ -223,7 +198,6 @@ function TransactionsPage() {
                 <tbody>
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td className="font-mono text-xs">{transaction.id.slice(0, 8)}</td>
                       <td>{datetimeFormatter.format(new Date(transaction.madeAt))}</td>
                       <td>
                         <span className={`badge ${transaction.type === "entry" ? "badge-success" : "badge-warning"}`}>
@@ -260,7 +234,7 @@ function TransactionsPage() {
               </table>
             </div>
           ) : null}
-        </div>
+
       </section>
 
       <TransactionFormModal
@@ -289,21 +263,5 @@ function TransactionsPage() {
         onSubmit={onSubmit}
       />
     </main>
-  );
-}
-
-type MetricCardProps = {
-  title: string;
-  value: string;
-};
-
-function MetricCard({ title, value }: MetricCardProps) {
-  return (
-    <div className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body gap-1 p-4">
-        <p className="text-sm opacity-70">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </div>
-    </div>
   );
 }

@@ -101,12 +101,24 @@ function CustomerDetailsPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Perfil do cliente</h1>
-        <Link to="/app/customers" className="btn btn-sm btn-outline">
-          Voltar para clientes
-        </Link>
-      </div>
+      {data && (
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">{data.customer.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
+              Editar cliente
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline btn-error"
+              disabled={isDeletingCustomer}
+              onClick={handleDeleteCustomer}
+            >
+              Excluir cliente
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoading ? <p>Carregando cliente...</p> : null}
       {isError ? <p className="text-error">{error.message}</p> : null}
@@ -120,23 +132,6 @@ function CustomerDetailsPage() {
         <div className="space-y-4">
           <section className="card border border-base-300 bg-base-100 shadow-sm">
             <div className="card-body">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="card-title">{data.customer.name}</h2>
-                <div className="flex gap-2">
-                  <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
-                    Editar cliente
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline btn-error"
-                    disabled={isDeletingCustomer}
-                    onClick={handleDeleteCustomer}
-                  >
-                    Excluir cliente
-                  </button>
-                </div>
-              </div>
-
               {formSuccess ? (
                 <div className="alert alert-success">
                   <span>{formSuccess}</span>
@@ -149,19 +144,20 @@ function CustomerDetailsPage() {
             </div>
           </section>
 
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <section className="grid gap-3 md:grid-cols-2">
             <MetricCard title="Total de pedidos" value={String(data.metrics.totalOrders)} />
-            <MetricCard title="Pedidos cancelados" value={String(data.metrics.canceledOrders)} />
-            <MetricCard title="Último pedido" value={data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "-"} />
-            <MetricCard title="Vendas confirmadas" value={currencyFormatter.format(data.metrics.totalInvoiced)} />
-            <MetricCard title="Recebido" value={currencyFormatter.format(data.metrics.totalReceived)} />
-            <MetricCard title="Saldo" value={currencyFormatter.format(data.metrics.balance)} />
+            <MetricCard title="Ultimo pedido" value={data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "-"} />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 md:col-span-2">
+              <MetricCard title="Vendas" value={currencyFormatter.format(data.metrics.totalInvoiced)} />
+              <MetricCard title="Recebido" value={currencyFormatter.format(data.metrics.totalReceived)} />
+              <MetricCard title="Saldo" value={currencyFormatter.format(data.metrics.balance)} />
+            </div>
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
+            <div className="p-4 border-b border-base-300">
               <h2 className="card-title text-base">Pedidos</h2>
-
+            </div>
               {data.recentOrders.length === 0 ? (
                 <p className="text-sm opacity-70">Este cliente ainda nao possui pedidos.</p>
               ) : (
@@ -171,7 +167,6 @@ function CustomerDetailsPage() {
                       <tr>
                         <th>Pedido</th>
                         <th>Data</th>
-                        <th>Status</th>
                         <th>Pagamento</th>
                         <th>Observacao</th>
                         <th>Itens</th>
@@ -184,11 +179,6 @@ function CustomerDetailsPage() {
                         <tr key={order.id}>
                           <td className="font-mono text-xs">{order.id.slice(0, 8)}</td>
                           <td>{datetimeFormatter.format(new Date(order.orderedAt))}</td>
-                          <td>
-                            <span className={`badge ${order.isCanceled ? "badge-error" : "badge-success"}`}>
-                              {order.isCanceled ? "Cancelado" : "Ativo"}
-                            </span>
-                          </td>
                           <td>
                             <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
                               {order.isPaid ? "Pago" : "Pendente"}
@@ -216,12 +206,12 @@ function CustomerDetailsPage() {
                   </table>
                 </div>
               )}
-            </div>
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
+            <div className="p-4 border-b border-base-300">
               <h2 className="card-title text-base">Transações</h2>
+            </div>
 
               {data.recentTransactions.length === 0 ? (
                 <p className="text-sm opacity-70">Sem transações para este cliente.</p>
@@ -257,7 +247,6 @@ function CustomerDetailsPage() {
                   </table>
                 </div>
               )}
-            </div>
           </section>
         </div>
       ) : null}

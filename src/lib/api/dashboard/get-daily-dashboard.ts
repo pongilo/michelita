@@ -85,13 +85,13 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         },
         select: {
           id: true,
-          isCanceled: true,
           isPaid: true,
           orderedAt: true,
           note: true,
           customerId: true,
           customer: {
             select: {
+              id: true,
               name: true,
             },
           },
@@ -137,7 +137,6 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
           order: {
             select: {
               id: true,
-              isCanceled: true,
               customer: {
                 select: {
                   name: true,
@@ -150,32 +149,34 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     ]);
 
     const totalOrders = ordersToday.length;
-    const canceledOrders = ordersToday.filter((order) => order.isCanceled).length;
-    const activeOrders = totalOrders - canceledOrders;
-
     const grossRevenue = ordersToday.reduce((sum, order) => {
-      if (order.isCanceled) {
-        return sum;
-      }
-
       const orderTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
       return sum + orderTotal;
     }, 0);
 
-    const receivedToday = transactionsToday.reduce((sum, transaction) => {
-      return sum + Number(transaction.amount);
-    }, 0);
+    const { entry, exit } = transactionsToday.reduce((acc, transaction) => {
+      const amount = Number(transaction.amount);
+      if (amount > 0) {
+        acc.entry = acc.entry + amount
+      } 
+      if (amount < 0) {
+        acc.exit = acc.exit - amount
+      }
+      return acc
+    }, {
+      entry: 0,
+      exit: 0
+    });
 
-    const averageTicket = activeOrders > 0 ? grossRevenue / activeOrders : 0;
-    const uniqueCustomers = new Set(
-      ordersToday
-        .filter((order) => !order.isCanceled && order.customerId)
-        .map((order) => order.customerId)
-    ).size;
+    const averageTicket = totalOrders > 0 ? grossRevenue / totalOrders : 0;
 
     const byMethod = transactionsToday.reduce(
       (acc, transaction) => {
         const value = Number(transaction.amount);
+
+        if (value < 0) {
+          return acc;
+        }
 
         if (transaction.method === "PIX") {
           acc.pix += value;
@@ -204,12 +205,10 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
       rangeEnd: rangeEnd.toISOString(),
       metrics: {
         totalOrders,
-        activeOrders,
-        canceledOrders,
-        uniqueCustomers,
         grossRevenue: Number(grossRevenue.toFixed(2)),
-        receivedToday: Number(receivedToday.toFixed(2)),
-        openAmount: Number(Math.max(grossRevenue - receivedToday, 0).toFixed(2)),
+        entry: Number(entry.toFixed(2)),
+        exit: Number(exit.toFixed(2)),
+        balance: Number((entry - exit).toFixed(2)),
         averageTicket: Number(averageTicket.toFixed(2)),
       },
       byMethod: {
@@ -219,7 +218,6 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         debitCard: Number(byMethod.debitCard.toFixed(2)),
       },
       upcomingDeliveries: deliveriesToday
-        .filter((item) => !item.order.isCanceled)
         .map((item) => ({
           id: item.id,
           description: item.description,
@@ -231,10 +229,10 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
       recentOrders: ordersToday.slice(0, 6).map((order) => ({
         id: order.id,
         orderedAt: order.orderedAt,
-        isCanceled: order.isCanceled,
         isPaid: order.isPaid,
         note: order.note,
         customerName: order.customer?.name ?? null,
+        customerId: order.customer?.id ?? null,
       })),
     };
   });

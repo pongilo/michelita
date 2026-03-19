@@ -5,7 +5,7 @@ import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
 
-export const Route = createFileRoute("/app/_analytics/orders")({
+export const Route = createFileRoute("/app/orders")({
   component: OrdersPage,
 });
 
@@ -21,20 +21,6 @@ function OrdersPage() {
     organizationId: organization.id,
   });
   const [actionError, setActionError] = useState("");
-
-  async function handleToggleCanceled(orderId: string, currentCanceled: boolean) {
-    setActionError("");
-
-    try {
-      await updateOrder({
-        id: orderId,
-        organizationId: organization.id,
-        isCanceled: !currentCanceled,
-      });
-    } catch (actionError) {
-      setActionError(actionError instanceof Error ? actionError.message : "Nao foi possivel atualizar o pedido.");
-    }
-  }
 
   async function handleTogglePaid(orderId: string, currentPaid: boolean) {
     setActionError("");
@@ -84,7 +70,6 @@ function OrdersPage() {
       ) : null}
 
       <div className="card border border-base-300 bg-base-100 shadow-sm">
-        <div className="card-body">
           {isLoading ? <p>Carregando pedidos...</p> : null}
           {isError ? <p className="text-error">{error.message}</p> : null}
 
@@ -102,7 +87,6 @@ function OrdersPage() {
                     <th>Data</th>
                     <th>Itens</th>
                     <th>Total itens</th>
-                    <th>Status</th>
                     <th>Pagamento</th>
                     <th>Observacao</th>
                     <th className="text-right">Acoes</th>
@@ -111,16 +95,21 @@ function OrdersPage() {
                 <tbody>
                   {orders.map((order) => (
                     <tr key={order.id}>
-                      <td className="font-mono text-xs">{order.id.slice(0, 8)}</td>
-                      <td>{order.customer?.name ?? "Sem cliente"}</td>
+                      <td className="font-mono text-xs">
+                        <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="link">
+                          {order.id.slice(0, 8)}
+                        </Link>
+                      </td>
+                      <td>
+                        {order.customer?.name ? (
+                          <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
+                            {order.customer.name}
+                          </Link>
+                        ) : "Sem cliente"}
+                      </td>
                       <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
                       <td>{order.item.length}</td>
                       <td>{currencyFormatter.format(order.itemTotal)}</td>
-                      <td>
-                        <span className={`badge ${order.isCanceled ? "badge-error" : "badge-success"}`}>
-                          {order.isCanceled ? "Cancelado" : "Ativo"}
-                        </span>
-                      </td>
                       <td>
                         <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
                           {order.isPaid ? "Pago" : "Pendente"}
@@ -140,23 +129,9 @@ function OrdersPage() {
                               className="menu dropdown-content z-[1] mt-1 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow"
                             >
                               <li>
-                                <Link to="/app/order/$orderId" params={{ orderId: order.id }}>
-                                  Ver pedido
-                                </Link>
-                              </li>
-                              <li>
                                 <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }}>
                                   Editar pedido
                                 </Link>
-                              </li>
-                              <li>
-                                <button
-                                  type="button"
-                                  disabled={isUpdatingOrder || isDeletingOrder}
-                                  onClick={() => handleToggleCanceled(order.id, order.isCanceled)}
-                                >
-                                  {order.isCanceled ? "Reativar pedido" : "Cancelar pedido"}
-                                </button>
                               </li>
                               <li>
                                 <button
@@ -187,7 +162,6 @@ function OrdersPage() {
               </table>
             </div>
           ) : null}
-        </div>
       </div>
     </main>
   );

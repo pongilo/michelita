@@ -64,7 +64,6 @@ const createOrderServerFn = createServerFn({ method: "POST" })
         organizationId: data.organizationId,
         customerId: data.customerId ?? null,
         orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
-        isCanceled: false,
         isPaid: data.isPaid,
         note: toOptionalString(data.note),
         item: {

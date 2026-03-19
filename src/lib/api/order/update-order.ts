@@ -15,7 +15,6 @@ const updateOrderSchema = z.object({
   organizationId: z.uuid(),
   customerId: z.uuid().nullable().optional(),
   orderedAt: z.string().optional(),
-  isCanceled: z.boolean().optional(),
   isPaid: z.boolean().optional(),
   note: z.string().trim().optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item.").optional(),
@@ -23,7 +22,6 @@ const updateOrderSchema = z.object({
   const hasDataToUpdate =
     value.customerId !== undefined ||
     value.orderedAt !== undefined ||
-    value.isCanceled !== undefined ||
     value.isPaid !== undefined ||
     value.note !== undefined ||
     value.items !== undefined;
@@ -93,7 +91,6 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
     const updateData: {
       customerId?: string | null;
       orderedAt?: Date;
-      isCanceled?: boolean;
       isPaid?: boolean;
       note?: string | null;
     } = {};
@@ -104,10 +101,6 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
 
     if (data.orderedAt !== undefined) {
       updateData.orderedAt = toDateOrThrow(data.orderedAt, "Data do pedido");
-    }
-
-    if (data.isCanceled !== undefined) {
-      updateData.isCanceled = data.isCanceled;
     }
 
     if (data.isPaid !== undefined) {

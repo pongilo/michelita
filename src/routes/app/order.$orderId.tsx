@@ -43,9 +43,6 @@ function OrderDetailsPage() {
                   <p className="text-sm opacity-70">ID: {order.id}</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className={`badge ${order.isCanceled ? "badge-error" : "badge-success"}`}>
-                    {order.isCanceled ? "Cancelado" : "Ativo"}
-                  </span>
                   <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
                     {order.isPaid ? "Pago" : "Pendente"}
                   </span>

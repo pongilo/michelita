@@ -11,7 +11,6 @@ import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 const updateOrderFormSchema = z.object({
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
-  isCanceled: z.boolean(),
   isPaid: z.boolean(),
   note: z.string().trim().optional(),
   items: z
@@ -100,7 +99,6 @@ function EditOrderRoute() {
     defaultValues: {
       customerId: "",
       orderedAt: localDatetimeNow(),
-      isCanceled: false,
       isPaid: false,
       note: "",
       items: [emptyItem()],
@@ -130,7 +128,6 @@ function EditOrderRoute() {
     reset({
       customerId: order.customerId ?? "",
       orderedAt: toLocalDatetimeInput(order.orderedAt),
-      isCanceled: order.isCanceled,
       isPaid: order.isPaid,
       note: order.note ?? "",
       items: order.item.length
@@ -186,7 +183,6 @@ function EditOrderRoute() {
         organizationId: organization.id,
         customerId: values.customerId ? values.customerId : null,
         orderedAt: values.orderedAt,
-        isCanceled: values.isCanceled,
         isPaid: values.isPaid,
         note: values.note,
         items: values.items.map((item) => ({
@@ -304,10 +300,6 @@ function EditOrderRoute() {
 
             <section className="grid gap-4 md:grid-cols-2">
               <div className="rounded-box border border-base-300 p-4">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input type="checkbox" className="checkbox" {...register("isCanceled")} />
-                  <span className="label-text">Pedido cancelado</span>
-                </label>
                 <label className="label cursor-pointer justify-start gap-3">
                   <input type="checkbox" className="checkbox" {...register("isPaid")} />
                   <span className="label-text">Pedido pago</span>

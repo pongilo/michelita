@@ -42,11 +42,10 @@ const getDailyOrdersServerFn = createServerFn({ method: "POST" })
     const referenceDate = parseReferenceDate(data.referenceDate);
     const { start, end } = getDayBounds(referenceDate);
 
-    const [orders, dailyTransactions] = await Promise.all([
+    const [orders] = await Promise.all([
       prisma.order.findMany({
         where: {
           organizationId: data.organizationId,
-          isCanceled: false,
           item: {
             some: {
               deliveredAt: {
@@ -129,23 +128,8 @@ const getDailyOrdersServerFn = createServerFn({ method: "POST" })
       };
     });
 
-    const totalOrders = orderRows.length;
-    const totalItems = orderRows.reduce(
-      (sum, order) => sum + order.items.reduce((itemsSum, item) => itemsSum + item.quantity, 0),
-      0
-    );
-    const totalAmount = orderRows.reduce((sum, order) => sum + order.itemsTotal, 0);
-    const receivedAmount = dailyTransactions.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
-
     return {
       referenceDate: start.toISOString(),
-      metrics: {
-        totalOrders,
-        totalItems,
-        totalAmount: Number(totalAmount.toFixed(2)),
-        receivedAmount: Number(receivedAmount.toFixed(2)),
-        openAmount: Number(Math.max(totalAmount - receivedAmount, 0).toFixed(2)),
-      },
       orders: orderRows,
     };
   });

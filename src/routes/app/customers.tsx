@@ -107,9 +107,6 @@ function CustomersPage() {
       ) : null}
 
       <section className="card border border-base-300 bg-base-100 shadow-sm">
-        <div className="card-body">
-          <h2 className="card-title text-base">Lista de clientes</h2>
-
           {isLoading ? <p>Carregando clientes...</p> : null}
           {isError ? <p className="text-error">{error.message}</p> : null}
 
@@ -126,42 +123,25 @@ function CustomersPage() {
                     <th>Telefone</th>
                     <th>Endereco</th>
                     <th>Pedidos</th>
-                    <th className="text-right">Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {customers.map((customer) => (
                     <tr key={customer.id}>
-                      <td>{customer.name}</td>
+                      <td>
+                        <Link to="/app/customers/$customerId" params={{ customerId: customer.id }} className="link">
+                          {customer.name}
+                        </Link>
+                      </td>
                       <td>{customer.phone ?? "-"}</td>
                       <td>{customer.address ?? "-"}</td>
                       <td>{customer._count.order}</td>
-                      <td>
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            to="/app/customers/$customerId"
-                            params={{ customerId: customer.id }}
-                            className="btn btn-xs btn-outline"
-                          >
-                            Ver perfil
-                          </Link>
-                          <button
-                            type="button"
-                            className="btn btn-xs btn-outline btn-error"
-                            disabled={isDeletingCustomer}
-                            onClick={() => handleDeleteCustomer(customer.id)}
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : null}
-        </div>
       </section>
 
       <CustomerFormModal
