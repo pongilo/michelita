@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
@@ -50,10 +51,8 @@ export const Route = createFileRoute("/app/order/form")({
 function OrderFormRoute() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [quickCustomerName, setQuickCustomerName] = useState("");
-  const [quickCustomerPhone, setQuickCustomerPhone] = useState("");
-  const [quickCustomerError, setQuickCustomerError] = useState("");
-  const [quickCustomerSuccess, setQuickCustomerSuccess] = useState("");
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [customerModalError, setCustomerModalError] = useState("");
   const { organization } = Route.useRouteContext();
 
   const { data: customers = [], isLoading: isLoadingCustomers } = useGetCustomers({
@@ -93,33 +92,29 @@ function OrderFormRoute() {
   const watchedItems = watch("items");
 
   const subtotal = useMemo(() => {
-    return watchedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    return watchedItems.reduce((sum, item) => {
+      const price = Number(item.unitPrice) || 0;
+      const qty = Number(item.quantity) || 0;
+      return sum + price * qty;
+    }, 0);
   }, [watchedItems]);
 
-  async function handleQuickCreateCustomer() {
-    setQuickCustomerError("");
-    setQuickCustomerSuccess("");
-
-    if (quickCustomerName.trim().length < 2) {
-      setQuickCustomerError("Informe ao menos 2 caracteres para o nome do cliente.");
-      return;
-    }
+  async function handleCreateCustomer(values: CustomerFormValues) {
+    setCustomerModalError("");
 
     try {
       const customer = await createCustomer({
         organizationId: organization.id,
-        name: quickCustomerName.trim(),
-        phone: quickCustomerPhone.trim() || undefined,
+        name: values.name.trim(),
+        phone: values.phone?.trim() || undefined,
+        address: values.address?.trim() || undefined,
+        note: values.note?.trim() || undefined,
       });
 
-      setValue("customerId", customer.id, {
-        shouldValidate: true,
-      });
-      setQuickCustomerName("");
-      setQuickCustomerPhone("");
-      setQuickCustomerSuccess(`Cliente ${customer.name} criado e vinculado ao pedido.`);
+      setValue("customerId", customer.id, { shouldValidate: true });
+      setIsCustomerModalOpen(false);
     } catch (error) {
-      setQuickCustomerError(error instanceof Error ? error.message : "Erro ao criar cliente.");
+      setCustomerModalError(error instanceof Error ? error.message : "Erro ao criar cliente.");
     }
   }
 
@@ -160,29 +155,36 @@ function OrderFormRoute() {
     <main className="mx-auto w-full max-w-5xl px-5 py-8">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Novo pedido</h1>
-        <Link to="/app/orders" className="btn btn-sm btn-outline">
-          Ver pedidos
-        </Link>
       </div>
 
       <div className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body gap-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <section className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-1">
+              <div className="space-y-1">
                 <span className="label">Cliente (opcional)</span>
-                <select className="select select-bordered w-full" {...register("customerId")}>
-                  <option value="">Sem cliente vinculado</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select className="select select-bordered w-full" {...register("customerId")}>
+                    <option value="">Sem cliente vinculado</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-square"
+                    title="Cadastrar novo cliente"
+                    onClick={() => { setCustomerModalError(""); setIsCustomerModalOpen(true); }}
+                  >
+                    +
+                  </button>
+                </div>
                 {isLoadingCustomers ? (
                   <span className="text-xs opacity-70">Carregando clientes...</span>
                 ) : null}
-              </label>
+              </div>
 
               <label className="space-y-1">
                 <span className="label">Data/hora do pedido</span>
@@ -193,58 +195,25 @@ function OrderFormRoute() {
               </label>
             </section>
 
-            <section className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-box border border-base-300 p-4">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input type="checkbox" className="checkbox" {...register("isPaid")} />
+            <label className="space-y-1 block">
+              <span className="label">Observacao do pedido</span>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={3}
+                placeholder="Observacoes gerais do pedido (opcional)"
+                {...register("note")}
+              />
+            </label>
+
+            <div>
+              <label className="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" className="checkbox" {...register("isPaid")} />
+                <div>
                   <span className="label-text">Pedido pago</span>
-                </label>
-                <p className="text-xs opacity-70">Marque quando o pedido ja estiver quitado.</p>
-              </div>
-
-              <label className="space-y-1">
-                <span className="label">Observacao do pedido</span>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  placeholder="Observacoes gerais do pedido (opcional)"
-                  {...register("note")}
-                />
+                  <p className="text-sm opacity-70">Marque quando o pedido ja estiver quitado.</p>
+                </div>
               </label>
-            </section>
-
-            <section className="rounded-box border border-base-300 p-4">
-              <h2 className="text-base font-medium">Cadastro rapido de cliente</h2>
-              <p className="mt-1 text-sm opacity-70">Crie e vincule o cliente sem sair da tela de pedido.</p>
-
-              <div className="mt-3 grid gap-3 md:grid-cols-[1fr_220px_auto]">
-                <input
-                  type="text"
-                  value={quickCustomerName}
-                  onChange={(event) => setQuickCustomerName(event.target.value)}
-                  placeholder="Nome do cliente"
-                  className="input input-bordered w-full"
-                />
-                <input
-                  type="text"
-                  value={quickCustomerPhone}
-                  onChange={(event) => setQuickCustomerPhone(event.target.value)}
-                  placeholder="Telefone (opcional)"
-                  className="input input-bordered w-full"
-                />
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  disabled={isCreatingCustomer}
-                  onClick={handleQuickCreateCustomer}
-                >
-                  {isCreatingCustomer ? "Criando..." : "Criar cliente"}
-                </button>
-              </div>
-
-              {quickCustomerError ? <p className="mt-2 text-sm text-error">{quickCustomerError}</p> : null}
-              {quickCustomerSuccess ? <p className="mt-2 text-sm text-success">{quickCustomerSuccess}</p> : null}
-            </section>
+            </div>
 
             <section className="space-y-3">
               <div className="flex items-center justify-between">
@@ -256,7 +225,7 @@ function OrderFormRoute() {
 
               {itemFields.map((field, index) => {
                 const itemSubtotal = watchedItems[index]
-                  ? watchedItems[index].unitPrice * watchedItems[index].quantity
+                  ? (Number(watchedItems[index].unitPrice) || 0) * (Number(watchedItems[index].quantity) || 0)
                   : 0;
 
                 return (
@@ -376,6 +345,15 @@ function OrderFormRoute() {
           </form>
         </div>
       </div>
+      <CustomerFormModal
+        isOpen={isCustomerModalOpen}
+        mode="create"
+        isSubmitting={isCreatingCustomer}
+        errorMessage={customerModalError}
+        successMessage=""
+        onClose={() => setIsCustomerModalOpen(false)}
+        onSubmit={handleCreateCustomer}
+      />
     </main>
   );
 }

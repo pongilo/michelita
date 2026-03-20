@@ -19,6 +19,16 @@ function CustomersPage() {
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
     organizationId: organization.id,
   });
+  const [search, setSearch] = useState("");
+  const filteredCustomers = customers.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.phone ?? "").toLowerCase().includes(q) ||
+      (c.address ?? "").toLowerCase().includes(q)
+    );
+  });
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -87,11 +97,23 @@ function CustomersPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <h1 className="text-2xl font-semibold">Clientes</h1>
-        <button type="button" className="btn btn-primary" onClick={handleOpenCreateModal}>
-          Novo cliente
-        </button>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="space-y-1">
+            <span className="label text-xs">Pesquisar</span>
+            <input
+              type="search"
+              placeholder="Nome, telefone ou endereço..."
+              className="input input-bordered input-sm w-64"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <button type="button" className="btn btn-primary btn-sm" onClick={handleOpenCreateModal}>
+            Novo cliente
+          </button>
+        </div>
       </div>
 
       {formSuccess ? (
@@ -114,7 +136,11 @@ function CustomersPage() {
             <p className="text-sm opacity-70">Nenhum cliente cadastrado.</p>
           ) : null}
 
-          {!isLoading && !isError && customers.length > 0 ? (
+          {!isLoading && !isError && customers.length > 0 && filteredCustomers.length === 0 ? (
+            <p className="text-sm opacity-70">Nenhum cliente encontrado para "{search}".</p>
+          ) : null}
+
+          {!isLoading && !isError && filteredCustomers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
@@ -126,7 +152,7 @@ function CustomersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {customers.map((customer) => (
+                  {filteredCustomers.map((customer) => (
                     <tr key={customer.id}>
                       <td>
                         <Link to="/app/customers/$customerId" params={{ customerId: customer.id }} className="link">
