@@ -281,7 +281,7 @@ function TransactionsPage() {
             </div>
           ) : null}
 
-          {isLoading ? <p>Carregando transacoes...</p> : null}
+          {isLoading ? <p>Carregando transações...</p> : null}
           {isError ? <p className="text-error">{error.message}</p> : null}
 
           {!isLoading && !isError && transactions.length === 0 ? (

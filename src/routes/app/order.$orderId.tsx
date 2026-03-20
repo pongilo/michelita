@@ -53,12 +53,14 @@ function OrderDetailsPage() {
               <>
                 <div className="p-4 border-b border-base-300">
                   <h2 className="card-title text-base">Cliente</h2>
-                  <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="card-title text-base underline">
-                    {order.customer.name}
-                  </Link>
                 </div>
                 <div className="card-body">
-                  <p><strong>Nome:</strong> {order.customer?.phone ?? "-"}</p>
+                  <p>
+                    <strong>Nome:</strong>{' '}
+                    <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
+                      {order.customer.name}
+                    </Link>
+                  </p>
                   <p><strong>Telefone:</strong> {order.customer?.phone ?? "-"}</p>
                   <p><strong>Endereço:</strong> {order.customer?.address ?? "-"}</p>
                   <p><strong>Observação:</strong> {order.note ?? "-"}</p>
