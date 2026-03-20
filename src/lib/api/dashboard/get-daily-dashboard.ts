@@ -227,6 +227,9 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
           customerName: item.order.customer?.name ?? null,
         })),
       recentOrders: ordersToday.slice(0, 6).map((order) => ({
+        total: Number(
+          order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0).toFixed(2),
+        ),
         id: order.id,
         orderedAt: order.orderedAt,
         isPaid: order.isPaid,

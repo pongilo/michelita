@@ -2,11 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useGetProductionOrders } from "@/hooks/tanstack/order/use-get-production-orders";
 import type { ProductionOrder } from "@/lib/api/order/get-production-orders";
-import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
-
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
-  timeStyle: "short",
-});
+import { currencyFormatter, dateFormatter, timeFormatter } from "@/lib/utils/formatter";
 
 const productionColumnTitleFormatter = new Intl.DateTimeFormat("pt-BR", {
   weekday: "long",
@@ -138,7 +134,7 @@ function ProductionBoardColumn({ productionDate, query }: ProductionBoardColumnP
   const scheduledItems = productionOrders.reduce((totalItems, order) => totalItems + order.items.length, 0);
 
   return (
-    <section className="flex min-h-[30rem] flex-col overflow-hidden rounded-box border border-base-300 bg-base-200/50 shadow-sm">
+    <section className="flex min-h-120 flex-col overflow-hidden rounded-box border border-base-300 bg-base-200/50 shadow-sm">
       <div className="border-b border-base-300 bg-base-100/90 px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -188,17 +184,18 @@ function ProductionOrderCard({ order }: ProductionOrderCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="link font-medium">
-              Pedido {order.id.slice(0, 8)}
+              Pedido #{order.id.slice(0, 8)}
             </Link>
-            <p className="text-xs opacity-70">{dateFormatter.format(new Date(order.orderedAt))}</p>
+            <p className="text-sm opacity-70">{dateFormatter.format(new Date(order.orderedAt))}</p>
           </div>
-
           <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
             {order.isPaid ? "Pago" : "Pendente"}
           </span>
         </div>
 
-        <div className="space-y-1 text-sm">
+        <div className="text-sm">
+          <p className="opacity-70">Total: {currencyFormatter.format(order.itemsTotal)}</p>
+          <p className="opacity-70">Observação: {order.note ?? "-"}</p>
           <p>
             Cliente:{" "}
             {order.customer ? (
@@ -209,8 +206,6 @@ function ProductionOrderCard({ order }: ProductionOrderCardProps) {
               "Sem cliente"
             )}
           </p>
-          <p className="text-xs opacity-70">Total dos itens: {currencyFormatter.format(order.itemsTotal)}</p>
-          <p className="text-xs opacity-70">Observacao do pedido: {order.note ?? "-"}</p>
         </div>
 
         <div className="space-y-2">
@@ -219,11 +214,11 @@ function ProductionOrderCard({ order }: ProductionOrderCardProps) {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{item.description}</p>
-                  <p className="text-xs opacity-70">Qtd. {item.quantity}</p>
+                  <p className="text-sm opacity-70">Qtd. {item.quantity}</p>
                 </div>
                 <span className="badge badge-ghost badge-sm">{timeFormatter.format(new Date(item.deliveredAt))}</span>
               </div>
-              <p className="mt-2 text-xs opacity-70">{item.note ?? "Sem observacao."}</p>
+              <p className="mt-2 text-sm opacity-70">{item.note ?? "Sem observação."}</p>
             </div>
           ))}
         </div>

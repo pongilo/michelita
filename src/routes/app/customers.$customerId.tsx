@@ -280,8 +280,8 @@ function CustomerDetailsPage() {
               ) : null}
 
               <p className="text-sm">Telefone: {data.customer.phone ?? "-"}</p>
-              <p className="text-sm">Endereco: {data.customer.address ?? "-"}</p>
-              <p className="text-sm">Observacao: {data.customer.note ?? "-"}</p>
+              <p className="text-sm">Endereço: {data.customer.address ?? "-"}</p>
+              <p className="text-sm">Observação: {data.customer.note ?? "-"}</p>
             </div>
           </section>
 

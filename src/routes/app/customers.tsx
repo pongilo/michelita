@@ -121,7 +121,7 @@ function CustomersPage() {
                   <tr>
                     <th>Nome</th>
                     <th>Telefone</th>
-                    <th>Endereco</th>
+                    <th>Endereço</th>
                     <th>Pedidos</th>
                   </tr>
                 </thead>

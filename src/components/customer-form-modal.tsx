@@ -78,14 +78,14 @@ export function CustomerFormModal({
           <input type="text" placeholder="Telefone (opcional)" className="input input-bordered w-full" {...register("phone")} />
 
           <textarea
-            placeholder="Endereco (opcional)"
+            placeholder="Endereço (opcional)"
             className="textarea textarea-bordered w-full md:col-span-2"
             rows={3}
             {...register("address")}
           />
 
           <textarea
-            placeholder="Observacao (opcional)"
+            placeholder="Observação (opcional)"
             className="textarea textarea-bordered w-full md:col-span-2"
             rows={3}
             {...register("note")}

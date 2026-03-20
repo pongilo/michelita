@@ -2,14 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
-});
-
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
-  timeStyle: "short",
 });
 
 type DashboardPeriod = "daily" | "weekly" | "monthly";
@@ -149,6 +145,7 @@ function DashboardPage() {
                       <th>Pedido</th>
                       <th>Cliente</th>
                       <th>Horario</th>
+                      <th>Total</th>
                       <th>Pagamento</th>
                       <th>Observacao</th>
                     </tr>
@@ -168,7 +165,8 @@ function DashboardPage() {
                           </Link>
                         ) : "Sem cliente"}
                         </td>
-                        <td>{timeFormatter.format(new Date(order.orderedAt))}</td>
+                        <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
+                        <td>{currencyFormatter.format(order.total)}</td>
                         <td>
                           <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
                             {order.isPaid ? "Pago" : "Pendente"}
