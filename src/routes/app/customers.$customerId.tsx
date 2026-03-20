@@ -1,9 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
+import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
+import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
+import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
+import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
 
 const transactionMethodLabel: Record<string, string> = {
@@ -12,6 +16,30 @@ const transactionMethodLabel: Record<string, string> = {
   CREDIT_CARD: "Cartao de credito",
   DEBIT_CARD: "Cartao de debito",
 };
+
+const transactionMethodFormValue: Record<string, TransactionFormValues["method"]> = {
+  PIX: "pix",
+  CASH: "cash",
+  CREDIT_CARD: "credit_card",
+  DEBIT_CARD: "debit_card",
+};
+
+function localDatetimeNow() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function toLocalDatetimeInput(value: string | Date) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return localDatetimeNow();
+  }
+
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
 
 export const Route = createFileRoute("/app/customers/$customerId")({
   component: CustomerDetailsPage,
@@ -22,8 +50,12 @@ function CustomerDetailsPage() {
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [transactionFormError, setTransactionFormError] = useState("");
+  const [transactionFormSuccess, setTransactionFormSuccess] = useState("");
   const [actionError, setActionError] = useState("");
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
@@ -33,9 +65,21 @@ function CustomerDetailsPage() {
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization.id,
   });
+  const { mutateAsync: createTransaction, isPending: isCreatingTransaction } = useCreateTransaction({
+    organizationId: organization.id,
+  });
+  const { mutateAsync: updateTransaction, isPending: isUpdatingTransaction } = useUpdateTransaction({
+    organizationId: organization.id,
+  });
+  const { mutateAsync: deleteTransaction, isPending: isDeletingTransaction } = useDeleteTransaction({
+    organizationId: organization.id,
+  });
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
     organizationId: organization.id,
   });
+  const editingTransaction = data?.recentTransactions.find((transaction) => transaction.id === editingTransactionId) ?? null;
+  const isEditingTransaction = !!editingTransaction;
+  const isSubmittingTransactionForm = isCreatingTransaction || isUpdatingTransaction;
 
   function handleStartEdit() {
     setFormError("");
@@ -45,6 +89,26 @@ function CustomerDetailsPage() {
   function handleCloseEditModal() {
     setFormError("");
     setIsEditModalOpen(false);
+  }
+
+  function handleOpenTransactionModal() {
+    setTransactionFormError("");
+    setTransactionFormSuccess("");
+    setEditingTransactionId(null);
+    setIsTransactionModalOpen(true);
+  }
+
+  function handleStartTransactionEdit(transactionId: string) {
+    setTransactionFormError("");
+    setTransactionFormSuccess("");
+    setEditingTransactionId(transactionId);
+    setIsTransactionModalOpen(true);
+  }
+
+  function handleCloseTransactionModal() {
+    setTransactionFormError("");
+    setEditingTransactionId(null);
+    setIsTransactionModalOpen(false);
   }
 
   async function onSubmit(values: CustomerFormValues) {
@@ -68,6 +132,55 @@ function CustomerDetailsPage() {
       setIsEditModalOpen(false);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Erro ao atualizar cliente.");
+    }
+  }
+
+  async function handleSubmitCustomerTransaction(values: TransactionFormValues) {
+    if (!data) {
+      return;
+    }
+
+    setTransactionFormError("");
+    setTransactionFormSuccess("");
+
+    try {
+      if (editingTransaction) {
+        await updateTransaction({
+          id: editingTransaction.id,
+          organizationId: organization.id,
+          type: values.type,
+          amount: values.amount,
+          method: values.method,
+          madeAt: values.madeAt,
+          linkedCustomerId: data.customer.id,
+          description: values.description,
+        });
+
+        setTransactionFormSuccess("Transação atualizada com sucesso.");
+      } else {
+        const transaction = await createTransaction({
+          organizationId: organization.id,
+          type: values.type,
+          amount: values.amount,
+          method: values.method,
+          madeAt: values.madeAt,
+          linkedCustomerId: data.customer.id,
+          description: values.description,
+        });
+
+        setTransactionFormSuccess(`Transação ${transaction.id.slice(0, 8)} registrada com sucesso.`);
+      }
+
+      setEditingTransactionId(null);
+      setIsTransactionModalOpen(false);
+    } catch (error) {
+      setTransactionFormError(
+        error instanceof Error
+          ? error.message
+          : editingTransaction
+            ? "Erro ao atualizar transacao."
+            : "Erro ao registrar transacao.",
+      );
     }
   }
 
@@ -99,12 +212,35 @@ function CustomerDetailsPage() {
     }
   }
 
+  async function handleDeleteTransaction(transactionId: string) {
+    setActionError("");
+
+    const confirmed = window.confirm(
+      "Deseja realmente excluir esta transacao? Esta acao nao pode ser desfeita.",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteTransaction({
+        id: transactionId,
+        organizationId: organization.id,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Erro ao excluir transacao.");
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       {data && (
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{data.customer.name}</h1>
           <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-sm btn-primary" onClick={handleOpenTransactionModal}>
+              Nova transação
+            </button>
             <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
               Editar cliente
             </button>
@@ -125,6 +261,11 @@ function CustomerDetailsPage() {
       {actionError ? (
         <div className="alert alert-error mb-4">
           <span>{actionError}</span>
+        </div>
+      ) : null}
+      {transactionFormSuccess ? (
+        <div className="alert alert-success mb-4">
+          <span>{transactionFormSuccess}</span>
         </div>
       ) : null}
 
@@ -171,13 +312,20 @@ function CustomerDetailsPage() {
                         <th>Observação</th>
                         <th>Itens</th>
                         <th>Total itens</th>
-                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.recentOrders.map((order) => (
                         <tr key={order.id}>
-                          <td className="font-mono text-xs">{order.id.slice(0, 8)}</td>
+                          <td>
+                            <Link
+                              to="/app/order/$orderId"
+                              params={{ orderId: order.id }}
+                              className="link"
+                            >
+                              {order.id.slice(0, 8)}
+                            </Link>
+                          </td>
                           <td>{datetimeFormatter.format(new Date(order.orderedAt))}</td>
                           <td>
                             <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
@@ -189,17 +337,6 @@ function CustomerDetailsPage() {
                           </td>
                           <td>{order.itemCount}</td>
                           <td>{currencyFormatter.format(order.itemTotal)}</td>
-                          <td>
-                            <div className="flex justify-end">
-                              <Link
-                                to="/app/order/$orderId"
-                                params={{ orderId: order.id }}
-                                className="btn btn-xs btn-outline"
-                              >
-                                Ver pedido
-                              </Link>
-                            </div>
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -214,7 +351,7 @@ function CustomerDetailsPage() {
             </div>
 
               {data.recentTransactions.length === 0 ? (
-                <p className="text-sm opacity-70 p-4">Sem transações para este cliente.</p>
+                <p className="text-sm opacity-70 p-4">Sem transações a este cliente.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table">
@@ -226,6 +363,7 @@ function CustomerDetailsPage() {
                         <th>Método</th>
                         <th>Descrição</th>
                         <th>Valor</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -241,6 +379,28 @@ function CustomerDetailsPage() {
                           <td>{transactionMethodLabel[transaction.method] ?? transaction.method}</td>
                           <td>{transaction.description ?? "-"}</td>
                           <td>{currencyFormatter.format(transaction.amount)}</td>
+                          <td>
+                            <div className="flex justify-end">
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-xs btn-outline"
+                                  disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
+                                  onClick={() => handleStartTransactionEdit(transaction.id)}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-xs btn-outline btn-error"
+                                  disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
+                                  onClick={() => handleDeleteTransaction(transaction.id)}
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -269,6 +429,39 @@ function CustomerDetailsPage() {
         }
         onClose={handleCloseEditModal}
         onSubmit={onSubmit}
+      />
+
+      <TransactionFormModal
+        isOpen={isTransactionModalOpen}
+        mode={isEditingTransaction ? "edit" : "create"}
+        isSubmitting={isSubmittingTransactionForm}
+        customers={[]}
+        fixedLinkedCustomer={
+          data
+            ? {
+                id: data.customer.id,
+                name: data.customer.name,
+              }
+            : undefined
+        }
+        errorMessage={transactionFormError}
+        successMessage=""
+        initialValues={
+          data
+            ? {
+                type: editingTransaction?.type as TransactionFormValues["type"] | undefined,
+                amount: editingTransaction ? Math.abs(editingTransaction.amount) : undefined,
+                method: editingTransaction
+                  ? transactionMethodFormValue[editingTransaction.method] ?? "pix"
+                  : undefined,
+                madeAt: editingTransaction ? toLocalDatetimeInput(editingTransaction.madeAt) : undefined,
+                linkedCustomerId: data.customer.id,
+                description: editingTransaction?.description ?? "",
+              }
+            : undefined
+        }
+        onClose={handleCloseTransactionModal}
+        onSubmit={handleSubmitCustomerTransaction}
       />
     </main>
   );

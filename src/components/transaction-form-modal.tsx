@@ -9,7 +9,7 @@ const transactionFormSchema = z.object({
   amount: z.number().min(0.01, "Informe um valor maior que zero."),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data/hora da transacao e obrigatoria."),
-  customerId: z.union([z.uuid(), z.literal("")]).optional(),
+  linkedCustomerId: z.union([z.uuid(), z.literal("")]).optional(),
   description: z.string().trim().max(500, "A descricao deve ter no maximo 500 caracteres.").optional(),
 });
 
@@ -25,6 +25,7 @@ type TransactionFormModalProps = {
   mode: "create" | "edit";
   isSubmitting: boolean;
   customers: CustomerOption[];
+  fixedLinkedCustomer?: CustomerOption;
   errorMessage: string;
   successMessage: string;
   initialValues?: Partial<TransactionFormValues>;
@@ -44,7 +45,7 @@ function getDefaultValues(initialValues?: Partial<TransactionFormValues>): Trans
     amount: initialValues?.amount ?? 0,
     method: initialValues?.method ?? "pix",
     madeAt: initialValues?.madeAt ?? localDatetimeNow(),
-    customerId: initialValues?.customerId ?? "",
+    linkedCustomerId: initialValues?.linkedCustomerId ?? "",
     description: initialValues?.description ?? "",
   };
 }
@@ -54,6 +55,7 @@ export function TransactionFormModal({
   mode,
   isSubmitting,
   customers,
+  fixedLinkedCustomer,
   errorMessage,
   successMessage,
   initialValues,
@@ -79,8 +81,8 @@ export function TransactionFormModal({
   }, [
     isOpen,
     initialValues?.amount,
-    initialValues?.customerId,
     initialValues?.description,
+    initialValues?.linkedCustomerId,
     initialValues?.madeAt,
     initialValues?.method,
     initialValues?.type,
@@ -137,17 +139,27 @@ export function TransactionFormModal({
           {errors.description ? <span className="text-error-content text-sm">{errors.description.message}</span> : null}
         </label>
 
-        <label className="space-y-1 md:col-span-2">
-          <span className="label">Cliente vinculado (opcional)</span>
-          <select className="select select-bordered w-full" {...register("customerId")}>
-            <option value="">Sem cliente vinculado</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {fixedLinkedCustomer ? (
+          <div className="space-y-1 md:col-span-2">
+            <span className="label">Cliente vinculado</span>
+            <input type="hidden" {...register("linkedCustomerId")} />
+            <div className="input input-bordered flex w-full items-center bg-base-200/60">
+              {fixedLinkedCustomer.name}
+            </div>
+          </div>
+        ) : (
+          <label className="space-y-1 md:col-span-2">
+            <span className="label">Cliente vinculado (opcional)</span>
+            <select className="select select-bordered w-full" {...register("linkedCustomerId")}>
+              <option value="">Sem cliente vinculado</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {errorMessage ? (
           <div className="alert alert-error md:col-span-2">

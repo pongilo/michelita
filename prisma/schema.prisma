@@ -39,11 +39,23 @@ model Customer {
   address        String?
   note           String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   order        Order[]
-  transactions Transaction[]
+  transaction  CustomerTransaction[]
 
   @@map("customer")
+  @@schema("public")
+}
+
+model CustomerTransaction {
+  id            String @id @default(uuid()) @db.Uuid
+  customerId    String @map("customer_id") @db.Uuid
+  transactionId String @map("transaction_id") @db.Uuid
+
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("customer_transaction")
   @@schema("public")
 }
 
@@ -82,14 +94,14 @@ model OrderItem {
 model Transaction {
   id             String            @id @default(uuid()) @db.Uuid
   organizationId String            @map("organization_id") @db.Uuid
-  customerId     String?           @map("customer_id") @db.Uuid
   description    String?
   amount         Decimal           @db.Decimal(10, 2)
   method         TransactionMethod
   madeAt         DateTime          @map("made_at") @db.Timestamptz
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  customer CustomerTransaction[]
 
   @@map("transaction")
   @@schema("public")

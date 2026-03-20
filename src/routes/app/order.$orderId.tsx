@@ -25,16 +25,11 @@ function OrderDetailsPage() {
             </span>
           )}
         </div>
-        <div className="flex gap-2">
-          <Link to="/app/orders" className="btn btn-sm btn-outline">
-            Voltar para pedidos
+        {order ? (
+          <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }} className="btn btn-sm btn-primary">
+            Editar pedido
           </Link>
-          {order ? (
-            <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }} className="btn btn-sm btn-primary">
-              Editar pedido
-            </Link>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       {isLoading ? <p>Carregando pedido...</p> : null}
@@ -48,33 +43,30 @@ function OrderDetailsPage() {
                 <strong>Data:</strong> {datetimeFormatter.format(new Date(order.orderedAt))}
               </p>
               <p>
-                <strong>Cliente:</strong>{" "}
-                {order.customer ? (
-                  <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
+                <strong>Total do pedido:</strong> {currencyFormatter.format(order.itemTotal)}
+              </p>
+            </div>
+          </section>
+
+          <section className="card border border-base-300 bg-base-100 shadow-sm">
+            {order.customer ? (
+              <>
+                <div className="p-4 border-b border-base-300">
+                  <h2 className="card-title text-base">Cliente</h2>
+                  <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="card-title text-base underline">
                     {order.customer.name}
                   </Link>
-                ) : (
-                  "Sem cliente"
-                )}
-              </p>
-              <p>
-                <strong>Telefone:</strong> {order.customer?.phone ?? "-"}
-              </p>
-              <p>
-                <strong>Observação:</strong> {order.note ?? "-"}
-              </p>
-
-              <div className="rounded-box bg-base-200 p-4 text-sm">
-                <div className="flex justify-between">
-                  <span>Total dos itens</span>
-                  <strong>{currencyFormatter.format(order.itemTotal)}</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total do pedido</span>
-                  <strong>{currencyFormatter.format(order.itemTotal)}</strong>
+                <div className="card-body">
+                  <p><strong>Nome:</strong> {order.customer?.phone ?? "-"}</p>
+                  <p><strong>Telefone:</strong> {order.customer?.phone ?? "-"}</p>
+                  <p><strong>Endereço:</strong> {order.customer?.address ?? "-"}</p>
+                  <p><strong>Observação:</strong> {order.note ?? "-"}</p>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <h2 className="p-4 card-title text-base">Sem cliente</h2>
+            )}
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">

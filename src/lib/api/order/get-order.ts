@@ -29,6 +29,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             id: true,
             name: true,
             phone: true,
+            address: true,
           },
         },
         item: {

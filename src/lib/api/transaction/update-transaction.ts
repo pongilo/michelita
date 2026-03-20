@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 const updateTransactionSchema = z.object({
   id: z.uuid(),
   organizationId: z.uuid(),
-  customerId: z.uuid().nullable().optional(),
+  linkedCustomerId: z.uuid().nullable().optional(),
   amount: z.number().min(0.01, "O valor deve ser maior que zero."),
   type: z.enum(["entry", "exit"]),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
@@ -49,10 +49,10 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
       throw new Error("Transacao nao encontrada para a organizacao informada.");
     }
 
-    if (data.customerId) {
+    if (data.linkedCustomerId) {
       const customer = await prisma.customer.findFirst({
         where: {
-          id: data.customerId,
+          id: data.linkedCustomerId,
           organizationId: data.organizationId,
         },
         select: {
@@ -67,17 +67,33 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
 
     const normalizedAmount = data.type === "entry" ? data.amount : -Math.abs(data.amount);
 
-    await prisma.transaction.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        customerId: data.customerId ?? null,
-        amount: normalizedAmount,
-        method: transactionMethodToPrisma[data.method],
-        madeAt: toDateOrThrow(data.madeAt, "Data da transacao"),
-        description: data.description || null,
-      },
+    await prisma.$transaction(async (transactionClient) => {
+      await transactionClient.transaction.update({
+        where: {
+          id: data.id,
+        },
+        data: {
+          amount: normalizedAmount,
+          method: transactionMethodToPrisma[data.method],
+          madeAt: toDateOrThrow(data.madeAt, "Data da transacao"),
+          description: data.description || null,
+        },
+      });
+
+      await transactionClient.customerTransaction.deleteMany({
+        where: {
+          transactionId: data.id,
+        },
+      });
+
+      if (data.linkedCustomerId) {
+        await transactionClient.customerTransaction.create({
+          data: {
+            customerId: data.linkedCustomerId,
+            transactionId: data.id,
+          },
+        });
+      }
     });
 
     return {

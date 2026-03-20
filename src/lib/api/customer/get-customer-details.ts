@@ -58,7 +58,11 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
       prisma.transaction.findMany({
         where: {
           organizationId: data.organizationId,
-          customerId: data.customerId,
+          customer: {
+            some: {
+              customerId: data.customerId,
+            },
+          },
         },
         orderBy: {
           madeAt: "desc",

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
@@ -78,7 +78,7 @@ function TransactionsPage() {
           amount: values.amount,
           method: values.method,
           madeAt: values.madeAt,
-          customerId: values.customerId ? values.customerId : null,
+          linkedCustomerId: values.linkedCustomerId ? values.linkedCustomerId : null,
           description: values.description,
         });
 
@@ -90,7 +90,7 @@ function TransactionsPage() {
           amount: values.amount,
           method: values.method,
           madeAt: values.madeAt,
-          customerId: values.customerId ? values.customerId : undefined,
+          linkedCustomerId: values.linkedCustomerId ? values.linkedCustomerId : undefined,
           description: values.description,
         });
 
@@ -191,7 +191,7 @@ function TransactionsPage() {
                     <th>Método</th>
                     <th>Descrição</th>
                     <th>Valor</th>
-                    <th>Cliente</th>
+                    <th>Clientes vinculados</th>
                     <th className="text-right">Acoes</th>
                   </tr>
                 </thead>
@@ -207,7 +207,24 @@ function TransactionsPage() {
                       <td>{methodLabel[transaction.method] ?? transaction.method}</td>
                       <td>{transaction.description || "-"}</td>
                       <td>{currencyFormatter.format(transaction.amount)}</td>
-                      <td>{transaction.customer?.name ?? "-"}</td>
+                      <td>
+                        {transaction.linkedCustomers.length === 0 ? (
+                          "-"
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {transaction.linkedCustomers.map((customer) => (
+                              <Link
+                                key={customer.id}
+                                to="/app/customers/$customerId"
+                                params={{ customerId: customer.id }}
+                                className="link"
+                              >
+                                {customer.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <div className="flex justify-end gap-2">
                           <button
@@ -254,7 +271,7 @@ function TransactionsPage() {
                 amount: Math.abs(editingTransaction.amount),
                 method: editingTransaction.method as TransactionFormValues["method"],
                 madeAt: toLocalDatetimeInput(editingTransaction.madeAt),
-                customerId: editingTransaction.customerId ?? "",
+                linkedCustomerId: editingTransaction.linkedCustomerId ?? "",
                 description: editingTransaction.description ?? "",
               }
             : undefined

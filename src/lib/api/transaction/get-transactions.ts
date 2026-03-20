@@ -27,30 +27,44 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
       },
       select: {
         id: true,
-        customerId: true,
         amount: true,
         method: true,
         madeAt: true,
         description: true,
         customer: {
           select: {
-            id: true,
-            name: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
     });
 
-    return transactions.map((transaction) => ({
-      id: transaction.id,
-      customerId: transaction.customerId,
-      amount: Number(transaction.amount),
-      type: Number(transaction.amount) >= 0 ? "entry" : "exit",
-      method: transactionMethodFromPrisma[transaction.method],
-      madeAt: transaction.madeAt,
-      description: transaction.description,
-      customer: transaction.customer,
-    }));
+    return transactions.map((transaction) => {
+      const linkedCustomers = Array.from(
+        new Map(
+          transaction.customer.map((customerLink) => [
+            customerLink.customer.id,
+            customerLink.customer,
+          ]),
+        ).values(),
+      );
+
+      return {
+        id: transaction.id,
+        linkedCustomerId: linkedCustomers[0]?.id ?? null,
+        linkedCustomers,
+        amount: Number(transaction.amount),
+        type: Number(transaction.amount) >= 0 ? "entry" : "exit",
+        method: transactionMethodFromPrisma[transaction.method],
+        madeAt: transaction.madeAt,
+        description: transaction.description,
+      };
+    });
   });
 
 export async function getTransactions(data: GetTransactionsProps) {
