@@ -55,7 +55,9 @@ function PrivateLayout() {
             </Link>
           </div>
         </nav>
-        <div className="bg-base-200 border-t border-l border-base-300 rounded-tl-box"><Outlet /></div>
+        <div className="bg-base-200 border-t border-l border-base-300 rounded-tl-box h-full">
+          <Outlet />
+        </div>
       </div>
 
       <div className="drawer-side is-drawer-close:overflow-visible">
