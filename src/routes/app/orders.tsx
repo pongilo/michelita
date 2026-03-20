@@ -66,14 +66,17 @@ function OrdersPage() {
   const { organization } = Route.useRouteContext();
   const [period, setPeriod] = useState<OrdersPeriod>("daily");
   const [referenceDate, setReferenceDate] = useState<string>(currentDateInputValue);
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "paid" | "pending">("all");
   const { start, end } = getOrdersPeriodBounds(period, parseOrdersReferenceDate(referenceDate));
   const rangeEnd = new Date(end.getTime() - 1);
   const periodLabel = period === "daily" ? "Diario" : period === "weekly" ? "Semanal" : "Mensal";
 
+  const isPaidFilter = paymentFilter === "all" ? undefined : paymentFilter === "paid";
   const { data: orders = [], isLoading, isError, error, isFetching, refetch } = useGetOrders({
     organizationId: organization.id,
     period,
     referenceDate,
+    isPaid: isPaidFilter,
   });
   const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({
     organizationId: organization.id,
@@ -146,6 +149,18 @@ function OrdersPage() {
               value={referenceDate}
               onChange={(event) => setReferenceDate(event.target.value)}
             />
+          </label>
+          <label className="space-y-1">
+            <span className="label text-xs">Pagamento</span>
+            <select
+              className="select select-bordered select-sm"
+              value={paymentFilter}
+              onChange={(event) => setPaymentFilter(event.target.value as "all" | "paid" | "pending")}
+            >
+              <option value="all">Todos</option>
+              <option value="paid">Pagos</option>
+              <option value="pending">Pendentes</option>
+            </select>
           </label>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? "Atualizando..." : "Atualizar"}

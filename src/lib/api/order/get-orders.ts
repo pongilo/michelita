@@ -10,6 +10,7 @@ const getOrdersSchema = z.object({
   referenceDate: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
+  isPaid: z.boolean().optional(),
 });
 
 export type GetOrdersProps = z.infer<typeof getOrdersSchema>;
@@ -95,6 +96,7 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
       where: {
         organizationId: data.organizationId,
         orderedAt: orderedAtFilter,
+        ...(data.isPaid !== undefined ? { isPaid: data.isPaid } : {}),
       },
       orderBy: {
         orderedAt: "desc",

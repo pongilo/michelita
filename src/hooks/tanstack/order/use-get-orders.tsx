@@ -7,12 +7,13 @@ type UseGetOrdersProps = {
   organizationId: string;
   period: OrdersPeriod;
   referenceDate: string;
+  isPaid?: boolean;
 };
 
-export function useGetOrders({ organizationId, period, referenceDate }: UseGetOrdersProps) {
+export function useGetOrders({ organizationId, period, referenceDate, isPaid }: UseGetOrdersProps) {
   return useQuery({
-    queryKey: ["orders", organizationId, period, referenceDate],
-    queryFn: async () => getOrders({ organizationId, period, referenceDate }),
+    queryKey: ["orders", organizationId, period, referenceDate, isPaid],
+    queryFn: async () => getOrders({ organizationId, period, referenceDate, isPaid }),
     enabled: !!organizationId,
   });
 }

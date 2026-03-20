@@ -1,17 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTransactions } from "@/lib/api/transaction/get-transactions";
+import { getTransactions, type TransactionsPeriod } from "@/lib/api/transaction/get-transactions";
 
 type UseGetTransactionsProps = {
   organizationId: string;
+  period: TransactionsPeriod;
+  referenceDate: string;
 };
 
-export function useGetTransactions({ organizationId }: UseGetTransactionsProps) {
+export function useGetTransactions({ organizationId, period, referenceDate }: UseGetTransactionsProps) {
   return useQuery({
-    queryKey: ["transactions", organizationId],
-    queryFn: async () =>
-      getTransactions({
-        organizationId,
-      }),
+    queryKey: ["transactions", organizationId, period, referenceDate],
+    queryFn: async () => getTransactions({ organizationId, period, referenceDate }),
     enabled: !!organizationId,
   });
 }

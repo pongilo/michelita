@@ -1,5 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import type { TransactionsPeriod } from "@/lib/api/transaction/get-transactions";
+
+const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+function currentDateInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function getTransactionsPeriodBounds(period: TransactionsPeriod, referenceDate: string) {
+  const base = new Date(`${referenceDate}T00:00:00`);
+  const start = new Date(base);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+
+  if (period === "daily") {
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
+
+  if (period === "weekly") {
+    const diffToMonday = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - diffToMonday);
+    end.setTime(start.getTime());
+    end.setDate(end.getDate() + 7);
+    return { start, end };
+  }
+
+  start.setDate(1);
+  end.setTime(start.getTime());
+  end.setMonth(end.getMonth() + 1);
+  return { start, end };
+}
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
@@ -38,8 +72,16 @@ export const Route = createFileRoute("/app/transactions")({
 
 function TransactionsPage() {
   const { organization } = Route.useRouteContext();
-  const { data: transactions = [], isLoading, isError, error } = useGetTransactions({
+  const [period, setPeriod] = useState<TransactionsPeriod>("monthly");
+  const [referenceDate, setReferenceDate] = useState<string>(currentDateInputValue);
+  const { start, end } = getTransactionsPeriodBounds(period, referenceDate);
+  const rangeEnd = new Date(end.getTime() - 1);
+  const periodLabel = period === "daily" ? "Diario" : period === "weekly" ? "Semanal" : "Mensal";
+
+  const { data: transactions = [], isLoading, isError, error, isFetching, refetch } = useGetTransactions({
     organizationId: organization.id,
+    period,
+    referenceDate,
   });
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization.id,
@@ -53,6 +95,16 @@ function TransactionsPage() {
   const { mutateAsync: deleteTransaction, isPending: isDeletingTransaction } = useDeleteTransaction({
     organizationId: organization.id,
   });
+  const { totalEntries, totalExits, balance } = useMemo(() => {
+    const totalEntries = transactions
+      .filter((t) => t.type === "entry")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExits = transactions
+      .filter((t) => t.type === "exit")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return { totalEntries, totalExits, balance: totalEntries - totalExits };
+  }, [transactions]);
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -154,18 +206,73 @@ function TransactionsPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Transações</h1>
-        <button type="button" className="btn btn-primary" onClick={handleOpenCreateModal}>
-          Nova transação
-        </button>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Transações</h1>
+          <p className="text-sm opacity-70">
+            {periodLabel}: {dateRangeFormatter.format(start)} ate {dateRangeFormatter.format(rangeEnd)}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="space-y-1">
+            <span className="label text-xs">Periodo</span>
+            <select
+              className="select select-bordered select-sm"
+              value={period}
+              onChange={(event) => setPeriod(event.target.value as TransactionsPeriod)}
+            >
+              <option value="daily">Diario</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensal</option>
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="label text-xs">Data de referencia</span>
+            <input
+              type="date"
+              className="input input-bordered input-sm"
+              value={referenceDate}
+              onChange={(event) => setReferenceDate(event.target.value)}
+            />
+          </label>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? "Atualizando..." : "Atualizar"}
+          </button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={handleOpenCreateModal}>
+            Nova transação
+          </button>
+        </div>
       </div>
 
       {formSuccess ? (
-        <div className="alert alert-success mt-4">
+        <div className="alert alert-success mb-4">
           <span>{formSuccess}</span>
         </div>
       ) : null}
+
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="card border border-base-300 bg-base-100 shadow-sm">
+          <div className="card-body p-4">
+            <p className="text-sm opacity-70">Entradas</p>
+            <p className="text-2xl font-semibold">{currencyFormatter.format(totalEntries)}</p>
+          </div>
+        </div>
+        <div className="card border border-base-300 bg-base-100 shadow-sm">
+          <div className="card-body p-4">
+            <p className="text-sm opacity-70">Saídas</p>
+            <p className="text-2xl font-semibold">{currencyFormatter.format(totalExits)}</p>
+          </div>
+        </div>
+        <div className="card border border-base-300 bg-base-100 shadow-sm">
+          <div className="card-body p-4">
+            <p className="text-sm opacity-70">Saldo</p>
+            <p className={`text-2xl font-semibold ${balance >= 0 ? "text-success" : "text-error"}`}>
+              {currencyFormatter.format(balance)}
+            </p>
+          </div>
+        </div>
+      </div>
 
       <section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
           {actionError ? (
