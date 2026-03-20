@@ -149,24 +149,22 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     ]);
 
     const totalOrders = ordersToday.length;
+    const totalItems = ordersToday.reduce((sum, order) => sum + order.item.length, 0);
     const grossRevenue = ordersToday.reduce((sum, order) => {
       const orderTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
       return sum + orderTotal;
     }, 0);
 
-    const { entry, exit } = transactionsToday.reduce((acc, transaction) => {
-      const amount = Number(transaction.amount);
-      if (amount > 0) {
-        acc.entry = acc.entry + amount
-      } 
-      if (amount < 0) {
-        acc.exit = acc.exit - amount
-      }
-      return acc
-    }, {
-      entry: 0,
-      exit: 0
-    });
+
+    const { entry, exit } = transactionsToday.reduce(
+      (acc, transaction) => {
+        const amount = Number(transaction.amount);
+        if (amount > 0) acc.entry += amount;
+        if (amount < 0) acc.exit -= amount;
+        return acc;
+      },
+      { entry: 0, exit: 0 },
+    );
 
     const averageTicket = totalOrders > 0 ? grossRevenue / totalOrders : 0;
 
@@ -205,11 +203,12 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
       rangeEnd: rangeEnd.toISOString(),
       metrics: {
         totalOrders,
+        totalItems,
         grossRevenue: Number(grossRevenue.toFixed(2)),
+        averageTicket: Number(averageTicket.toFixed(2)),
         entry: Number(entry.toFixed(2)),
         exit: Number(exit.toFixed(2)),
         balance: Number((entry - exit).toFixed(2)),
-        averageTicket: Number(averageTicket.toFixed(2)),
       },
       byMethod: {
         pix: Number(byMethod.pix.toFixed(2)),
@@ -236,6 +235,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         note: order.note,
         customerName: order.customer?.name ?? null,
         customerId: order.customer?.id ?? null,
+        itemCount: order.item.length,
       })),
     };
   });

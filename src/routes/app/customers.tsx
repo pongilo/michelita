@@ -101,10 +101,9 @@ function CustomersPage() {
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
-            <span className="label text-xs">Pesquisar</span>
             <input
               type="search"
-              placeholder="Nome, telefone ou endereço..."
+              placeholder="Pesquisar por nome, telefone ou endereço"
               className="input input-bordered input-sm w-64"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

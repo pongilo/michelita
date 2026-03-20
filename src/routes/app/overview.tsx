@@ -144,10 +144,11 @@ function DashboardPage() {
                     <tr>
                       <th>Pedido</th>
                       <th>Cliente</th>
-                      <th>Horario</th>
+                      <th>Data</th>
+                      <th>Itens</th>
                       <th>Total</th>
                       <th>Pagamento</th>
-                      <th>Observacao</th>
+                      <th>Observação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -166,6 +167,7 @@ function DashboardPage() {
                         ) : "Sem cliente"}
                         </td>
                         <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
+                        <td>{order.itemCount}</td>
                         <td>{currencyFormatter.format(order.total)}</td>
                         <td>
                           <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
