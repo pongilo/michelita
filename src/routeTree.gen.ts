@@ -14,9 +14,9 @@ import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AppTransactionsRouteImport } from './routes/app/transactions'
-import { Route as AppProductionRouteImport } from './routes/app/production'
 import { Route as AppOverviewRouteImport } from './routes/app/overview'
 import { Route as AppOrdersRouteImport } from './routes/app/orders'
+import { Route as AppDeliveriesRouteImport } from './routes/app/deliveries'
 import { Route as AppCustomersRouteImport } from './routes/app/customers'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
 import { Route as SiteBolosVulcaoRouteImport } from './routes/_site/bolos-vulcao'
@@ -56,11 +56,6 @@ const AppTransactionsRoute = AppTransactionsRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppProductionRoute = AppProductionRouteImport.update({
-  id: '/production',
-  path: '/production',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -69,6 +64,11 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
 const AppOrdersRoute = AppOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppDeliveriesRoute = AppDeliveriesRouteImport.update({
+  id: '/deliveries',
+  path: '/deliveries',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCustomersRoute = AppCustomersRouteImport.update({
@@ -160,9 +160,9 @@ export interface FileRoutesByFullPath {
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
-  '/app/production': typeof AppProductionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
@@ -183,9 +183,9 @@ export interface FileRoutesByTo {
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
-  '/app/production': typeof AppProductionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
@@ -208,9 +208,9 @@ export interface FileRoutesById {
   '/_site/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/_site/docinhos': typeof SiteDocinhosRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
-  '/app/production': typeof AppProductionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/_site/': typeof SiteIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
@@ -234,9 +234,9 @@ export interface FileRouteTypes {
     | '/bolos-vulcao'
     | '/docinhos'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
-    | '/app/production'
     | '/app/transactions'
     | '/organization/new'
     | '/app/customers/$customerId'
@@ -257,9 +257,9 @@ export interface FileRouteTypes {
     | '/bolos-vulcao'
     | '/docinhos'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
-    | '/app/production'
     | '/app/transactions'
     | '/organization/new'
     | '/app/customers/$customerId'
@@ -281,9 +281,9 @@ export interface FileRouteTypes {
     | '/_site/bolos-vulcao'
     | '/_site/docinhos'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
-    | '/app/production'
     | '/app/transactions'
     | '/_site/'
     | '/_auth/organization/new'
@@ -336,13 +336,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTransactionsRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/production': {
-      id: '/app/production'
-      path: '/production'
-      fullPath: '/app/production'
-      preLoaderRoute: typeof AppProductionRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/overview': {
       id: '/app/overview'
       path: '/overview'
@@ -355,6 +348,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/app/orders'
       preLoaderRoute: typeof AppOrdersRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/deliveries': {
+      id: '/app/deliveries'
+      path: '/deliveries'
+      fullPath: '/app/deliveries'
+      preLoaderRoute: typeof AppDeliveriesRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/customers': {
@@ -521,9 +521,9 @@ const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppCustomersRoute: typeof AppCustomersRouteWithChildren
+  AppDeliveriesRoute: typeof AppDeliveriesRoute
   AppOrdersRoute: typeof AppOrdersRoute
   AppOverviewRoute: typeof AppOverviewRoute
-  AppProductionRoute: typeof AppProductionRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppOrderOrderIdRoute: typeof AppOrderOrderIdRoute
   AppOrderFormRoute: typeof AppOrderFormRoute
@@ -532,9 +532,9 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppCustomersRoute: AppCustomersRouteWithChildren,
+  AppDeliveriesRoute: AppDeliveriesRoute,
   AppOrdersRoute: AppOrdersRoute,
   AppOverviewRoute: AppOverviewRoute,
-  AppProductionRoute: AppProductionRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppOrderOrderIdRoute: AppOrderOrderIdRoute,
   AppOrderFormRoute: AppOrderFormRoute,

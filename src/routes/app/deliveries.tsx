@@ -49,7 +49,7 @@ function formatProductionColumnTitle(productionDate: string) {
   return formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1);
 }
 
-export const Route = createFileRoute("/app/production")({
+export const Route = createFileRoute("/app/deliveries")({
   component: ProductionPage,
 });
 
@@ -87,11 +87,7 @@ function ProductionPage() {
     <main className="mx-auto w-full max-w-7xl px-5 py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Produção</h1>
-          <p className="text-sm opacity-70">
-            Agenda de {productionWindowFormatter.format(createProductionDate(firstProductionDate))} ate{" "}
-            {productionWindowFormatter.format(createProductionDate(thirdProductionDate))}
-          </p>
+          <h1 className="text-2xl font-semibold">Entregas</h1>
         </div>
 
         <div className="flex flex-wrap items-end gap-2">

@@ -88,7 +88,7 @@ function PrivateLayout() {
 
             <li>
               <Link
-                to="/app/production"
+                to="/app/deliveries"
                 data-tip="Entregas"
                 activeOptions={{ exact: true }}
                 activeProps={{ className: "menu-active is-drawer-close:tooltip is-drawer-close:tooltip-right" }}
