@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useGetProductionOrders } from "@/hooks/tanstack/order/use-get-production-orders";
-import type { ProductionOrder } from "@/lib/api/order/get-production-orders";
-import { currencyFormatter, dateFormatter, timeFormatter } from "@/lib/utils/formatter";
+import type { ProductionOrder, ProductionOrderItem } from "@/lib/api/order/get-production-orders";
+import { dateFormatter, timeFormatter } from "@/lib/utils/formatter";
 
 const productionColumnTitleFormatter = new Intl.DateTimeFormat("pt-BR", {
   weekday: "long",
@@ -14,11 +14,6 @@ const productionColumnDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
-});
-
-const productionWindowFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
 });
 
 function formatProductionDateInputValue(date: Date) {
@@ -47,6 +42,27 @@ function getProductionBoardDates(productionStartDate: string) {
 function formatProductionColumnTitle(productionDate: string) {
   const formattedTitle = productionColumnTitleFormatter.format(createProductionDate(productionDate));
   return formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1);
+}
+
+type FlatItem = ProductionOrderItem & {
+  order: Pick<ProductionOrder, "id" | "isPaid" | "orderedAt" | "note" | "customer">;
+};
+
+function flattenAndSort(orders: ProductionOrder[]): FlatItem[] {
+  return orders
+    .flatMap((order) =>
+      order.items.map((item) => ({
+        ...item,
+        order: {
+          id: order.id,
+          isPaid: order.isPaid,
+          orderedAt: order.orderedAt,
+          note: order.note,
+          customer: order.customer,
+        },
+      }))
+    )
+    .sort((a, b) => new Date(a.deliveredAt).getTime() - new Date(b.deliveredAt).getTime());
 }
 
 export const Route = createFileRoute("/app/deliveries")({
@@ -84,11 +100,9 @@ function ProductionPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-5 py-8">
+    <main className="mx-auto w-full max-w-7xl py-4">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Entregas</h1>
-        </div>
+        <h1 className="text-2xl font-semibold px-4">Entregas</h1>
 
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
@@ -127,24 +141,22 @@ type ProductionBoardColumnProps = {
 
 function ProductionBoardColumn({ productionDate, query }: ProductionBoardColumnProps) {
   const productionOrders = query.data?.orders ?? [];
-  const scheduledItems = productionOrders.reduce((totalItems, order) => totalItems + order.items.length, 0);
+  const flatItems = flattenAndSort(productionOrders);
 
   return (
-    <section className="flex min-h-120 flex-col overflow-hidden rounded-box border border-base-300 bg-base-200/50 shadow-sm">
-      <div className="border-b border-base-300 bg-base-100/90 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold">{formatProductionColumnTitle(productionDate)}</h2>
-            <p className="text-xs opacity-70">{productionColumnDateFormatter.format(createProductionDate(productionDate))}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium">{productionOrders.length} pedidos</p>
-            <p className="text-xs opacity-70">{scheduledItems} itens</p>
-          </div>
+    <section className="flex min-h-120 flex-col overflow-hidden rounded-box">
+      <div className="flex items-start justify-between gap-3 px-4">
+        <div>
+          <h2 className="text-base font-semibold">{formatProductionColumnTitle(productionDate)}</h2>
+          <p className="text-xs opacity-70">{productionColumnDateFormatter.format(createProductionDate(productionDate))}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-medium">{flatItems.length} itens</p>
+          <p className="text-xs opacity-70">{productionOrders.length} pedidos</p>
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 p-3">
+      <div className="flex-1 space-y-3 p-4">
         {query.isLoading ? (
           <div className="rounded-box border border-dashed border-base-300 bg-base-100 p-4 text-sm opacity-70">
             Carregando produção...
@@ -155,70 +167,65 @@ function ProductionBoardColumn({ productionDate, query }: ProductionBoardColumnP
           <div className="rounded-box border border-error/40 bg-error/10 p-4 text-sm text-error">{query.error.message}</div>
         ) : null}
 
-        {!query.isLoading && !query.isError && productionOrders.length === 0 ? (
+        {!query.isLoading && !query.isError && flatItems.length === 0 ? (
           <div className="rounded-box border border-dashed border-base-300 bg-base-100 p-4 text-sm opacity-70">
-            Nenhum pedido programado para este dia.
+            Nenhum item programado para este dia.
           </div>
         ) : null}
 
         {!query.isLoading && !query.isError
-          ? productionOrders.map((order) => <ProductionOrderCard key={order.id} order={order} />)
+          ? flatItems.map((item) => <ProductionItemCard key={item.id} item={item} />)
           : null}
       </div>
     </section>
   );
 }
 
-type ProductionOrderCardProps = {
-  order: ProductionOrder;
+type ProductionItemCardProps = {
+  item: FlatItem;
 };
 
-function ProductionOrderCard({ order }: ProductionOrderCardProps) {
+function ProductionItemCard({ item }: ProductionItemCardProps) {
+  const { order } = item;
+
   return (
-    <article className="rounded-box border border-base-300 bg-base-100 shadow-sm">
-      <div className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
+    <Link
+      to="/app/order/$orderId"
+      params={{ orderId: order.id }}
+      className="card border border-base-300 bg-base-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all"
+    >
+      <div className="card-body gap-3 p-4">
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="link font-medium">
-              Pedido #{order.id.slice(0, 8)}
-            </Link>
-            <p className="text-sm opacity-70">{dateFormatter.format(new Date(order.orderedAt))}</p>
+            {order.customer ? (
+              <p className="font-semibold leading-tight">{order.customer.name}</p>
+            ) : (
+              <p className="opacity-40 text-sm">Sem cliente</p>
+            )}
+            <p className="text-xs opacity-50 mt-0.5">{dateFormatter.format(new Date(order.orderedAt))}</p>
           </div>
-          <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+          <span className={`badge badge-sm shrink-0 ${order.isPaid ? "badge-info" : "badge-warning"}`}>
             {order.isPaid ? "Pago" : "Pendente"}
           </span>
         </div>
 
-        <div className="text-sm">
-          <p className="opacity-70">Total: {currencyFormatter.format(order.itemsTotal)}</p>
-          <p className="opacity-70">Observação: {order.note ?? "-"}</p>
-          <p>
-            Cliente:{" "}
-            {order.customer ? (
-              <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
-                {order.customer.name}
-              </Link>
-            ) : (
-              "Sem cliente"
-            )}
+        <div>
+          <p className="text-sm">
+            <span className="font-bold text-primary">{item.quantity}x</span>{" "}
+            {item.description}
+            <span className="ml-1.5 text-xs opacity-50">
+              · {timeFormatter.format(new Date(item.deliveredAt))}
+            </span>
           </p>
+          {item.note && (
+            <p className="text-xs opacity-50 mt-0.5">{item.note}</p>
+          )}
         </div>
 
-        <div className="space-y-2">
-          {order.items.map((item) => (
-            <div key={item.id} className="rounded-box border border-base-200 bg-base-200/60 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">{item.description}</p>
-                  <p className="text-sm opacity-70">Qtd. {item.quantity}</p>
-                </div>
-                <span className="badge badge-ghost badge-sm">{timeFormatter.format(new Date(item.deliveredAt))}</span>
-              </div>
-              <p className="mt-2 text-sm opacity-70">{item.note ?? "Sem observação."}</p>
-            </div>
-          ))}
-        </div>
+        {order.note && (
+          <p className="text-xs opacity-50 italic border-t border-base-300 pt-2">{order.note}</p>
+        )}
       </div>
-    </article>
+    </Link>
   );
 }

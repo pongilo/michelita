@@ -8,6 +8,23 @@ const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
 });
 
+const timeFormatter = new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" });
+const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+function formatDelivery(deliveredAt: string | null, orderedAt: string | Date) {
+  if (!deliveredAt) return null;
+  const d = new Date(deliveredAt);
+  const o = new Date(orderedAt);
+  if (d.getTime() === o.getTime()) return null;
+  const sameDay =
+    d.getFullYear() === o.getFullYear() &&
+    d.getMonth() === o.getMonth() &&
+    d.getDate() === o.getDate();
+  return sameDay
+    ? timeFormatter.format(d)
+    : `${shortDateFormatter.format(d)} ${timeFormatter.format(d)}`;
+}
+
 type DashboardPeriod = "daily" | "weekly" | "monthly";
 
 function currentDateInputValue() {
@@ -131,56 +148,68 @@ function DashboardPage() {
             </div>
           </section>
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300">
-              <h2 className="card-title text-base">Pedidos recentes</h2>
+          <section>
+            <div className="mb-3">
+              <h2 className="text-base font-semibold">Pedidos recentes</h2>
             </div>
             {data.recentOrders.length === 0 ? (
               <p className="text-sm opacity-70">Nenhum pedido encontrado no periodo.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Pedido</th>
-                      <th>Cliente</th>
-                      <th>Data</th>
-                      <th>Itens</th>
-                      <th>Total</th>
-                      <th>Pagamento</th>
-                      <th>Observação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recentOrders.map((order) => (
-                      <tr key={order.id}>
-                        <td className="font-mono text-xs">
-                          <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="link">
-                            {order.id.slice(0, 8)}
-                          </Link>
-                        </td>
-                        <td>
+              <div className="space-y-3">
+                {data.recentOrders.map((order) => (
+                  <Link
+                    key={order.id}
+                    to="/app/order/$orderId"
+                    params={{ orderId: order.id }}
+                    className="card border border-base-300 bg-base-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all"
+                  >
+                    <div className="card-body gap-3 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
                           {(order.customerName && order.customerId) ? (
-                          <Link to="/app/customers/$customerId" params={{ customerId: order.customerId }} className="link">
-                            {order.customerName}
-                          </Link>
-                        ) : "Sem cliente"}
-                        </td>
-                        <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
-                        <td>{order.itemCount}</td>
-                        <td>{currencyFormatter.format(order.total)}</td>
-                        <td>
-                          <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                            {order.isPaid ? "Pago" : "Pendente"}
-                          </span>
-                        </td>
-                        <td className="max-w-44 truncate" title={order.note ?? ""}>
-                          {order.note ?? "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            <p className="font-semibold leading-tight">{order.customerName}</p>
+                          ) : (
+                            <p className="opacity-40 text-sm">Sem cliente</p>
+                          )}
+                          <p className="text-xs opacity-50 mt-0.5">{dateFormatter.format(new Date(order.orderedAt))}</p>
+                        </div>
+                        <span className={`badge badge-sm shrink-0 ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+                          {order.isPaid ? "Pago" : "Pendente"}
+                        </span>
+                      </div>
+
+                      <ul className="space-y-2">
+                        {order.items.map((item, i) => (
+                          <li key={i} className="flex items-start justify-between gap-2">
+                            <div>
+                              <span className="text-sm">
+                                <span className="font-bold text-primary">{item.quantity}x</span>{" "}
+                                {item.description}
+                                {formatDelivery(item.deliveredAt, order.orderedAt) && (
+                                  <span className="ml-1.5 text-xs opacity-50">
+                                    · {formatDelivery(item.deliveredAt, order.orderedAt)}
+                                  </span>
+                                )}
+                              </span>
+                              {item.note && (
+                                <p className="text-xs opacity-50 mt-0.5">{item.note}</p>
+                              )}
+                            </div>
+                            <span className="text-xs opacity-60 shrink-0 mt-0.5">{currencyFormatter.format(item.total)}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="border-t border-base-300 pt-2 flex items-center justify-between gap-2">
+                        {order.note
+                          ? <p className="text-xs opacity-50 italic">{order.note}</p>
+                          : <span />
+                        }
+                        <span className="text-sm font-bold">{currencyFormatter.format(order.total)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </section>

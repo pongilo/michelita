@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, HouseIcon, KanbanIcon, ListOrderedIcon, PlusIcon, UsersRoundIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, HouseIcon, KanbanIcon, ListOrderedIcon, PanelRightCloseIcon, PlusIcon, UsersRoundIcon } from 'lucide-react'
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -41,18 +41,16 @@ function PrivateLayout() {
       <div className="drawer-content">
         <nav className="navbar w-full bg-white sticky top-0 z-10">
           <label htmlFor="app-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path><path d="M9 4v16"></path><path d="M14 10l2 2l-2 2"></path></svg>
+            <PanelRightCloseIcon className="size-5" />
           </label>
           <div className="px-4 flex justify-end w-full">
-            <Link
-              to="/app/order/form"
-              className="btn btn-soft btn-primary"
-              activeOptions={{ exact: true }}
-              activeProps={{ className: "text-primary" }}
+            <button
+              type="button"
+              className="btn btn-soft btn-neutral"
+              onClick={handleSignOut}
             >
-              <PlusIcon className="size-4" />
-              <span>Novo pedido</span>
-            </Link>
+              Sair
+            </button>
           </div>
         </nav>
         <div className="bg-base-200 border-t border-l border-base-300 rounded-tl-box h-full">
@@ -67,6 +65,17 @@ function PrivateLayout() {
             {organization.name}
           </div>
           <ul className="menu p-4 w-full space-y-1">
+            <li>
+              <Link
+              to="/app/order/form"
+              className="btn btn-soft btn-primary"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "text-primary" }}
+            >
+              <PlusIcon className="size-4" />
+              <span>Novo pedido</span>
+            </Link>
+            </li>
             <li>
               <Link
                 to="/app/overview"

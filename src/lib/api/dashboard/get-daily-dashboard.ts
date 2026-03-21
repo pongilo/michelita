@@ -97,7 +97,11 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
           },
           item: {
             select: {
+              description: true,
+              quantity: true,
               total: true,
+              deliveredAt: true,
+              note: true,
             },
           },
         },
@@ -235,7 +239,13 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         note: order.note,
         customerName: order.customer?.name ?? null,
         customerId: order.customer?.id ?? null,
-        itemCount: order.item.length,
+        items: order.item.map((item) => ({
+          description: item.description,
+          quantity: Number(item.quantity),
+          total: Number(item.total),
+          deliveredAt: item.deliveredAt?.toISOString() ?? null,
+          note: item.note ?? null,
+        })),
       })),
     };
   });
