@@ -6,6 +6,7 @@ const updateTransactionSchema = z.object({
   id: z.uuid(),
   organizationId: z.uuid(),
   linkedCustomerId: z.uuid().nullable().optional(),
+  linkedOrderId: z.uuid().nullable().optional(),
   amount: z.number().min(0.01, "O valor deve ser maior que zero."),
   type: z.enum(["entry", "exit"]),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
@@ -65,6 +66,26 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
       }
     }
 
+    let orderCustomerId: string | null = null;
+    if (data.linkedOrderId) {
+      const order = await prisma.order.findFirst({
+        where: {
+          id: data.linkedOrderId,
+          organizationId: data.organizationId,
+        },
+        select: {
+          id: true,
+          customerId: true,
+        },
+      });
+
+      if (!order) {
+        throw new Error("Pedido nao encontrado para a organizacao informada.");
+      }
+
+      orderCustomerId = order.customerId;
+    }
+
     const normalizedAmount = data.type === "entry" ? data.amount : -Math.abs(data.amount);
 
     await prisma.$transaction(async (transactionClient) => {
@@ -86,6 +107,12 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
         },
       });
 
+      await transactionClient.orderTransaction.deleteMany({
+        where: {
+          transactionId: data.id,
+        },
+      });
+
       if (data.linkedCustomerId) {
         await transactionClient.customerTransaction.create({
           data: {
@@ -93,6 +120,24 @@ const updateTransactionServerFn = createServerFn({ method: "POST" })
             transactionId: data.id,
           },
         });
+      }
+
+      if (data.linkedOrderId) {
+        await transactionClient.orderTransaction.create({
+          data: {
+            orderId: data.linkedOrderId,
+            transactionId: data.id,
+          },
+        });
+
+        if (orderCustomerId && orderCustomerId !== data.linkedCustomerId) {
+          await transactionClient.customerTransaction.create({
+            data: {
+              customerId: orderCustomerId,
+              transactionId: data.id,
+            },
+          });
+        }
       }
     });
 

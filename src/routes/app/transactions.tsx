@@ -36,6 +36,7 @@ function getTransactionsPeriodBounds(period: TransactionsPeriod, referenceDate: 
 }
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
+import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
@@ -86,6 +87,11 @@ function TransactionsPage() {
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization.id,
   });
+  const { data: orders = [] } = useGetOrders({
+    organizationId: organization.id,
+    period,
+    referenceDate,
+  });
   const { mutateAsync: createTransaction, isPending: isCreatingTransaction } = useCreateTransaction({
     organizationId: organization.id,
   });
@@ -131,6 +137,7 @@ function TransactionsPage() {
           method: values.method,
           madeAt: values.madeAt,
           linkedCustomerId: values.linkedCustomerId ? values.linkedCustomerId : null,
+          linkedOrderId: values.linkedOrderId ? values.linkedOrderId : null,
           description: values.description,
         });
 
@@ -143,6 +150,7 @@ function TransactionsPage() {
           method: values.method,
           madeAt: values.madeAt,
           linkedCustomerId: values.linkedCustomerId ? values.linkedCustomerId : undefined,
+          linkedOrderId: values.linkedOrderId ? values.linkedOrderId : undefined,
           description: values.description,
         });
 
@@ -293,18 +301,21 @@ function TransactionsPage() {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Data</th>
                     <th>Tipo</th>
                     <th>Método</th>
                     <th>Descrição</th>
                     <th>Valor</th>
                     <th>Clientes vinculados</th>
+                    <th>Pedidos vinculados</th>
                     <th className="text-right">Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
+                      <td className="font-mono text-xs opacity-60">{transaction.id.slice(0, 8)}</td>
                       <td>{datetimeFormatter.format(new Date(transaction.madeAt))}</td>
                       <td>
                         <span className={`badge ${transaction.type === "entry" ? "badge-success" : "badge-warning"}`}>
@@ -327,6 +338,24 @@ function TransactionsPage() {
                                 className="link"
                               >
                                 {customer.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {transaction.linkedOrders.length === 0 ? (
+                          "-"
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {transaction.linkedOrders.map((order) => (
+                              <Link
+                                key={order.id}
+                                to="/app/order/$orderId"
+                                params={{ orderId: order.id }}
+                                className="link"
+                              >
+                                #{order.id.slice(0, 8)}
                               </Link>
                             ))}
                           </div>
@@ -369,6 +398,10 @@ function TransactionsPage() {
           id: customer.id,
           name: customer.name,
         }))}
+        orders={orders.map((order) => ({
+          id: order.id,
+          label: `#${order.id.slice(0, 8)}${order.customer ? ` – ${order.customer.name}` : ""} (${datetimeFormatter.format(new Date(order.orderedAt))})`,
+        }))}
         errorMessage={formError}
         successMessage=""
         initialValues={
@@ -379,6 +412,7 @@ function TransactionsPage() {
                 method: editingTransaction.method as TransactionFormValues["method"],
                 madeAt: toLocalDatetimeInput(editingTransaction.madeAt),
                 linkedCustomerId: editingTransaction.linkedCustomerId ?? "",
+                linkedOrderId: editingTransaction.linkedOrderId ?? "",
                 description: editingTransaction.description ?? "",
               }
             : undefined

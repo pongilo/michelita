@@ -46,6 +46,34 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             note: true,
           },
         },
+        orderTransaction: {
+          orderBy: {
+            transaction: {
+              madeAt: "desc",
+            },
+          },
+          select: {
+            transaction: {
+              select: {
+                id: true,
+                amount: true,
+                method: true,
+                madeAt: true,
+                description: true,
+                customer: {
+                  select: {
+                    customer: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -73,6 +101,15 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         note: item.note,
       })),
       itemTotal,
+      transactions: order.orderTransaction.map(({ transaction }) => ({
+        id: transaction.id,
+        amount: Number(transaction.amount),
+        type: Number(transaction.amount) >= 0 ? "entry" : "exit",
+        method: transaction.method as string,
+        madeAt: transaction.madeAt,
+        description: transaction.description,
+        linkedCustomers: transaction.customer.map((c) => c.customer),
+      })),
     };
   });
 

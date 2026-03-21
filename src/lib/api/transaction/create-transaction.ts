@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 const createTransactionSchema = z.object({
   organizationId: z.uuid(),
   linkedCustomerId: z.uuid().optional(),
+  linkedOrderId: z.uuid().optional(),
   amount: z.number().min(0.01, "O valor deve ser maior que zero."),
   type: z.enum(["entry", "exit"]),
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
@@ -50,6 +51,26 @@ const createTransactionServerFn = createServerFn({ method: "POST" })
       }
     }
 
+    let orderCustomerId: string | null = null;
+    if (data.linkedOrderId) {
+      const order = await prisma.order.findFirst({
+        where: {
+          id: data.linkedOrderId,
+          organizationId: data.organizationId,
+        },
+        select: {
+          id: true,
+          customerId: true,
+        },
+      });
+
+      if (!order) {
+        throw new Error("Pedido nao encontrado para a organizacao informada.");
+      }
+
+      orderCustomerId = order.customerId;
+    }
+
     const normalizedAmount = data.type === "entry" ? data.amount : -Math.abs(data.amount);
 
     const transaction = await prisma.$transaction(async (transactionClient) => {
@@ -73,6 +94,25 @@ const createTransactionServerFn = createServerFn({ method: "POST" })
             transactionId: createdTransaction.id,
           },
         });
+      }
+
+      if (data.linkedOrderId) {
+        await transactionClient.orderTransaction.create({
+          data: {
+            orderId: data.linkedOrderId,
+            transactionId: createdTransaction.id,
+          },
+        });
+
+        // Se o pedido tem um cliente e ele é diferente do já vinculado, vincular também
+        if (orderCustomerId && orderCustomerId !== data.linkedCustomerId) {
+          await transactionClient.customerTransaction.create({
+            data: {
+              customerId: orderCustomerId,
+              transactionId: createdTransaction.id,
+            },
+          });
+        }
       }
 
       return createdTransaction;

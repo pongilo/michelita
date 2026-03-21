@@ -10,7 +10,7 @@ export function useCreateTransaction({ organizationId }: UseCreateTransactionPro
 
   return useMutation({
     mutationFn: createTransaction,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["transactions", organizationId],
       });
@@ -20,6 +20,11 @@ export function useCreateTransaction({ organizationId }: UseCreateTransactionPro
       queryClient.invalidateQueries({
         queryKey: ["dashboard", organizationId, "daily"],
       });
+      if (variables.linkedOrderId) {
+        queryClient.invalidateQueries({
+          queryKey: ["order", organizationId, variables.linkedOrderId],
+        });
+      }
     },
   });
 }

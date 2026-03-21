@@ -7,6 +7,15 @@ import { CustomerFormModal, type CustomerFormValues } from "@/components/custome
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
+import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
+
+const transactionSchema = z.object({
+  type: z.enum(["entry", "exit"]),
+  amount: z.number().min(0.01, "O valor deve ser maior que zero."),
+  method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
+  madeAt: z.string().trim().min(1, "Data/hora da transacao e obrigatoria."),
+  description: z.string().trim().optional(),
+});
 
 const createOrderFormSchema = z.object({
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
@@ -24,6 +33,7 @@ const createOrderFormSchema = z.object({
       })
     )
     .min(1, "Adicione pelo menos um item."),
+  transactions: z.array(transactionSchema),
 });
 
 type CreateOrderFormValues = z.infer<typeof createOrderFormSchema>;
@@ -44,6 +54,16 @@ function emptyItem(): CreateOrderFormValues["items"][number] {
   };
 }
 
+function emptyTransaction(): CreateOrderFormValues["transactions"][number] {
+  return {
+    type: "entry",
+    amount: 0,
+    method: "pix",
+    madeAt: localDatetimeNow(),
+    description: "",
+  };
+}
+
 export const Route = createFileRoute("/app/order/form")({
   component: OrderFormRoute,
 });
@@ -60,6 +80,9 @@ function OrderFormRoute() {
   });
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
   const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutateAsync: createTransaction, isPending: isCreatingTransaction } = useCreateTransaction({
+    organizationId: organization.id,
+  });
 
   const {
     control,
@@ -77,6 +100,7 @@ function OrderFormRoute() {
       isPaid: false,
       note: "",
       items: [emptyItem()],
+      transactions: [],
     },
   });
 
@@ -89,7 +113,17 @@ function OrderFormRoute() {
     name: "items",
   });
 
+  const {
+    fields: transactionFields,
+    append: appendTransaction,
+    remove: removeTransaction,
+  } = useFieldArray({
+    control,
+    name: "transactions",
+  });
+
   const watchedItems = watch("items");
+  const watchedCustomerId = watch("customerId");
 
   const subtotal = useMemo(() => {
     return watchedItems.reduce((sum, item) => {
@@ -138,6 +172,19 @@ function OrderFormRoute() {
         })),
       });
 
+      for (const t of values.transactions) {
+        await createTransaction({
+          organizationId: organization.id,
+          type: t.type,
+          amount: t.amount,
+          method: t.method,
+          madeAt: t.madeAt,
+          description: t.description || undefined,
+          linkedOrderId: order.id,
+          linkedCustomerId: values.customerId || undefined,
+        });
+      }
+
       setSuccessMessage(`Pedido criado com sucesso. ID: ${order.id}`);
       reset({
         customerId: "",
@@ -145,11 +192,14 @@ function OrderFormRoute() {
         isPaid: false,
         note: "",
         items: [emptyItem()],
+        transactions: [],
       });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erro ao registrar pedido.");
     }
   }
+
+  const isPending = isCreatingOrder || isCreatingTransaction;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-8">
@@ -325,6 +375,100 @@ function OrderFormRoute() {
               </div>
             </section>
 
+            {/* Seção de transações */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-medium">Transações</h2>
+                  {watchedCustomerId ? (
+                    <p className="text-sm opacity-70">Vinculadas ao pedido e ao cliente selecionado.</p>
+                  ) : (
+                    <p className="text-sm opacity-70">Vinculadas ao pedido.</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  onClick={() => appendTransaction(emptyTransaction())}
+                >
+                  Adicionar transação
+                </button>
+              </div>
+
+              {transactionFields.map((field, index) => (
+                <div key={field.id} className="card border border-base-300 bg-base-100">
+                  <div className="card-body gap-3 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Transação {index + 1}</span>
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-ghost text-error"
+                        onClick={() => removeTransaction(index)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="space-y-1">
+                        <span className="label">Tipo</span>
+                        <select className="select select-bordered w-full" {...register(`transactions.${index}.type`)}>
+                          <option value="entry">Entrada</option>
+                          <option value="exit">Saida</option>
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="label">Valor</span>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          className="input input-bordered w-full"
+                          {...register(`transactions.${index}.amount`, { valueAsNumber: true })}
+                        />
+                        {errors.transactions?.[index]?.amount ? (
+                          <span className="text-error-content text-sm">{errors.transactions[index]?.amount?.message}</span>
+                        ) : null}
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="label">Metodo</span>
+                        <select className="select select-bordered w-full" {...register(`transactions.${index}.method`)}>
+                          <option value="pix">PIX</option>
+                          <option value="cash">Dinheiro</option>
+                          <option value="credit_card">Cartao de credito</option>
+                          <option value="debit_card">Cartao de debito</option>
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="label">Data/hora</span>
+                        <input
+                          type="datetime-local"
+                          className="input input-bordered w-full"
+                          {...register(`transactions.${index}.madeAt`)}
+                        />
+                        {errors.transactions?.[index]?.madeAt ? (
+                          <span className="text-error-content text-sm">{errors.transactions[index]?.madeAt?.message}</span>
+                        ) : null}
+                      </label>
+
+                      <label className="space-y-1 md:col-span-2">
+                        <span className="label">Descricao (opcional)</span>
+                        <input
+                          type="text"
+                          className="input input-bordered w-full"
+                          placeholder="Descricao da transacao"
+                          {...register(`transactions.${index}.description`)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </section>
+
             {errorMessage ? (
               <div className="alert alert-error">
                 <span>{errorMessage}</span>
@@ -338,8 +482,8 @@ function OrderFormRoute() {
             ) : null}
 
             <div className="flex justify-end">
-              <button type="submit" disabled={isCreatingOrder} className="btn btn-primary">
-                {isCreatingOrder ? "Salvando..." : "Registrar pedido"}
+              <button type="submit" disabled={isPending} className="btn btn-primary">
+                {isPending ? "Salvando..." : "Registrar pedido"}
               </button>
             </div>
           </form>

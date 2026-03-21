@@ -1,14 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
+import { useLinkCustomerTransaction } from "@/hooks/tanstack/customer/use-link-customer-transaction";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
+import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+
+function currentDateInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
 
 const transactionMethodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -51,12 +59,15 @@ function CustomerDetailsPage() {
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [transactionFormError, setTransactionFormError] = useState("");
   const [transactionFormSuccess, setTransactionFormSuccess] = useState("");
   const [actionError, setActionError] = useState("");
+  const [linkError, setLinkError] = useState("");
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
     organizationId: organization.id,
@@ -77,6 +88,22 @@ function CustomerDetailsPage() {
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
     organizationId: organization.id,
   });
+  const { mutateAsync: linkTransaction, isPending: isLinking } = useLinkCustomerTransaction({
+    organizationId: organization.id,
+    customerId,
+  });
+  const { data: allTransactions = [] } = useGetTransactions({
+    organizationId: organization.id,
+    period: "monthly",
+    referenceDate: currentDateInputValue(),
+  });
+
+  const linkedTransactionIds = useMemo(
+    () => new Set(data?.recentTransactions.map((t) => t.id) ?? []),
+    [data?.recentTransactions],
+  );
+  const availableToLink = allTransactions.filter((t) => !linkedTransactionIds.has(t.id));
+
   const editingTransaction = data?.recentTransactions.find((transaction) => transaction.id === editingTransactionId) ?? null;
   const isEditingTransaction = !!editingTransaction;
   const isSubmittingTransactionForm = isCreatingTransaction || isUpdatingTransaction;
@@ -209,6 +236,23 @@ function CustomerDetailsPage() {
       });
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Erro ao excluir cliente.");
+    }
+  }
+
+  async function handleLinkTransaction() {
+    if (!selectedTransactionId) return;
+    setLinkError("");
+    try {
+      await linkTransaction({
+        organizationId: organization.id,
+        customerId,
+        transactionId: selectedTransactionId,
+      });
+      setIsLinkModalOpen(false);
+      setSelectedTransactionId("");
+      setTransactionFormSuccess("Transacao vinculada ao cliente.");
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : "Erro ao vincular transacao.");
     }
   }
 
@@ -346,8 +390,19 @@ function CustomerDetailsPage() {
           </section>
 
           <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300">
+            <div className="p-4 border-b border-base-300 flex items-center justify-between gap-2">
               <h2 className="card-title text-base">Transações</h2>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                onClick={() => {
+                  setLinkError("");
+                  setSelectedTransactionId("");
+                  setIsLinkModalOpen(true);
+                }}
+              >
+                Vincular existente
+              </button>
             </div>
 
               {data.recentTransactions.length === 0 ? (
@@ -430,6 +485,63 @@ function CustomerDetailsPage() {
         onClose={handleCloseEditModal}
         onSubmit={onSubmit}
       />
+
+      {isLinkModalOpen ? (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-lg">
+            <h3 className="font-bold text-lg mb-4">Vincular transação existente</h3>
+
+            {availableToLink.length === 0 ? (
+              <p className="text-sm opacity-70">Nenhuma transacao disponivel para vincular no periodo atual.</p>
+            ) : (
+              <label className="space-y-1">
+                <span className="label">Selecione a transacao</span>
+                <select
+                  className="select select-bordered w-full"
+                  value={selectedTransactionId}
+                  onChange={(e) => setSelectedTransactionId(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {availableToLink.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"} {currencyFormatter.format(Math.abs(t.amount))} – {datetimeFormatter.format(new Date(t.madeAt))}{t.description ? ` – ${t.description}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {linkError ? (
+              <div className="alert alert-error mt-3">
+                <span>{linkError}</span>
+              </div>
+            ) : null}
+
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setIsLinkModalOpen(false);
+                  setSelectedTransactionId("");
+                  setLinkError("");
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!selectedTransactionId || isLinking}
+                onClick={handleLinkTransaction}
+              >
+                {isLinking ? "Vinculando..." : "Vincular"}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsLinkModalOpen(false)} />
+        </div>
+      ) : null}
 
       <TransactionFormModal
         isOpen={isTransactionModalOpen}

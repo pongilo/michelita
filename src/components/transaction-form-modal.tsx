@@ -10,6 +10,7 @@ const transactionFormSchema = z.object({
   method: z.enum(["pix", "cash", "credit_card", "debit_card"]),
   madeAt: z.string().trim().min(1, "Data/hora da transacao e obrigatoria."),
   linkedCustomerId: z.union([z.uuid(), z.literal("")]).optional(),
+  linkedOrderId: z.union([z.uuid(), z.literal("")]).optional(),
   description: z.string().trim().max(500, "A descricao deve ter no maximo 500 caracteres.").optional(),
 });
 
@@ -20,12 +21,19 @@ type CustomerOption = {
   name: string;
 };
 
+type OrderOption = {
+  id: string;
+  label: string;
+};
+
 type TransactionFormModalProps = {
   isOpen: boolean;
   mode: "create" | "edit";
   isSubmitting: boolean;
   customers: CustomerOption[];
+  orders?: OrderOption[];
   fixedLinkedCustomer?: CustomerOption;
+  fixedLinkedOrder?: OrderOption;
   errorMessage: string;
   successMessage: string;
   initialValues?: Partial<TransactionFormValues>;
@@ -46,6 +54,7 @@ function getDefaultValues(initialValues?: Partial<TransactionFormValues>): Trans
     method: initialValues?.method ?? "pix",
     madeAt: initialValues?.madeAt ?? localDatetimeNow(),
     linkedCustomerId: initialValues?.linkedCustomerId ?? "",
+    linkedOrderId: initialValues?.linkedOrderId ?? "",
     description: initialValues?.description ?? "",
   };
 }
@@ -55,7 +64,9 @@ export function TransactionFormModal({
   mode,
   isSubmitting,
   customers,
+  orders,
   fixedLinkedCustomer,
+  fixedLinkedOrder,
   errorMessage,
   successMessage,
   initialValues,
@@ -83,6 +94,7 @@ export function TransactionFormModal({
     initialValues?.amount,
     initialValues?.description,
     initialValues?.linkedCustomerId,
+    initialValues?.linkedOrderId,
     initialValues?.madeAt,
     initialValues?.method,
     initialValues?.type,
@@ -160,6 +172,28 @@ export function TransactionFormModal({
             </select>
           </label>
         )}
+
+        {fixedLinkedOrder ? (
+          <div className="space-y-1 md:col-span-2">
+            <span className="label">Pedido vinculado</span>
+            <input type="hidden" {...register("linkedOrderId")} value={fixedLinkedOrder.id} />
+            <div className="input input-bordered flex w-full items-center bg-base-200/60">
+              {fixedLinkedOrder.label}
+            </div>
+          </div>
+        ) : orders && orders.length > 0 ? (
+          <label className="space-y-1 md:col-span-2">
+            <span className="label">Pedido vinculado (opcional)</span>
+            <select className="select select-bordered w-full" {...register("linkedOrderId")}>
+              <option value="">Sem pedido vinculado</option>
+              {orders.map((order) => (
+                <option key={order.id} value={order.id}>
+                  {order.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         {errorMessage ? (
           <div className="alert alert-error md:col-span-2">

@@ -35,7 +35,7 @@ model Customer {
   id             String  @id @default(uuid()) @db.Uuid
   organizationId String  @map("organization_id") @db.Uuid
   name           String
-  phone          String?
+  phone          String? @unique
   address        String?
   note           String?
 
@@ -59,6 +59,18 @@ model CustomerTransaction {
   @@schema("public")
 }
 
+model OrderTransaction {
+  id            String @id @default(uuid()) @db.Uuid
+  orderId       String @map("order_id") @db.Uuid
+  transactionId String @map("transaction_id") @db.Uuid
+
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("order_transaction")
+  @@schema("public")
+}
+
 model Order {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -67,9 +79,10 @@ model Order {
   orderedAt      DateTime @map("ordered_at") @db.Timestamptz
   note           String?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  item         OrderItem[]
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer         Customer?          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  item             OrderItem[]
+  orderTransaction OrderTransaction[]
 
   @@map("order")
   @@schema("public")
@@ -101,7 +114,8 @@ model Transaction {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  customer CustomerTransaction[]
+  customer          CustomerTransaction[]
+  orderTransactions OrderTransaction[]
 
   @@map("transaction")
   @@schema("public")

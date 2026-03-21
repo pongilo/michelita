@@ -80,6 +80,22 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
             },
           },
         },
+        orderTransactions: {
+          select: {
+            order: {
+              select: {
+                id: true,
+                orderedAt: true,
+                customer: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -93,10 +109,18 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
         ).values(),
       );
 
+      const linkedOrders = transaction.orderTransactions.map(({ order }) => ({
+        id: order.id,
+        orderedAt: order.orderedAt,
+        customer: order.customer,
+      }));
+
       return {
         id: transaction.id,
         linkedCustomerId: linkedCustomers[0]?.id ?? null,
         linkedCustomers,
+        linkedOrderId: linkedOrders[0]?.id ?? null,
+        linkedOrders,
         amount: Number(transaction.amount),
         type: Number(transaction.amount) >= 0 ? "entry" : "exit",
         method: transactionMethodFromPrisma[transaction.method],
