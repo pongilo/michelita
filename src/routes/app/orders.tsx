@@ -9,6 +9,23 @@ const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
 });
 
+const timeFormatter = new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" });
+const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+function formatDelivery(deliveredAt: Date | string | null, orderedAt: Date | string) {
+  if (!deliveredAt) return null;
+  const d = new Date(deliveredAt);
+  const o = new Date(orderedAt);
+  if (d.getTime() === o.getTime()) return null;
+  const sameDay =
+    d.getFullYear() === o.getFullYear() &&
+    d.getMonth() === o.getMonth() &&
+    d.getDate() === o.getDate();
+  return sameDay
+    ? timeFormatter.format(d)
+    : `${shortDateFormatter.format(d)} ${timeFormatter.format(d)}`;
+}
+
 type OrdersPeriod = "daily" | "weekly" | "monthly";
 
 function currentDateInputValue() {
@@ -165,9 +182,6 @@ function OrdersPage() {
           <button type="button" className="btn btn-outline btn-sm" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? "Atualizando..." : "Atualizar"}
           </button>
-          <Link to="/app/order/form" className="btn btn-primary btn-sm">
-            Novo pedido
-          </Link>
         </div>
       </div>
 
@@ -177,100 +191,110 @@ function OrdersPage() {
         </div>
       ) : null}
 
-      <div className="card border border-base-300 bg-base-100 shadow-sm">
-          {isLoading ? <p>Carregando pedidos...</p> : null}
-          {isError ? <p className="text-error">{error.message}</p> : null}
+      {isLoading ? <p>Carregando pedidos...</p> : null}
+      {isError ? <p className="text-error">{error.message}</p> : null}
 
-          {!isLoading && !isError && orders.length === 0 ? (
-            <p className="opacity-70">Nenhum pedido encontrado no periodo.</p>
-          ) : null}
+      {!isLoading && !isError && orders.length === 0 ? (
+        <p className="text-sm opacity-70">Nenhum pedido encontrado no periodo.</p>
+      ) : null}
 
-          {!isLoading && !isError && orders.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Data</th>
-                    <th>Itens</th>
-                    <th>Total itens</th>
-                    <th>Pagamento</th>
-                    <th>Observacao</th>
-                    <th className="text-right">Acoes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="font-mono text-xs">
-                        <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="link">
-                          {order.id.slice(0, 8)}
-                        </Link>
-                      </td>
-                      <td>
-                        {order.customer?.name ? (
-                          <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
-                            {order.customer.name}
+      {!isLoading && !isError && orders.length > 0 ? (
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="card border border-base-300 bg-base-100 shadow-sm"
+            >
+              <div className="card-body gap-3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="min-w-0">
+                    {order.customer?.name ? (
+                      <p className="font-semibold leading-tight">{order.customer.name}</p>
+                    ) : (
+                      <p className="text-sm opacity-40">Sem cliente</p>
+                    )}
+                    <p className="mt-0.5 text-xs opacity-50">{dateFormatter.format(new Date(order.orderedAt))}</p>
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+                      {order.isPaid ? "Pago" : "Pendente"}
+                    </span>
+                    <div className="dropdown dropdown-end">
+                      <label tabIndex={0} className="btn btn-xs btn-outline">
+                        Ações
+                      </label>
+                      <ul
+                        tabIndex={0}
+                        className="menu dropdown-content z-1 mt-1 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow"
+                      >
+                        <li>
+                          <Link to="/app/order/$orderId" params={{ orderId: order.id }}>
+                            Ver pedido
                           </Link>
-                        ) : "Sem cliente"}
-                      </td>
-                      <td>{dateFormatter.format(new Date(order.orderedAt))}</td>
-                      <td>{order.item.length}</td>
-                      <td>{currencyFormatter.format(order.itemTotal)}</td>
-                      <td>
-                        <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                          {order.isPaid ? "Pago" : "Pendente"}
+                        </li>
+                        <li>
+                          <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }}>
+                            Editar pedido
+                          </Link>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            disabled={isUpdatingOrder || isDeletingOrder}
+                            onClick={() => handleTogglePaid(order.id, order.isPaid)}
+                          >
+                            {order.isPaid ? "Marcar pendente" : "Marcar pago"}
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className="text-error"
+                            disabled={isUpdatingOrder || isDeletingOrder}
+                            onClick={() => handleDeleteOrder(order.id)}
+                          >
+                            Excluir pedido
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <ul className="space-y-2">
+                  {order.item.map((item) => (
+                    <li key={item.id} className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-sm">
+                          <span className="font-bold text-primary">{item.quantity}x</span>{" "}
+                          {item.description}
+                          {formatDelivery(item.deliveredAt, order.orderedAt) && (
+                            <span className="ml-1.5 text-xs opacity-50">
+                              · {formatDelivery(item.deliveredAt, order.orderedAt)}
+                            </span>
+                          )}
                         </span>
-                      </td>
-                      <td className="max-w-44 truncate" title={order.note ?? ""}>
-                        {order.note ?? "-"}
-                      </td>
-                      <td>
-                        <div className="flex justify-end">
-                          <div className="dropdown dropdown-end">
-                            <label tabIndex={0} className="btn btn-xs btn-outline">
-                              Acoes
-                            </label>
-                            <ul
-                              tabIndex={0}
-                              className="menu dropdown-content z-[1] mt-1 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow"
-                            >
-                              <li>
-                                <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }}>
-                                  Editar pedido
-                                </Link>
-                              </li>
-                              <li>
-                                <button
-                                  type="button"
-                                  disabled={isUpdatingOrder || isDeletingOrder}
-                                  onClick={() => handleTogglePaid(order.id, order.isPaid)}
-                                >
-                                  {order.isPaid ? "Marcar pendente" : "Marcar pago"}
-                                </button>
-                              </li>
-                              <li>
-                                <button
-                                  type="button"
-                                  className="text-error"
-                                  disabled={isUpdatingOrder || isDeletingOrder}
-                                  onClick={() => handleDeleteOrder(order.id)}
-                                >
-                                  Excluir pedido
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
+                        {item.note && (
+                          <p className="mt-0.5 text-xs opacity-50">{item.note}</p>
+                        )}
+                      </div>
+                      <span className="mt-0.5 shrink-0 text-xs opacity-60">{currencyFormatter.format(item.total)}</span>
+                    </li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+
+                <div className="flex items-center justify-between gap-2 border-t border-base-300 pt-2">
+                  {order.note
+                    ? <p className="text-xs italic opacity-50">{order.note}</p>
+                    : <span />
+                  }
+                  <span className="text-sm font-bold">{currencyFormatter.format(order.itemTotal)}</span>
+                </div>
+              </div>
             </div>
-          ) : null}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </main>
   );
 }

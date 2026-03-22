@@ -101,17 +101,7 @@ function TransactionsPage() {
   const { mutateAsync: deleteTransaction, isPending: isDeletingTransaction } = useDeleteTransaction({
     organizationId: organization.id,
   });
-  const { totalEntries, totalExits, balance } = useMemo(() => {
-    const totalEntries = transactions
-      .filter((t) => t.type === "entry")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const totalExits = transactions
-      .filter((t) => t.type === "exit")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    return { totalEntries, totalExits, balance: totalEntries - totalExits };
-  }, [transactions]);
-
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
@@ -259,30 +249,7 @@ function TransactionsPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body p-4">
-            <p className="text-sm opacity-70">Entradas</p>
-            <p className="text-2xl font-semibold">{currencyFormatter.format(totalEntries)}</p>
-          </div>
-        </div>
-        <div className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body p-4">
-            <p className="text-sm opacity-70">Saídas</p>
-            <p className="text-2xl font-semibold">{currencyFormatter.format(totalExits)}</p>
-          </div>
-        </div>
-        <div className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body p-4">
-            <p className="text-sm opacity-70">Saldo</p>
-            <p className={`text-2xl font-semibold ${balance >= 0 ? "text-success" : "text-error"}`}>
-              {currencyFormatter.format(balance)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
+<section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
           {actionError ? (
             <div className="alert alert-error">
               <span>{actionError}</span>
