@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
+import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useLinkOrderTransaction } from "@/hooks/tanstack/order/use-link-order-transaction";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/app/order/$orderId")({
 function OrderDetailsPage() {
   const { organization } = Route.useRouteContext();
   const { orderId } = Route.useParams();
+  const navigate = useNavigate();
   const { data: order, isLoading, isError, error } = useGetOrder({
     organizationId: organization.id,
     orderId,
@@ -49,8 +51,20 @@ function OrderDetailsPage() {
     organizationId: organization.id,
   });
   const { link, unlink } = useLinkOrderTransaction({ organizationId: organization.id, orderId });
+  const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({ organizationId: organization.id });
 
   const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
+
+  async function handleDeleteOrder() {
+    const confirmed = window.confirm("Tem certeza que deseja deletar este pedido? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
+    try {
+      await deleteOrder({ id: orderId, organizationId: organization.id });
+      navigate({ to: "/app/orders" });
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Erro ao deletar pedido.");
+    }
+  }
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState("");
   const [formError, setFormError] = useState("");
@@ -142,9 +156,19 @@ function OrderDetailsPage() {
           )}
         </div>
         {order ? (
-          <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }} className="btn btn-sm btn-primary">
-            Editar pedido
-          </Link>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline btn-error"
+              disabled={isDeletingOrder}
+              onClick={handleDeleteOrder}
+            >
+              {isDeletingOrder ? "Deletando..." : "Deletar pedido"}
+            </button>
+            <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }} className="btn btn-sm btn-primary">
+              Editar pedido
+            </Link>
+          </div>
         ) : null}
       </div>
 

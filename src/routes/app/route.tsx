@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, HouseIcon, KanbanIcon, ListOrderedIcon, PanelRightCloseIcon, PlusIcon, UsersRoundIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, ChevronDownIcon, HouseIcon, KanbanIcon, ListOrderedIcon, LogOutIcon, MenuIcon, PlusIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -26,9 +26,16 @@ export const Route = createFileRoute("/app")({
   component: PrivateLayout,
 });
 
+const navItems = [
+  { to: "/app/overview", icon: HouseIcon, label: "Página inicial", subNav: [] },
+  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos", subNav: [{to: "/app/deliveries", icon: KanbanIcon, label: "Entregas" }] },
+  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes", subNav: [] },
+  { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações", subNav: [] },
+] as const;
+
 function PrivateLayout() {
   const navigate = useNavigate();
-  const { organization } = Route.useRouteContext();
+  const { organization, user } = Route.useRouteContext();
 
   async function handleSignOut() {
     await signOut();
@@ -38,100 +45,122 @@ function PrivateLayout() {
   return (
     <div className="drawer lg:drawer-open">
       <input id="app-drawer" type="checkbox" className="drawer-toggle" />
-      <div className="drawer-content">
-        <nav className="navbar w-full bg-white sticky top-0 z-10">
-          <label htmlFor="app-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden">
-            <PanelRightCloseIcon className="size-5" />
+      <div className="drawer-content flex flex-col min-h-screen">
+        <nav className="navbar w-full bg-base-100 border-b border-base-200 sticky top-0 z-10 lg:hidden">
+          <label htmlFor="app-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost">
+            <MenuIcon className="size-5" />
           </label>
-          <div className="px-4 flex justify-end w-full">
-            <button
-              type="button"
-              className="btn btn-soft btn-neutral"
-              onClick={handleSignOut}
-            >
-              Sair
-            </button>
-          </div>
+          <span className="font-semibold text-sm ml-1">{organization.name}</span>
         </nav>
-        <div className="bg-base-200 border-t border-l border-base-300 rounded-tl-box h-full">
+        <div className="flex-1 bg-base-100">
           <Outlet />
         </div>
       </div>
 
-      <div className="drawer-side is-drawer-close:overflow-visible">
+      <div className="drawer-side z-20 border-r border-base-300">
         <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
-        <div className="bg-white min-h-full w-80">
-          <div className="font-semibold text-lg px-7 py-5">
-            {organization.name}
+
+        <aside className="min-h-full w-64 bg-base-100">
+          {/* Header */}
+          {/* <div className="flex items-center gap-2.5 px-5 py-5">
+            <div className="size-7 rounded-md bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {organization.name.charAt(0).toUpperCase()}
+            </div>
+            <span className="font-semibold text-sm truncate">{organization.name}</span>
+          </div> */}
+
+          <div className="px-3 py-2">
+            <div className="dropdown w-full">
+              <div tabIndex={0} role="button" className="btn btn-ghost gap-2.5 px-2 py-5 w-full">
+                <div className="size-7 rounded-md bg-primary flex items-center justify-center text-base-100 text-xs font-bold shrink-0">
+                  {organization.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-semibold text-sm truncate flex-1 text-left">{organization.name}</span>
+                <ChevronDownIcon className="size-4 shrink-0" />
+              </div>
+              <div
+                tabIndex={0}
+                className="dropdown-content card card-sm bg-base-100 z-1 w-58 shadow-md border border-base-300"
+              >
+                <ul className="menu w-full space-y-0.5">
+                  <li>
+                    <Link
+                      to="/app/settings"
+                      activeOptions={{ exact: true }}
+                      className="opacity-60!"
+                    >
+                      <SettingsIcon className="size-4" />
+                      <span>Configurações</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/app/account"
+                      activeOptions={{ exact: true }}
+                      className="opacity-60!"
+                    >
+                      <User2Icon className="size-4" />
+                      <span>{user.user_metadata.name}</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="opacity-60!"
+                    >
+                      <LogOutIcon className="size-4 shrink-0" />
+                      <span>Sair</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <ul className="menu p-4 w-full space-y-1">
-            <li>
-              <Link
+
+          <div className="px-3 pt-4 pb-2">
+            <Link
               to="/app/order/form"
-              className="btn btn-soft btn-primary"
-              activeOptions={{ exact: true }}
-              activeProps={{ className: "text-primary" }}
+              className="btn btn-primary w-full btn-soft"
             >
-              <PlusIcon className="size-4" />
+              <PlusIcon className="size-4 shrink-0" />
               <span>Novo pedido</span>
             </Link>
-            </li>
-            <li>
-              <Link
-                to="/app/overview"
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "text-primary" }}
-              >
-                <HouseIcon className="size-5" />
-                <span>Visão geral</span>
-              </Link>
-            </li>
+          </div>
 
-            <li>
-              <Link
-                to="/app/orders"
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "text-primary" }}
-              >
-                <ListOrderedIcon className="size-5" />
-                <span>Pedidos</span>
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                to="/app/deliveries"
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "text-primary" }}
-              >
-                <KanbanIcon className="size-5" />
-                <span>Entregas</span>
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                to="/app/customers"
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "text-primary" }}
-              >
-                <UsersRoundIcon className="size-5" />
-                <span>Clientes</span>
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                to="/app/transactions"
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "text-primary" }}
-              >
-                <ArrowRightLeftIcon className="size-5" />
-                <span>Transações</span>
-              </Link>
-            </li>
+          <ul className="menu w-full px-3 py-2 space-y-0.5">
+            {navItems.map(({ to, icon: Icon, label, subNav }) => (
+              <li key={to}>
+                <Link
+                  to={to}
+                  activeOptions={{ exact: true }}
+                  className="opacity-60!"
+                  activeProps={{ className: "text-primary opacity-100!" }}
+                >
+                  <Icon className="size-4" />
+                  <span>{label}</span>
+                </Link>
+                {subNav.length > 0 && (
+                  <ul>
+                    {subNav.map((subNavItem) => (
+                      <li key={subNavItem.to}>
+                        <Link
+                          to={subNavItem.to}
+                          activeOptions={{ exact: true }}
+                          className="opacity-60!"
+                          activeProps={{ className: "text-primary opacity-100!" }}
+                        >
+                          <subNavItem.icon className="size-4" />
+                          <span>{subNavItem.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )} 
+              </li>
+            ))}
           </ul>
-        </div>
+        </aside>
       </div>
     </div>
   );

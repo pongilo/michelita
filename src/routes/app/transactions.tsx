@@ -249,7 +249,7 @@ const [isFormModalOpen, setIsFormModalOpen] = useState(false);
         </div>
       ) : null}
 
-<section className="card border border-base-300 bg-base-100 shadow-sm mt-4">
+        <section className="mt-4">
           {actionError ? (
             <div className="alert alert-error">
               <span>{actionError}</span>

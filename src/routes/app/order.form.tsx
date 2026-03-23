@@ -294,8 +294,8 @@ function OrderFormRoute() {
                         ) : null}
                       </div>
 
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <label className="space-y-1 md:col-span-2">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <label className="space-y-1">
                           <span className="label">Descricao</span>
                           <input
                             type="text"
@@ -355,7 +355,7 @@ function OrderFormRoute() {
                           ) : null}
                         </label>
 
-                        <label className="space-y-1">
+                        <label className="space-y-1 md:col-span-2">
                           <span className="label">Observacao</span>
                           <input type="text" className="input input-bordered w-full" {...register(`items.${index}.note`)} />
                         </label>

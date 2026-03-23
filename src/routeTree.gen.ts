@@ -14,10 +14,12 @@ import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AppTransactionsRouteImport } from './routes/app/transactions'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppOverviewRouteImport } from './routes/app/overview'
 import { Route as AppOrdersRouteImport } from './routes/app/orders'
 import { Route as AppDeliveriesRouteImport } from './routes/app/deliveries'
 import { Route as AppCustomersRouteImport } from './routes/app/customers'
+import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
 import { Route as SiteBolosVulcaoRouteImport } from './routes/_site/bolos-vulcao'
 import { Route as SiteBolosFitRouteImport } from './routes/_site/bolos-fit'
@@ -56,6 +58,11 @@ const AppTransactionsRoute = AppTransactionsRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -74,6 +81,11 @@ const AppDeliveriesRoute = AppDeliveriesRouteImport.update({
 const AppCustomersRoute = AppCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
@@ -159,10 +171,12 @@ export interface FileRoutesByFullPath {
   '/bolos-fit': typeof SiteBolosFitRoute
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
+  '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
   '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
@@ -182,10 +196,12 @@ export interface FileRoutesByTo {
   '/bolos-fit': typeof SiteBolosFitRoute
   '/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/docinhos': typeof SiteDocinhosRoute
+  '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
   '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
@@ -207,10 +223,12 @@ export interface FileRoutesById {
   '/_site/bolos-fit': typeof SiteBolosFitRoute
   '/_site/bolos-vulcao': typeof SiteBolosVulcaoRoute
   '/_site/docinhos': typeof SiteDocinhosRoute
+  '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
   '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/_site/': typeof SiteIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
@@ -233,10 +251,12 @@ export interface FileRouteTypes {
     | '/bolos-fit'
     | '/bolos-vulcao'
     | '/docinhos'
+    | '/app/account'
     | '/app/customers'
     | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
+    | '/app/settings'
     | '/app/transactions'
     | '/organization/new'
     | '/app/customers/$customerId'
@@ -256,10 +276,12 @@ export interface FileRouteTypes {
     | '/bolos-fit'
     | '/bolos-vulcao'
     | '/docinhos'
+    | '/app/account'
     | '/app/customers'
     | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
+    | '/app/settings'
     | '/app/transactions'
     | '/organization/new'
     | '/app/customers/$customerId'
@@ -280,10 +302,12 @@ export interface FileRouteTypes {
     | '/_site/bolos-fit'
     | '/_site/bolos-vulcao'
     | '/_site/docinhos'
+    | '/app/account'
     | '/app/customers'
     | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
+    | '/app/settings'
     | '/app/transactions'
     | '/_site/'
     | '/_auth/organization/new'
@@ -336,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTransactionsRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/overview': {
       id: '/app/overview'
       path: '/overview'
@@ -362,6 +393,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/app/customers'
       preLoaderRoute: typeof AppCustomersRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/account': {
+      id: '/app/account'
+      path: '/account'
+      fullPath: '/app/account'
+      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_site/docinhos': {
@@ -520,10 +558,12 @@ const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppCustomersRoute: typeof AppCustomersRouteWithChildren
   AppDeliveriesRoute: typeof AppDeliveriesRoute
   AppOrdersRoute: typeof AppOrdersRoute
   AppOverviewRoute: typeof AppOverviewRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppOrderOrderIdRoute: typeof AppOrderOrderIdRoute
   AppOrderFormRoute: typeof AppOrderFormRoute
@@ -531,10 +571,12 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppCustomersRoute: AppCustomersRouteWithChildren,
   AppDeliveriesRoute: AppDeliveriesRoute,
   AppOrdersRoute: AppOrdersRoute,
   AppOverviewRoute: AppOverviewRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppOrderOrderIdRoute: AppOrderOrderIdRoute,
   AppOrderFormRoute: AppOrderFormRoute,

@@ -127,7 +127,7 @@ function CustomersPage() {
         </div>
       ) : null}
 
-      <section className="card border border-base-300 bg-base-100 shadow-sm">
+      <section>
           {isLoading ? <p>Carregando clientes...</p> : null}
           {isError ? <p className="text-error">{error.message}</p> : null}
 
