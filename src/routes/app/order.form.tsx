@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -25,6 +25,7 @@ const createOrderFormSchema = z.object({
   items: z
     .array(
       z.object({
+        isEncomenda: z.boolean(),
         description: z.string().trim().min(1, "Descricao do item e obrigatoria."),
         unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
         quantity: z.number().int().min(1, "Quantidade minima: 1."),
@@ -44,12 +45,13 @@ function localDatetimeNow() {
   return local.toISOString().slice(0, 16);
 }
 
-function emptyItem(): CreateOrderFormValues["items"][number] {
+function emptyItem(orderedAt?: string): CreateOrderFormValues["items"][number] {
   return {
+    isEncomenda: false,
     description: "",
     unitPrice: 0,
     quantity: 1,
-    deliveredAt: localDatetimeNow(),
+    deliveredAt: orderedAt ?? localDatetimeNow(),
     note: "",
   };
 }
@@ -99,7 +101,7 @@ function OrderFormRoute() {
       orderedAt: localDatetimeNow(),
       isPaid: false,
       note: "",
-      items: [emptyItem()],
+      items: [emptyItem(localDatetimeNow())],
       transactions: [],
     },
   });
@@ -124,6 +126,15 @@ function OrderFormRoute() {
 
   const watchedItems = watch("items");
   const watchedCustomerId = watch("customerId");
+  const watchedOrderedAt = watch("orderedAt");
+
+  useEffect(() => {
+    watchedItems.forEach((item, index) => {
+      if (!item.isEncomenda) {
+        setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: false });
+      }
+    });
+  }, [watchedOrderedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const subtotal = useMemo(() => {
     return watchedItems.reduce((sum, item) => {
@@ -167,7 +178,7 @@ function OrderFormRoute() {
           description: item.description,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
-          deliveredAt: item.deliveredAt,
+          deliveredAt: item.isEncomenda ? item.deliveredAt : values.orderedAt,
           note: item.note?.trim() ? item.note.trim() : undefined,
         })),
       });
@@ -186,12 +197,13 @@ function OrderFormRoute() {
       }
 
       setSuccessMessage(`Pedido criado com sucesso. ID: ${order.id}`);
+      const newOrderedAt = localDatetimeNow();
       reset({
         customerId: "",
-        orderedAt: localDatetimeNow(),
+        orderedAt: newOrderedAt,
         isPaid: false,
         note: "",
-        items: [emptyItem()],
+        items: [emptyItem(newOrderedAt)],
         transactions: [],
       });
     } catch (error) {
@@ -268,7 +280,7 @@ function OrderFormRoute() {
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium">Itens do pedido</h2>
-                <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem())}>
+                <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(watchedOrderedAt))}>
                   Adicionar item
                 </button>
               </div>
@@ -277,6 +289,7 @@ function OrderFormRoute() {
                 const itemSubtotal = watchedItems[index]
                   ? (Number(watchedItems[index].unitPrice) || 0) * (Number(watchedItems[index].quantity) || 0)
                   : 0;
+                const isEncomenda = watchedItems[index]?.isEncomenda ?? false;
 
                 return (
                   <div key={field.id} className="card border border-base-300 bg-base-100">
@@ -293,6 +306,28 @@ function OrderFormRoute() {
                           </button>
                         ) : null}
                       </div>
+
+                      <label className="label cursor-pointer justify-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          {...register(`items.${index}.isEncomenda`, {
+                            onChange: (e) => {
+                              if (!e.target.checked) {
+                                setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
+                              }
+                            },
+                          })}
+                        />
+                        <div>
+                          <span className="label-text font-medium">Encomenda</span>
+                          <p className="text-sm opacity-70">
+                            {isEncomenda
+                              ? "Defina a data de entrega deste item."
+                              : "A entrega sera na data do pedido."}
+                          </p>
+                        </div>
+                      </label>
 
                       <div className="grid gap-3 md:grid-cols-3">
                         <label className="space-y-1">
@@ -341,21 +376,23 @@ function OrderFormRoute() {
                           ) : null}
                         </label>
 
-                        <label className="space-y-1">
-                          <span className="label">Data/hora de entrega do item</span>
-                          <input
-                            type="datetime-local"
-                            className="input input-bordered w-full"
-                            {...register(`items.${index}.deliveredAt`)}
-                          />
-                          {errors.items?.[index]?.deliveredAt ? (
-                            <span className="text-error-content text-sm">
-                              {errors.items[index]?.deliveredAt?.message}
-                            </span>
-                          ) : null}
-                        </label>
+                        {isEncomenda ? (
+                          <label className="space-y-1">
+                            <span className="label">Data/hora de entrega</span>
+                            <input
+                              type="datetime-local"
+                              className="input input-bordered w-full"
+                              {...register(`items.${index}.deliveredAt`)}
+                            />
+                            {errors.items?.[index]?.deliveredAt ? (
+                              <span className="text-error-content text-sm">
+                                {errors.items[index]?.deliveredAt?.message}
+                              </span>
+                            ) : null}
+                          </label>
+                        ) : null}
 
-                        <label className="space-y-1 md:col-span-2">
+                        <label className={`space-y-1 ${isEncomenda ? "md:col-span-2" : "md:col-span-3"}`}>
                           <span className="label">Observacao</span>
                           <input type="text" className="input input-bordered w-full" {...register(`items.${index}.note`)} />
                         </label>

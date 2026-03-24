@@ -153,6 +153,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     ]);
 
     const totalOrders = ordersToday.length;
+    const pendingOrders = ordersToday.filter((order) => !order.isPaid).length;
     const totalItems = ordersToday.reduce((sum, order) => sum + order.item.length, 0);
     const grossRevenue = ordersToday.reduce((sum, order) => {
       const orderTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
@@ -207,6 +208,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
       rangeEnd: rangeEnd.toISOString(),
       metrics: {
         totalOrders,
+        pendingOrders,
         totalItems,
         grossRevenue: Number(grossRevenue.toFixed(2)),
         averageTicket: Number(averageTicket.toFixed(2)),

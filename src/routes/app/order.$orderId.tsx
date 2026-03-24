@@ -1,9 +1,14 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
+import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useLinkOrderTransaction } from "@/hooks/tanstack/order/use-link-order-transaction";
+import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
@@ -27,6 +32,45 @@ function currentDateInputValue() {
   return local.toISOString().slice(0, 10);
 }
 
+function toLocalDatetimeInput(value: string | Date) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return localDatetimeNow();
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+// ── Schemas ──────────────────────────────────────────────────────────────────
+
+const editInfoSchema = z.object({
+  customerId: z.union([z.uuid(), z.literal("")]).optional(),
+  orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
+  isPaid: z.boolean(),
+  note: z.string().trim().optional(),
+});
+
+const editItemsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        description: z.string().trim().min(1, "Descricao do item e obrigatoria."),
+        unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
+        quantity: z.number().int().min(1, "Quantidade minima: 1."),
+        deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
+        note: z.string().trim().optional(),
+      }),
+    )
+    .min(1, "Adicione pelo menos um item."),
+});
+
+type EditInfoValues = z.infer<typeof editInfoSchema>;
+type EditItemsValues = z.infer<typeof editItemsSchema>;
+
+function emptyItem(): EditItemsValues["items"][number] {
+  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetimeNow(), note: "" };
+}
+
+// ── Route ────────────────────────────────────────────────────────────────────
+
 export const Route = createFileRoute("/app/order/$orderId")({
   component: OrderDetailsPage,
 });
@@ -35,12 +79,14 @@ function OrderDetailsPage() {
   const { organization } = Route.useRouteContext();
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
+
   const { data: order, isLoading, isError, error } = useGetOrder({
     organizationId: organization.id,
     orderId,
   });
 
-  // Transações do período atual para vincular existente
+  const { data: customers = [] } = useGetCustomers({ organizationId: organization.id });
+
   const { data: allTransactions = [] } = useGetTransactions({
     organizationId: organization.id,
     period: "monthly",
@@ -52,9 +98,82 @@ function OrderDetailsPage() {
   });
   const { link, unlink } = useLinkOrderTransaction({ organizationId: organization.id, orderId });
   const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({ organizationId: organization.id });
+  const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({ organizationId: organization.id });
 
+  // ── Modal state ──────────────────────────────────────────────────────────
   const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
+  const [isEditItemsModalOpen, setIsEditItemsModalOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState("");
+  const [formError, setFormError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
 
+  // ── Edit info form ───────────────────────────────────────────────────────
+  const {
+    register: registerInfo,
+    handleSubmit: handleSubmitInfo,
+    reset: resetInfo,
+    formState: { errors: infoErrors },
+  } = useForm<EditInfoValues>({
+    resolver: zodResolver(editInfoSchema),
+    defaultValues: { customerId: "", orderedAt: localDatetimeNow(), isPaid: false, note: "" },
+  });
+
+  useEffect(() => {
+    if (order && isEditInfoModalOpen) {
+      resetInfo({
+        customerId: order.customerId ?? "",
+        orderedAt: toLocalDatetimeInput(order.orderedAt),
+        isPaid: order.isPaid,
+        note: order.note ?? "",
+      });
+    }
+  }, [order, isEditInfoModalOpen, resetInfo]);
+
+  // ── Edit items form ──────────────────────────────────────────────────────
+  const {
+    control: itemsControl,
+    register: registerItems,
+    handleSubmit: handleSubmitItems,
+    reset: resetItems,
+    watch: watchItems,
+    formState: { errors: itemsErrors },
+  } = useForm<EditItemsValues>({
+    resolver: zodResolver(editItemsSchema),
+    defaultValues: { items: [emptyItem()] },
+  });
+
+  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
+    control: itemsControl,
+    name: "items",
+  });
+
+  const watchedItems = watchItems("items");
+
+  const itemsSubtotal = useMemo(
+    () => watchedItems.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0), 0),
+    [watchedItems],
+  );
+
+  useEffect(() => {
+    if (order && isEditItemsModalOpen) {
+      resetItems({
+        items: order.item.length
+          ? order.item.map((item) => ({
+              description: item.description,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              deliveredAt: toLocalDatetimeInput(item.deliveredAt),
+              note: item.note ?? "",
+            }))
+          : [emptyItem()],
+      });
+    }
+  }, [order, isEditItemsModalOpen, resetItems]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleDeleteOrder() {
     const confirmed = window.confirm("Tem certeza que deseja deletar este pedido? Esta ação não pode ser desfeita.");
     if (!confirmed) return;
@@ -65,13 +184,48 @@ function OrderDetailsPage() {
       setActionError(err instanceof Error ? err.message : "Erro ao deletar pedido.");
     }
   }
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState("");
-  const [formError, setFormError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [actionSuccess, setActionSuccess] = useState("");
 
-  // Transações já vinculadas ao pedido (para evitar duplicatas no picker)
+  async function handleSaveInfo(values: EditInfoValues) {
+    if (!order) return;
+    setFormError("");
+    try {
+      await updateOrder({
+        id: order.id,
+        organizationId: organization.id,
+        customerId: values.customerId ? values.customerId : null,
+        orderedAt: values.orderedAt,
+        isPaid: values.isPaid,
+        note: values.note,
+      });
+      setIsEditInfoModalOpen(false);
+      setActionSuccess("Informações do pedido atualizadas.");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Erro ao atualizar pedido.");
+    }
+  }
+
+  async function handleSaveItems(values: EditItemsValues) {
+    if (!order) return;
+    setFormError("");
+    try {
+      await updateOrder({
+        id: order.id,
+        organizationId: organization.id,
+        items: values.items.map((item) => ({
+          description: item.description,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          deliveredAt: item.deliveredAt,
+          note: item.note?.trim() ? item.note.trim() : undefined,
+        })),
+      });
+      setIsEditItemsModalOpen(false);
+      setActionSuccess("Itens do pedido atualizados.");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Erro ao atualizar itens.");
+    }
+  }
+
   const linkedTransactionIds = useMemo(
     () => new Set(order?.transactions.map((t) => t.id) ?? []),
     [order?.transactions],
@@ -103,11 +257,7 @@ function OrderDetailsPage() {
     if (!selectedTransactionId) return;
     setActionError("");
     try {
-      await link.mutateAsync({
-        organizationId: organization.id,
-        orderId,
-        transactionId: selectedTransactionId,
-      });
+      await link.mutateAsync({ organizationId: organization.id, orderId, transactionId: selectedTransactionId });
       setIsLinkModalOpen(false);
       setSelectedTransactionId("");
       setActionSuccess("Transacao vinculada ao pedido.");
@@ -121,11 +271,7 @@ function OrderDetailsPage() {
     const confirmed = window.confirm("Deseja desvincular esta transacao do pedido?");
     if (!confirmed) return;
     try {
-      await unlink.mutateAsync({
-        organizationId: organization.id,
-        orderId,
-        transactionId,
-      });
+      await unlink.mutateAsync({ organizationId: organization.id, orderId, transactionId });
       setActionSuccess("Transacao desvinculada do pedido.");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Erro ao desvincular transacao.");
@@ -133,24 +279,25 @@ function OrderDetailsPage() {
   }
 
   const fixedLinkedOrder = order
-    ? {
-        id: order.id,
-        label: `#${order.id.slice(0, 8)}${order.customer ? ` – ${order.customer.name}` : ""}`,
-      }
+    ? { id: order.id, label: `#${order.id.slice(0, 8)}${order.customer ? ` – ${order.customer.name}` : ""}` }
     : undefined;
 
-  const fixedLinkedCustomer =
-    order?.customer
-      ? { id: order.customer.id, name: order.customer.name }
-      : undefined;
+  const fixedLinkedCustomer = order?.customer
+    ? { id: order.customer.id, name: order.customer.name }
+    : undefined;
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex gap-2 items-center">
-          <h1 className="text-2xl font-semibold">Pedido #{order?.id.slice(0, 8)}</h1>
+    <main className="mx-auto w-full max-w-4xl px-5 py-8">
+
+      {/* Header */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">
+            Pedido #{order?.id.slice(0, 8)}
+          </h1>
           {order && (
-            <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+            <span className={`badge ${order.isPaid ? "badge-success" : "badge-warning"}`}>
               {order.isPaid ? "Pago" : "Pendente"}
             </span>
           )}
@@ -159,205 +306,399 @@ function OrderDetailsPage() {
           <div className="flex gap-2">
             <button
               type="button"
-              className="btn btn-sm btn-outline btn-error"
+              className="btn btn-sm btn-ghost text-error"
               disabled={isDeletingOrder}
               onClick={handleDeleteOrder}
             >
-              {isDeletingOrder ? "Deletando..." : "Deletar pedido"}
+              {isDeletingOrder ? "Deletando..." : "Deletar"}
             </button>
-            <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }} className="btn btn-sm btn-primary">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => { setFormError(""); setIsEditItemsModalOpen(true); }}
+            >
+              Editar itens
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => { setFormError(""); setIsEditInfoModalOpen(true); }}
+            >
               Editar pedido
-            </Link>
+            </button>
           </div>
         ) : null}
       </div>
 
-      {isLoading ? <p>Carregando pedido...</p> : null}
-      {isError ? <p className="text-error">{error.message}</p> : null}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm opacity-60">
+          <span className="loading loading-spinner loading-sm" />
+          Carregando pedido...
+        </div>
+      ) : null}
+      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
       {order ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {actionSuccess ? (
-            <div className="alert alert-success">
-              <span>{actionSuccess}</span>
-            </div>
+            <div className="alert alert-success"><span>{actionSuccess}</span></div>
           ) : null}
           {actionError ? (
-            <div className="alert alert-error">
-              <span>{actionError}</span>
-            </div>
+            <div className="alert alert-error"><span>{actionError}</span></div>
           ) : null}
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
-              <p>
-                <strong>Data:</strong> {datetimeFormatter.format(new Date(order.orderedAt))}
-              </p>
-              <p>
-                <strong>Total do pedido:</strong> {currencyFormatter.format(order.itemTotal)}
-              </p>
+          {/* Info geral */}
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Data</p>
+              <p className="font-semibold text-sm">{datetimeFormatter.format(new Date(order.orderedAt))}</p>
             </div>
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Total</p>
+              <p className="font-bold text-lg">{currencyFormatter.format(order.itemTotal)}</p>
+            </div>
+            {order.note ? (
+              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4 col-span-2 sm:col-span-1">
+                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Observação</p>
+                <p className="text-sm">{order.note}</p>
+              </div>
+            ) : null}
           </section>
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
+          {/* Cliente */}
+          <section>
+            <h2 className="font-semibold mb-3">Cliente</h2>
             {order.customer ? (
-              <>
-                <div className="p-4 border-b border-base-300">
-                  <h2 className="card-title text-base">Cliente</h2>
+              <Link
+                to="/app/customers/$customerId"
+                params={{ customerId: order.customer.id }}
+                className="flex items-center gap-3 px-4 py-3 bg-base-100 border border-base-300 rounded-box hover:bg-base-200/50 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
+                  {order.customer.name.slice(0, 1).toUpperCase()}
                 </div>
-                <div className="card-body">
-                  <p>
-                    <strong>Nome:</strong>{' '}
-                    <Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} className="link">
-                      {order.customer.name}
-                    </Link>
-                  </p>
-                  <p><strong>Telefone:</strong> {order.customer?.phone ?? "-"}</p>
-                  <p><strong>Endereço:</strong> {order.customer?.address ?? "-"}</p>
-                  <p><strong>Observação:</strong> {order.note ?? "-"}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium leading-snug truncate">{order.customer.name}</p>
+                  {order.customer.phone ? (
+                    <p className="text-xs opacity-50 truncate">{order.customer.phone}</p>
+                  ) : null}
                 </div>
-              </>
+                <span className="text-xs opacity-40">Ver perfil →</span>
+              </Link>
             ) : (
-              <h2 className="p-4 card-title text-base">Sem cliente</h2>
-            )}
-          </section>
-
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300">
-              <h2 className="card-title text-base">Itens do pedido</h2>
-            </div>
-
-            {order.item.length === 0 ? (
-              <p className="text-sm opacity-70 p-4">Nenhum item cadastrado.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Descrição</th>
-                      <th>Qtd.</th>
-                      <th>Preço</th>
-                      <th>Total</th>
-                      <th>Entrega</th>
-                      <th>Observação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.item.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.description}</td>
-                        <td>{item.quantity}</td>
-                        <td>{currencyFormatter.format(item.unitPrice)}</td>
-                        <td>{currencyFormatter.format(item.total)}</td>
-                        <td>{datetimeFormatter.format(new Date(item.deliveredAt))}</td>
-                        <td>{item.note ?? "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
+                Sem cliente vinculado
               </div>
             )}
           </section>
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300 flex items-center justify-between gap-2">
-              <h2 className="card-title text-base">Transações vinculadas</h2>
+          {/* Itens */}
+          <section>
+            <h2 className="font-semibold mb-3">Itens</h2>
+            {order.item.length === 0 ? (
+              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
+                Nenhum item cadastrado.
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+                {order.item.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                    <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
+                      {item.quantity}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+                      <p className="text-xs opacity-50 truncate">
+                        {datetimeFormatter.format(new Date(item.deliveredAt))}
+                        {item.note ? ` · ${item.note}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                      <p className="text-xs opacity-40">{currencyFormatter.format(item.unitPrice)} un.</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Transações */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Transações</h2>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={() => {
-                    setActionError("");
-                    setActionSuccess("");
-                    setSelectedTransactionId("");
-                    setIsLinkModalOpen(true);
-                  }}
+                  className="btn btn-xs btn-outline"
+                  onClick={() => { setActionError(""); setActionSuccess(""); setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
                 >
-                  Vincular existente
+                  Vincular
                 </button>
                 <button
                   type="button"
-                  className="btn btn-sm btn-primary"
-                  onClick={() => {
-                    setFormError("");
-                    setActionSuccess("");
-                    setIsNewTransactionModalOpen(true);
-                  }}
+                  className="btn btn-xs btn-primary"
+                  onClick={() => { setFormError(""); setActionSuccess(""); setIsNewTransactionModalOpen(true); }}
                 >
-                  Nova transação
+                  + Nova
                 </button>
               </div>
             </div>
 
             {order.transactions.length === 0 ? (
-              <p className="text-sm opacity-70 p-4">Nenhuma transacao vinculada.</p>
+              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
+                Nenhuma transação vinculada.
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Tipo</th>
-                      <th>Método</th>
-                      <th>Descrição</th>
-                      <th>Valor</th>
-                      <th>Clientes</th>
-                      <th className="text-right">Acoes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.transactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td>{datetimeFormatter.format(new Date(transaction.madeAt))}</td>
-                        <td>
-                          <span className={`badge ${transaction.type === "entry" ? "badge-success" : "badge-warning"}`}>
-                            {transaction.type === "entry" ? "Entrada" : "Saida"}
-                          </span>
-                        </td>
-                        <td>{methodLabel[transaction.method] ?? transaction.method}</td>
-                        <td>{transaction.description || "-"}</td>
-                        <td>{currencyFormatter.format(Math.abs(transaction.amount))}</td>
-                        <td>
-                          {transaction.linkedCustomers.length === 0 ? (
-                            "-"
-                          ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {transaction.linkedCustomers.map((customer) => (
-                                <Link
-                                  key={customer.id}
-                                  to="/app/customers/$customerId"
-                                  params={{ customerId: customer.id }}
-                                  className="link"
-                                >
-                                  {customer.name}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              className="btn btn-xs btn-outline btn-error"
-                              disabled={unlink.isPending}
-                              onClick={() => handleUnlinkTransaction(transaction.id)}
-                            >
-                              Desvincular
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+                {order.transactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
+                      {transaction.type === "entry" ? "↑" : "↓"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-snug truncate">
+                        {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                      </p>
+                      <p className="text-xs opacity-50 truncate">
+                        {methodLabel[transaction.method] ?? transaction.method}
+                        {" · "}
+                        {datetimeFormatter.format(new Date(transaction.madeAt))}
+                        {transaction.linkedCustomers.length > 0 && (
+                          <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
+                        )}
+                      </p>
+                    </div>
+                    <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-ghost text-error shrink-0"
+                      disabled={unlink.isPending}
+                      onClick={() => handleUnlinkTransaction(transaction.id)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </section>
         </div>
       ) : null}
 
-      {/* Modal: Nova transação vinculada ao pedido */}
+      {/* ── Modal: Editar informações gerais ─────────────────────────────── */}
+      {isEditInfoModalOpen ? (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-lg">
+            <h3 className="font-bold text-lg mb-4">Editar informações do pedido</h3>
+
+            <form onSubmit={handleSubmitInfo(handleSaveInfo)} className="space-y-4">
+              <label className="space-y-1 block">
+                <span className="label">Cliente (opcional)</span>
+                <select className="select select-bordered w-full" {...registerInfo("customerId")}>
+                  <option value="">Sem cliente vinculado</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 block">
+                <span className="label">Data/hora do pedido</span>
+                <input type="datetime-local" className="input input-bordered w-full" {...registerInfo("orderedAt")} />
+                {infoErrors.orderedAt ? (
+                  <span className="text-error-content text-sm">{infoErrors.orderedAt.message}</span>
+                ) : null}
+              </label>
+
+              <label className="space-y-1 block">
+                <span className="label">Observação (opcional)</span>
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  rows={3}
+                  placeholder="Observações gerais do pedido"
+                  {...registerInfo("note")}
+                />
+              </label>
+
+              <label className="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" className="checkbox" {...registerInfo("isPaid")} />
+                <div>
+                  <span className="label-text">Pedido pago</span>
+                  <p className="text-sm opacity-70">Marque quando o pedido já estiver quitado.</p>
+                </div>
+              </label>
+
+              {formError ? (
+                <div className="alert alert-error">
+                  <span>{formError}</span>
+                </div>
+              ) : null}
+
+              <div className="modal-action">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setIsEditInfoModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={isUpdatingOrder}>
+                  {isUpdatingOrder ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsEditInfoModalOpen(false)} />
+        </div>
+      ) : null}
+
+      {/* ── Modal: Editar itens ───────────────────────────────────────────── */}
+      {isEditItemsModalOpen ? (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-3xl">
+            <h3 className="font-bold text-lg mb-4">Editar itens do pedido</h3>
+
+            <form onSubmit={handleSubmitItems(handleSaveItems)} className="space-y-4">
+              <div className="space-y-3">
+                {itemFields.map((field, index) => {
+                  const itemSubtotal =
+                    (Number(watchedItems[index]?.unitPrice) || 0) * (Number(watchedItems[index]?.quantity) || 0);
+
+                  return (
+                    <div key={field.id} className="rounded-box border border-base-300 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">Item {index + 1}</span>
+                        {itemFields.length > 1 ? (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-ghost text-error"
+                            onClick={() => removeItem(index)}
+                          >
+                            Remover
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <label className="space-y-1 md:col-span-2">
+                          <span className="label">Descrição</span>
+                          <input
+                            type="text"
+                            className="input input-bordered w-full"
+                            {...registerItems(`items.${index}.description`)}
+                          />
+                          {itemsErrors.items?.[index]?.description ? (
+                            <span className="text-error-content text-sm">
+                              {itemsErrors.items[index]?.description?.message}
+                            </span>
+                          ) : null}
+                        </label>
+
+                        <label className="space-y-1">
+                          <span className="label">Preço unitário</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="input input-bordered w-full"
+                            {...registerItems(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                          />
+                          {itemsErrors.items?.[index]?.unitPrice ? (
+                            <span className="text-error-content text-sm">
+                              {itemsErrors.items[index]?.unitPrice?.message}
+                            </span>
+                          ) : null}
+                        </label>
+
+                        <label className="space-y-1">
+                          <span className="label">Quantidade</span>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            className="input input-bordered w-full"
+                            {...registerItems(`items.${index}.quantity`, { valueAsNumber: true })}
+                          />
+                          {itemsErrors.items?.[index]?.quantity ? (
+                            <span className="text-error-content text-sm">
+                              {itemsErrors.items[index]?.quantity?.message}
+                            </span>
+                          ) : null}
+                        </label>
+
+                        <label className="space-y-1">
+                          <span className="label">Data/hora de entrega</span>
+                          <input
+                            type="datetime-local"
+                            className="input input-bordered w-full"
+                            {...registerItems(`items.${index}.deliveredAt`)}
+                          />
+                          {itemsErrors.items?.[index]?.deliveredAt ? (
+                            <span className="text-error-content text-sm">
+                              {itemsErrors.items[index]?.deliveredAt?.message}
+                            </span>
+                          ) : null}
+                        </label>
+
+                        <label className="space-y-1">
+                          <span className="label">Observação</span>
+                          <input
+                            type="text"
+                            className="input input-bordered w-full"
+                            {...registerItems(`items.${index}.note`)}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="text-sm opacity-70">Subtotal: R$ {itemSubtotal.toFixed(2)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-sm btn-outline w-full"
+                onClick={() => appendItem(emptyItem())}
+              >
+                + Adicionar item
+              </button>
+
+              <div className="rounded-box bg-base-200 px-4 py-3 text-sm flex justify-between">
+                <span>Total dos itens</span>
+                <span>R$ {itemsSubtotal.toFixed(2)}</span>
+              </div>
+
+              {formError ? (
+                <div className="alert alert-error">
+                  <span>{formError}</span>
+                </div>
+              ) : null}
+
+              <div className="modal-action">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setIsEditItemsModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={isUpdatingOrder}>
+                  {isUpdatingOrder ? "Salvando..." : "Salvar itens"}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsEditItemsModalOpen(false)} />
+        </div>
+      ) : null}
+
+      {/* ── Modal: Nova transação ─────────────────────────────────────────── */}
       {order ? (
         <TransactionFormModal
           isOpen={isNewTransactionModalOpen}
@@ -368,15 +709,13 @@ function OrderDetailsPage() {
           fixedLinkedCustomer={fixedLinkedCustomer}
           errorMessage={formError}
           successMessage=""
-          initialValues={{
-            madeAt: localDatetimeNow(),
-          }}
+          initialValues={{ madeAt: localDatetimeNow() }}
           onClose={() => setIsNewTransactionModalOpen(false)}
           onSubmit={handleCreateTransaction}
         />
       ) : null}
 
-      {/* Modal: Vincular transação existente */}
+      {/* ── Modal: Vincular transação existente ──────────────────────────── */}
       {isLinkModalOpen ? (
         <div className="modal modal-open">
           <div className="modal-box max-w-lg">
@@ -395,7 +734,10 @@ function OrderDetailsPage() {
                   <option value="">Selecione...</option>
                   {availableToLink.map((t) => (
                     <option key={t.id} value={t.id}>
-                      #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"} {currencyFormatter.format(Math.abs(t.amount))} – {datetimeFormatter.format(new Date(t.madeAt))}{t.description ? ` – ${t.description}` : ""}
+                      #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"}{" "}
+                      {currencyFormatter.format(Math.abs(t.amount))} –{" "}
+                      {datetimeFormatter.format(new Date(t.madeAt))}
+                      {t.description ? ` – ${t.description}` : ""}
                     </option>
                   ))}
                 </select>

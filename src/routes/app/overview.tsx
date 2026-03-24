@@ -4,9 +4,7 @@ import { useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
 import { currencyFormatter } from "@/lib/utils/formatter";
 
-const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-});
+const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
 type DashboardPeriod = "daily" | "weekly" | "monthly";
 
@@ -25,109 +23,129 @@ function DashboardPage() {
   const [period, setPeriod] = useState<DashboardPeriod>("daily");
   const [referenceDate, setReferenceDate] = useState<string>(currentDateInputValue);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    isFetching,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
     queryKey: ["dashboard", organization.id, "daily", period, referenceDate],
     queryFn: async () =>
-      getDailyDashboard({
-        organizationId: organization.id,
-        period,
-        referenceDate,
-      }),
+      getDailyDashboard({ organizationId: organization.id, period, referenceDate }),
     enabled: !!organization.id,
     refetchInterval: 60_000,
   });
 
-  const periodLabel =
-    period === "daily" ? "Diario" : period === "weekly" ? "Semanal" : "Mensal";
-
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {/* Header */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Visão geral</h1>
           {data ? (
-            <p className="text-sm opacity-70">
-              {periodLabel}: {dateRangeFormatter.format(new Date(data.rangeStart))} ate{" "}
+            <p className="text-sm opacity-60 mt-0.5">
+              {dateRangeFormatter.format(new Date(data.rangeStart))} —{" "}
               {dateRangeFormatter.format(new Date(data.rangeEnd))}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
-            <span className="label text-xs">Periodo</span>
+            <span className="label text-xs">Período</span>
             <select
               className="select select-bordered select-sm"
               value={period}
-              onChange={(event) => setPeriod(event.target.value as DashboardPeriod)}
+              onChange={(e) => setPeriod(e.target.value as DashboardPeriod)}
             >
-              <option value="daily">Diario</option>
+              <option value="daily">Diário</option>
               <option value="weekly">Semanal</option>
               <option value="monthly">Mensal</option>
             </select>
           </label>
           <label className="space-y-1">
-            <span className="label text-xs">Data de referencia</span>
+            <span className="label text-xs">Data de referência</span>
             <input
               type="date"
               className="input input-bordered input-sm"
               value={referenceDate}
-              onChange={(event) => setReferenceDate(event.target.value)}
+              onChange={(e) => setReferenceDate(e.target.value)}
             />
           </label>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => refetch()} disabled={isFetching}>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? <span className="loading loading-spinner loading-xs" /> : null}
             {isFetching ? "Atualizando..." : "Atualizar"}
           </button>
         </div>
       </div>
 
-      {isLoading ? <p>Carregando dashboard...</p> : null}
-      {isError ? <p className="text-error">{error.message}</p> : null}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm opacity-60">
+          <span className="loading loading-spinner loading-sm" />
+          Carregando dados...
+        </div>
+      ) : null}
+      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
       {data ? (
         <div className="space-y-6">
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <MetricCard title="Vendas" value={currencyFormatter.format(data.metrics.grossRevenue)} />
-            <MetricCard title="Pedidos" value={String(data.metrics.totalOrders)} />
-            <MetricCard title="Ticket médio" value={currencyFormatter.format(data.metrics.averageTicket)} />
-            <MetricCard title="Entradas" value={currencyFormatter.format(data.metrics.entry)} />
-            <MetricCard title="Saídas" value={currencyFormatter.format(data.metrics.exit)} />
-            <MetricCard title="Saldo" value={currencyFormatter.format(data.metrics.balance)} />
+
+          {/* Métricas financeiras */}
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MetricCard
+              label="Vendas"
+              value={currencyFormatter.format(data.metrics.grossRevenue)}
+            />
+            <MetricCard
+              label="Entradas"
+              value={currencyFormatter.format(data.metrics.entry)}
+              valueClassName="text-success"
+            />
+            <MetricCard
+              label="Saídas"
+              value={currencyFormatter.format(data.metrics.exit)}
+              valueClassName="text-error"
+            />
+            <MetricCard
+              label="Saldo"
+              value={currencyFormatter.format(data.metrics.balance)}
+              valueClassName={data.metrics.balance >= 0 ? "text-success" : "text-error"}
+            />
           </section>
 
+          {/* Métricas de pedidos */}
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <MetricCard label="Pedidos" value={String(data.metrics.totalOrders)} />
+            <MetricCard
+              label="Pendentes"
+              value={String(data.metrics.pendingOrders)}
+              valueClassName={data.metrics.pendingOrders > 0 ? "text-warning" : undefined}
+            />
+            <MetricCard
+              label="Ticket médio"
+              value={currencyFormatter.format(data.metrics.averageTicket)}
+            />
+          </section>
+
+          {/* Por método de pagamento */}
           <section>
-            <div className="card border border-base-300 bg-base-100 shadow-sm">
-              <div className="p-4 border-b border-base-300">
-                <h2 className="card-title text-base">Método de pagamento</h2>
-              </div>
-                <div className="space-y-2 text-sm">
-                  <table className="table table-zebra">
-                    <tbody>
-                      <tr>
-                        <td>PIX</td>
-                        <td className="text-right font-semibold">{currencyFormatter.format(data.byMethod.pix)}</td>
-                      </tr>
-                      <tr>
-                        <td>Dinheiro</td>
-                        <td className="text-right font-semibold">{currencyFormatter.format(data.byMethod.cash)}</td>
-                      </tr>
-                      <tr>
-                        <td>Cartão de crédito</td>
-                        <td className="text-right font-semibold">{currencyFormatter.format(data.byMethod.creditCard)}</td>
-                      </tr>
-                      <tr>
-                        <td>Cartão de débito</td>
-                        <td className="text-right font-semibold">{currencyFormatter.format(data.byMethod.debitCard)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+            <h2 className="font-semibold mb-3">Por método de pagamento</h2>
+            <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+              {[
+                { label: "PIX", icon: "⚡", value: data.byMethod.pix },
+                { label: "Dinheiro", icon: "💵", value: data.byMethod.cash },
+                { label: "Cartão de crédito", icon: "💳", value: data.byMethod.creditCard },
+                { label: "Cartão de débito", icon: "💳", value: data.byMethod.debitCard },
+              ].map(({ label, icon, value }) => (
+                <div key={label} className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                  <div className="w-9 h-9 rounded-full bg-base-200 flex items-center justify-center shrink-0 text-base">
+                    {icon}
+                  </div>
+                  <span className="flex-1 text-sm">{label}</span>
+                  <span className={`text-sm font-semibold tabular-nums ${value > 0 ? "" : "opacity-40"}`}>
+                    {currencyFormatter.format(value)}
+                  </span>
                 </div>
+              ))}
             </div>
           </section>
 
@@ -138,18 +156,16 @@ function DashboardPage() {
 }
 
 type MetricCardProps = {
-  title: string;
+  label: string;
   value: string;
+  valueClassName?: string;
 };
 
-function MetricCard({ title, value }: MetricCardProps) {
+function MetricCard({ label, value, valueClassName }: MetricCardProps) {
   return (
-    <div className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body gap-1 p-4">
-        <p className="text-sm opacity-70">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </div>
+    <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+      <p className="text-xs opacity-60 uppercase tracking-wide mb-1">{label}</p>
+      <p className={`text-xl font-bold ${valueClassName ?? ""}`}>{value}</p>
     </div>
   );
 }
-

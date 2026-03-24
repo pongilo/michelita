@@ -30,6 +30,7 @@ type TransactionFormModalProps = {
   isOpen: boolean;
   mode: "create" | "edit";
   isSubmitting: boolean;
+  isDeleting?: boolean;
   customers: CustomerOption[];
   orders?: OrderOption[];
   fixedLinkedCustomer?: CustomerOption;
@@ -39,6 +40,7 @@ type TransactionFormModalProps = {
   initialValues?: Partial<TransactionFormValues>;
   onClose: () => void;
   onSubmit: (values: TransactionFormValues) => Promise<void> | void;
+  onDelete?: () => Promise<void> | void;
 };
 
 function localDatetimeNow() {
@@ -63,6 +65,7 @@ export function TransactionFormModal({
   isOpen,
   mode,
   isSubmitting,
+  isDeleting,
   customers,
   orders,
   fixedLinkedCustomer,
@@ -72,6 +75,7 @@ export function TransactionFormModal({
   initialValues,
   onClose,
   onSubmit,
+  onDelete,
 }: TransactionFormModalProps) {
   const {
     register,
@@ -207,17 +211,31 @@ export function TransactionFormModal({
           </div>
         ) : null}
 
-        <div className="md:col-span-2 flex justify-end gap-2">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Salvando..."
-              : mode === "create"
-                ? "Registrar transacao"
-                : "Salvar alteracoes"}
-          </button>
+        <div className="md:col-span-2 flex items-center justify-between gap-2">
+          <div>
+            {mode === "edit" && onDelete ? (
+              <button
+                type="button"
+                className="btn btn-ghost text-error"
+                disabled={isSubmitting || isDeleting}
+                onClick={onDelete}
+              >
+                {isDeleting ? "Excluindo..." : "Excluir transação"}
+              </button>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting || isDeleting}>
+              {isSubmitting
+                ? "Salvando..."
+                : mode === "create"
+                  ? "Registrar transacao"
+                  : "Salvar alteracoes"}
+            </button>
+          </div>
         </div>
       </form>
     </FormModal>

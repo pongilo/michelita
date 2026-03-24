@@ -33,7 +33,6 @@ import { Route as AppOrderFormRouteImport } from './routes/app/order.form'
 import { Route as AppOrderOrderIdRouteImport } from './routes/app/order.$orderId'
 import { Route as AppCustomersCustomerIdRouteImport } from './routes/app/customers.$customerId'
 import { Route as AuthOrganizationNewRouteImport } from './routes/_auth/organization.new'
-import { Route as AppOrderEditOrderIdRouteImport } from './routes/app/order.edit.$orderId'
 
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/app',
@@ -153,11 +152,6 @@ const AuthOrganizationNewRoute = AuthOrganizationNewRouteImport.update({
   path: '/organization/new',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AppOrderEditOrderIdRoute = AppOrderEditOrderIdRouteImport.update({
-  id: '/order/edit/$orderId',
-  path: '/order/edit/$orderId',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteIndexRoute
@@ -182,7 +176,6 @@ export interface FileRoutesByFullPath {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/order/$orderId': typeof AppOrderOrderIdRoute
   '/app/order/form': typeof AppOrderFormRoute
-  '/app/order/edit/$orderId': typeof AppOrderEditOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
@@ -207,7 +200,6 @@ export interface FileRoutesByTo {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/order/$orderId': typeof AppOrderOrderIdRoute
   '/app/order/form': typeof AppOrderFormRoute
-  '/app/order/edit/$orderId': typeof AppOrderEditOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,7 +227,6 @@ export interface FileRoutesById {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/order/$orderId': typeof AppOrderOrderIdRoute
   '/app/order/form': typeof AppOrderFormRoute
-  '/app/order/edit/$orderId': typeof AppOrderEditOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -262,7 +253,6 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/order/$orderId'
     | '/app/order/form'
-    | '/app/order/edit/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,7 +277,6 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/order/$orderId'
     | '/app/order/form'
-    | '/app/order/edit/$orderId'
   id:
     | '__root__'
     | '/_auth'
@@ -314,7 +303,6 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/order/$orderId'
     | '/app/order/form'
-    | '/app/order/edit/$orderId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -493,13 +481,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrganizationNewRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/app/order/edit/$orderId': {
-      id: '/app/order/edit/$orderId'
-      path: '/order/edit/$orderId'
-      fullPath: '/app/order/edit/$orderId'
-      preLoaderRoute: typeof AppOrderEditOrderIdRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
   }
 }
 
@@ -567,7 +548,6 @@ interface AppRouteRouteChildren {
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppOrderOrderIdRoute: typeof AppOrderOrderIdRoute
   AppOrderFormRoute: typeof AppOrderFormRoute
-  AppOrderEditOrderIdRoute: typeof AppOrderEditOrderIdRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -580,7 +560,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppTransactionsRoute: AppTransactionsRoute,
   AppOrderOrderIdRoute: AppOrderOrderIdRoute,
   AppOrderFormRoute: AppOrderFormRoute,
-  AppOrderEditOrderIdRoute: AppOrderEditOrderIdRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

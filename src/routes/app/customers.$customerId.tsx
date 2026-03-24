@@ -277,192 +277,191 @@ function CustomerDetailsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      {data && (
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{data.customer.name}</h1>
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="btn btn-sm btn-primary" onClick={handleOpenTransactionModal}>
-              Nova transação
-            </button>
-            <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
-              Editar cliente
-            </button>
+    <main className="mx-auto w-full max-w-4xl px-5 py-8">
+
+      {/* Header */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {data && (
+            <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-base font-bold">
+              {data.customer.name.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <h1 className="text-2xl font-semibold">{data?.customer.name ?? "Cliente"}</h1>
+        </div>
+        {data && (
+          <div className="flex gap-2">
             <button
               type="button"
-              className="btn btn-sm btn-outline btn-error"
+              className="btn btn-sm btn-ghost text-error"
               disabled={isDeletingCustomer}
               onClick={handleDeleteCustomer}
             >
-              Excluir cliente
+              Excluir
+            </button>
+            <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
+              Editar
+            </button>
+            <button type="button" className="btn btn-sm btn-primary" onClick={handleOpenTransactionModal}>
+              + Nova transação
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {isLoading ? <p>Carregando cliente...</p> : null}
-      {isError ? <p className="text-error">{error.message}</p> : null}
-      {actionError ? (
-        <div className="alert alert-error mb-4">
-          <span>{actionError}</span>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm opacity-60">
+          <span className="loading loading-spinner loading-sm" />
+          Carregando cliente...
         </div>
       ) : null}
-      {transactionFormSuccess ? (
-        <div className="alert alert-success mb-4">
-          <span>{transactionFormSuccess}</span>
-        </div>
-      ) : null}
+      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
+      {actionError ? <div className="alert alert-error mb-5"><span>{actionError}</span></div> : null}
+      {transactionFormSuccess ? <div className="alert alert-success mb-5"><span>{transactionFormSuccess}</span></div> : null}
+      {formSuccess ? <div className="alert alert-success mb-5"><span>{formSuccess}</span></div> : null}
 
       {data ? (
-        <div className="space-y-4">
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
-              {formSuccess ? (
-                <div className="alert alert-success">
-                  <span>{formSuccess}</span>
+        <div className="space-y-5">
+
+          {/* Contato */}
+          {(data.customer.phone || data.customer.address || data.customer.note) ? (
+            <section className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+              {data.customer.phone ? (
+                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                  <span className="text-xs opacity-50 w-20 shrink-0">Telefone</span>
+                  <span className="text-sm">{data.customer.phone}</span>
                 </div>
               ) : null}
-
-              <p className="text-sm">Telefone: {data.customer.phone ?? "-"}</p>
-              <p className="text-sm">Endereço: {data.customer.address ?? "-"}</p>
-              <p className="text-sm">Observação: {data.customer.note ?? "-"}</p>
-            </div>
-          </section>
-
-          <section className="grid gap-3 md:grid-cols-2">
-            <MetricCard title="Total de pedidos" value={String(data.metrics.totalOrders)} />
-            <MetricCard title="Ultimo pedido" value={data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "-"} />
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 md:col-span-2">
-              <MetricCard title="Vendas" value={currencyFormatter.format(data.metrics.totalInvoiced)} />
-              <MetricCard title="Recebido" value={currencyFormatter.format(data.metrics.totalReceived)} />
-              <MetricCard title="Saldo" value={currencyFormatter.format(data.metrics.balance)} />
-            </div>
-          </section>
-
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300">
-              <h2 className="card-title text-base">Pedidos</h2>
-            </div>
-              {data.recentOrders.length === 0 ? (
-                <p className="text-sm opacity-70 p-4">Este cliente ainda nao possui pedidos.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Pedido</th>
-                        <th>Data</th>
-                        <th>Pagamento</th>
-                        <th>Observação</th>
-                        <th>Itens</th>
-                        <th>Total itens</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.recentOrders.map((order) => (
-                        <tr key={order.id}>
-                          <td>
-                            <Link
-                              to="/app/order/$orderId"
-                              params={{ orderId: order.id }}
-                              className="link"
-                            >
-                              {order.id.slice(0, 8)}
-                            </Link>
-                          </td>
-                          <td>{datetimeFormatter.format(new Date(order.orderedAt))}</td>
-                          <td>
-                            <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                              {order.isPaid ? "Pago" : "Pendente"}
-                            </span>
-                          </td>
-                          <td className="max-w-44 truncate" title={order.note ?? ""}>
-                            {order.note ?? "-"}
-                          </td>
-                          <td>{order.itemCount}</td>
-                          <td>{currencyFormatter.format(order.itemTotal)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {data.customer.address ? (
+                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                  <span className="text-xs opacity-50 w-20 shrink-0">Endereço</span>
+                  <span className="text-sm">{data.customer.address}</span>
                 </div>
-              )}
+              ) : null}
+              {data.customer.note ? (
+                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
+                  <span className="text-xs opacity-50 w-20 shrink-0">Observação</span>
+                  <span className="text-sm">{data.customer.note}</span>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {/* Métricas */}
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Pedidos</p>
+              <p className="font-bold text-lg">{data.metrics.totalOrders}</p>
+            </div>
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Último pedido</p>
+              <p className="font-semibold text-sm">
+                {data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "—"}
+              </p>
+            </div>
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Vendas</p>
+              <p className="font-bold text-lg">{currencyFormatter.format(data.metrics.totalInvoiced)}</p>
+            </div>
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Recebido</p>
+              <p className="font-bold text-lg text-success">{currencyFormatter.format(data.metrics.totalReceived)}</p>
+            </div>
+            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4 col-span-2 sm:col-span-1">
+              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saldo</p>
+              <p className={`font-bold text-lg ${data.metrics.balance >= 0 ? "text-success" : "text-error"}`}>
+                {currencyFormatter.format(data.metrics.balance)}
+              </p>
+            </div>
           </section>
 
-          <section className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="p-4 border-b border-base-300 flex items-center justify-between gap-2">
-              <h2 className="card-title text-base">Transações</h2>
+          {/* Pedidos */}
+          <section>
+            <h2 className="font-semibold mb-3">Pedidos</h2>
+            {data.recentOrders.length === 0 ? (
+              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
+                Este cliente ainda não possui pedidos.
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+                {data.recentOrders.map((order) => (
+                  <Link
+                    key={order.id}
+                    to="/app/order/$orderId"
+                    params={{ orderId: order.id }}
+                    className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors"
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                      {order.isPaid ? "✓" : "!"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-snug">
+                        #{order.id.slice(0, 8)}
+                        {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
+                      </p>
+                      <p className="text-xs opacity-50">
+                        {datetimeFormatter.format(new Date(order.orderedAt))}
+                        {" · "}
+                        {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold shrink-0">
+                      {currencyFormatter.format(order.itemTotal)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Transações */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Transações</h2>
               <button
                 type="button"
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setLinkError("");
-                  setSelectedTransactionId("");
-                  setIsLinkModalOpen(true);
-                }}
+                className="btn btn-xs btn-outline"
+                onClick={() => { setLinkError(""); setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
               >
-                Vincular existente
+                Vincular
               </button>
             </div>
-
-              {data.recentTransactions.length === 0 ? (
-                <p className="text-sm opacity-70 p-4">Sem transações a este cliente.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Transação</th>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Método</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                        <th className="text-right">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.recentTransactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td className="font-mono text-xs">{transaction.id.slice(0, 8)}</td>
-                          <td>{datetimeFormatter.format(new Date(transaction.madeAt))}</td>
-                          <td>
-                            <span className={`badge ${transaction.type === "entry" ? "badge-success" : "badge-warning"}`}>
-                              {transaction.type === "entry" ? "Entrada" : "Saida"}
-                            </span>
-                          </td>
-                          <td>{transactionMethodLabel[transaction.method] ?? transaction.method}</td>
-                          <td>{transaction.description ?? "-"}</td>
-                          <td>{currencyFormatter.format(transaction.amount)}</td>
-                          <td>
-                            <div className="flex justify-end">
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  className="btn btn-xs btn-outline"
-                                  disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
-                                  onClick={() => handleStartTransactionEdit(transaction.id)}
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-xs btn-outline btn-error"
-                                  disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
-                                  onClick={() => handleDeleteTransaction(transaction.id)}
-                                >
-                                  Excluir
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            {data.recentTransactions.length === 0 ? (
+              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
+                Sem transações vinculadas a este cliente.
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+                {data.recentTransactions.map((transaction) => (
+                  <button
+                    key={transaction.id}
+                    type="button"
+                    className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
+                    disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
+                    onClick={() => handleStartTransactionEdit(transaction.id)}
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
+                      {transaction.type === "entry" ? "↑" : "↓"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-snug truncate">
+                        {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                      </p>
+                      <p className="text-xs opacity-50 truncate">
+                        {transactionMethodLabel[transaction.method] ?? transaction.method}
+                        {" · "}
+                        {datetimeFormatter.format(new Date(transaction.madeAt))}
+                      </p>
+                    </div>
+                    <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
+
         </div>
       ) : null}
 
@@ -579,18 +578,3 @@ function CustomerDetailsPage() {
   );
 }
 
-type MetricCardProps = {
-  title: string;
-  value: string;
-};
-
-function MetricCard({ title, value }: MetricCardProps) {
-  return (
-    <div className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body gap-1 p-4">
-        <p className="text-sm opacity-70">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </div>
-    </div>
-  );
-}
