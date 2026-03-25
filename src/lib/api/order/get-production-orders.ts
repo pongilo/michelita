@@ -43,6 +43,7 @@ export type ProductionOrderItem = {
   unitPrice: number;
   total: number;
   deliveredAt: Date;
+  isDelivered: boolean;
   note: string | null;
 };
 
@@ -115,6 +116,7 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
             unit_price: true,
             total: true,
             deliveredAt: true,
+            isDelivered: true,
             note: true,
           },
         },
@@ -122,11 +124,6 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
     });
 
     const productionOrders: ProductionOrder[] = orders
-    .filter((order) =>
-      order.item.some(
-        (item) => item.deliveredAt.getTime() !== order.orderedAt.getTime()
-      )
-    )
     .map((order) => {
       const itemsTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
 
@@ -143,6 +140,7 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
           unitPrice: Number(item.unit_price),
           total: Number(item.total),
           deliveredAt: item.deliveredAt,
+          isDelivered: item.isDelivered,
           note: item.note,
         })),
         itemsTotal: Number(itemsTotal.toFixed(2)),

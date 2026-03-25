@@ -49,6 +49,7 @@ const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
             unit_price: true,
             total: true,
             deliveredAt: true,
+            isDelivered: true,
             note: true,
           },
         },
@@ -67,6 +68,7 @@ const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
           unitPrice: Number(item.unit_price),
           total: Number(item.total),
           deliveredAt: item.deliveredAt,
+          isDelivered: item.isDelivered,
           note: item.note,
           order: {
             id: order.id,
