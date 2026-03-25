@@ -32,12 +32,13 @@ model Organization {
 }
 
 model Customer {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @map("organization_id") @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
   name           String
-  phone          String? @unique
+  phone          String?  @unique
   address        String?
   note           String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   order        Order[]
@@ -96,6 +97,7 @@ model OrderItem {
   quantity    Int
   total       Decimal  @db.Decimal(10, 2)
   deliveredAt DateTime @map("delivered_at") @db.Timestamptz
+  isDelivered Boolean  @default(false) @map("is_delivered")
   note        String?
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
