@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, ChevronDownIcon, HouseIcon, KanbanIcon, ListOrderedIcon, LogOutIcon, MenuIcon, PlusIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, ChevronDownIcon, HouseIcon, ListOrderedIcon, LogOutIcon, MenuIcon, PlusIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/app")({
 
 const navItems = [
   { to: "/app/overview", icon: HouseIcon, label: "Página inicial", subNav: [] },
-  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos", subNav: [{to: "/app/deliveries", icon: KanbanIcon, label: "Entregas" }] },
+  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos", subNav: [] },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes", subNav: [] },
   { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações", subNav: [] },
 ] as const;

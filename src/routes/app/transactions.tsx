@@ -119,6 +119,16 @@ function TransactionsPage() {
     return { entries, exits, balance: entries - exits };
   }, [transactions]);
 
+  const byMethod = useMemo(() => {
+    const result = { pix: 0, cash: 0, credit_card: 0, debit_card: 0 };
+    for (const t of transactions) {
+      if (t.type === "entry" && t.method in result) {
+        result[t.method as keyof typeof result] += t.amount;
+      }
+    }
+    return result;
+  }, [transactions]);
+
   async function onSubmit(values: TransactionFormValues) {
     setFormError("");
     setFormSuccess("");
@@ -253,26 +263,6 @@ function TransactionsPage() {
         </div>
       ) : null}
 
-      {/* Summary cards */}
-      {!isLoading && !isError && transactions.length > 0 ? (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="rounded-box border border-base-300 bg-base-100 px-5 py-4">
-            <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Entradas</p>
-            <p className="text-xl font-bold text-success">{currencyFormatter.format(summary.entries)}</p>
-          </div>
-          <div className="rounded-box border border-base-300 bg-base-100 px-5 py-4">
-            <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saídas</p>
-            <p className="text-xl font-bold text-error">{currencyFormatter.format(summary.exits)}</p>
-          </div>
-          <div className="rounded-box border border-base-300 bg-base-100 px-5 py-4">
-            <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saldo</p>
-            <p className={`text-xl font-bold ${summary.balance >= 0 ? "text-success" : "text-error"}`}>
-              {currencyFormatter.format(summary.balance)}
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm opacity-60">
           <span className="loading loading-spinner loading-sm" />
@@ -300,53 +290,99 @@ function TransactionsPage() {
       ) : null}
 
       {!isLoading && !isError && transactions.length > 0 ? (
-        <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden">
-          {transactions.map((transaction) => (
-            <button
-              key={transaction.id}
-              type="button"
-              className="flex items-center gap-4 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
-              onClick={() => handleStartEdit(transaction)}
-            >
-              {/* Ícone do tipo */}
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-base ${
-                  transaction.type === "entry"
-                    ? "bg-success/15 text-success"
-                    : "bg-error/15 text-error"
-                }`}
-              >
-                {transaction.type === "entry" ? "↑" : "↓"}
-              </div>
+        <div className="flex flex-col-reverse gap-6 lg:flex-row lg:items-start">
+          {/* Histórico */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden">
+              {transactions.map((transaction) => (
+                <button
+                  key={transaction.id}
+                  type="button"
+                  className="flex items-center gap-4 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
+                  onClick={() => handleStartEdit(transaction)}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-base ${
+                      transaction.type === "entry"
+                        ? "bg-success/15 text-success"
+                        : "bg-error/15 text-error"
+                    }`}
+                  >
+                    {transaction.type === "entry" ? "↑" : "↓"}
+                  </div>
 
-              {/* Info principal */}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium leading-snug truncate">
-                  {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                </p>
-                <p className="text-sm opacity-50 truncate">
-                  {methodIcon[transaction.method]} {methodLabel[transaction.method] ?? transaction.method}
-                  {" · "}
-                  {datetimeFormatter.format(new Date(transaction.madeAt))}
-                  {transaction.linkedCustomers.length > 0 && (
-                    <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
-                  )}
-                  {transaction.linkedOrders.length > 0 && (
-                    <> · {transaction.linkedOrders.map((o) => `#${o.id.slice(0, 8)}`).join(", ")}</>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium leading-snug truncate">
+                      {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                    </p>
+                    <p className="text-sm opacity-50 truncate">
+                      {methodIcon[transaction.method]} {methodLabel[transaction.method] ?? transaction.method}
+                      {" · "}
+                      {datetimeFormatter.format(new Date(transaction.madeAt))}
+                      {transaction.linkedCustomers.length > 0 && (
+                        <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
+                      )}
+                      {transaction.linkedOrders.length > 0 && (
+                        <> · {transaction.linkedOrders.map((o) => `#${o.id.slice(0, 8)}`).join(", ")}</>
+                      )}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`font-semibold tabular-nums shrink-0 ${
+                      transaction.type === "entry" ? "text-success" : "text-error"
+                    }`}
+                  >
+                    {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar: resumo + por método */}
+          <div className="flex flex-col gap-4 lg:w-72 shrink-0">
+            {/* Summary cards */}
+            <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
+              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
+                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Entradas</p>
+                <p className="text-lg font-bold text-success">{currencyFormatter.format(summary.entries)}</p>
+              </div>
+              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
+                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saídas</p>
+                <p className="text-lg font-bold text-error">{currencyFormatter.format(summary.exits)}</p>
+              </div>
+              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
+                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saldo</p>
+                <p className={`text-lg font-bold ${summary.balance >= 0 ? "text-success" : "text-error"}`}>
+                  {currencyFormatter.format(summary.balance)}
                 </p>
               </div>
+            </div>
 
-              {/* Valor */}
-              <span
-                className={`font-semibold tabular-nums shrink-0 ${
-                  transaction.type === "entry" ? "text-success" : "text-error"
-                }`}
-              >
-                {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-              </span>
-            </button>
-          ))}
+            {/* Por método de pagamento */}
+            <div>
+              <h2 className="font-semibold mb-2 text-sm">Por método de pagamento</h2>
+              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
+                {[
+                  { key: "pix", label: "PIX", icon: "⚡", value: byMethod.pix },
+                  { key: "cash", label: "Dinheiro", icon: "💵", value: byMethod.cash },
+                  { key: "credit_card", label: "Cartão de crédito", icon: "💳", value: byMethod.credit_card },
+                  { key: "debit_card", label: "Cartão de débito", icon: "💳", value: byMethod.debit_card },
+                ].map(({ key, label, icon, value }) => (
+                  <div key={key} className="flex items-center gap-3 px-3 py-2.5 bg-base-100">
+                    <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center shrink-0 text-sm">
+                      {icon}
+                    </div>
+                    <span className="flex-1 text-sm">{label}</span>
+                    <span className={`text-sm font-semibold tabular-nums ${value > 0 ? "" : "opacity-40"}`}>
+                      {currencyFormatter.format(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       ) : null}
 

@@ -17,7 +17,6 @@ import { Route as AppTransactionsRouteImport } from './routes/app/transactions'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppOverviewRouteImport } from './routes/app/overview'
 import { Route as AppOrdersRouteImport } from './routes/app/orders'
-import { Route as AppDeliveriesRouteImport } from './routes/app/deliveries'
 import { Route as AppCustomersRouteImport } from './routes/app/customers'
 import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
@@ -70,11 +69,6 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
 const AppOrdersRoute = AppOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppDeliveriesRoute = AppDeliveriesRouteImport.update({
-  id: '/deliveries',
-  path: '/deliveries',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCustomersRoute = AppCustomersRouteImport.update({
@@ -167,7 +161,6 @@ export interface FileRoutesByFullPath {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
-  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
@@ -191,7 +184,6 @@ export interface FileRoutesByTo {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
-  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
@@ -217,7 +209,6 @@ export interface FileRoutesById {
   '/_site/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
-  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
@@ -244,7 +235,6 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/account'
     | '/app/customers'
-    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
     | '/app/settings'
@@ -268,7 +258,6 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/account'
     | '/app/customers'
-    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
     | '/app/settings'
@@ -293,7 +282,6 @@ export interface FileRouteTypes {
     | '/_site/docinhos'
     | '/app/account'
     | '/app/customers'
-    | '/app/deliveries'
     | '/app/orders'
     | '/app/overview'
     | '/app/settings'
@@ -367,13 +355,6 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/app/orders'
       preLoaderRoute: typeof AppOrdersRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/app/deliveries': {
-      id: '/app/deliveries'
-      path: '/deliveries'
-      fullPath: '/app/deliveries'
-      preLoaderRoute: typeof AppDeliveriesRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/customers': {
@@ -541,7 +522,6 @@ const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
 interface AppRouteRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppCustomersRoute: typeof AppCustomersRouteWithChildren
-  AppDeliveriesRoute: typeof AppDeliveriesRoute
   AppOrdersRoute: typeof AppOrdersRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -553,7 +533,6 @@ interface AppRouteRouteChildren {
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppCustomersRoute: AppCustomersRouteWithChildren,
-  AppDeliveriesRoute: AppDeliveriesRoute,
   AppOrdersRoute: AppOrdersRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppSettingsRoute: AppSettingsRoute,

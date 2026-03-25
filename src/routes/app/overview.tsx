@@ -1,10 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { useGetProductionOrders } from "@/hooks/tanstack/order/use-get-production-orders";
+import { useGetProductionOrdersRange } from "@/hooks/tanstack/order/use-get-production-orders-range";
+import type { FlatProductionItem } from "@/lib/api/order/get-production-orders-range";
+import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+const dayLabelFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "short",
+});
 
 type DashboardPeriod = "daily" | "weekly" | "monthly";
 
@@ -12,6 +21,67 @@ function currentDateInputValue() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
+}
+
+function formatDayLabel(date: Date) {
+  const formatted = dayLabelFormatter.format(date);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+function toDateString(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function getPeriodBounds(period: DashboardPeriod, referenceDate: string): { startDate: string; endDate: string } {
+  const base = new Date(`${referenceDate}T00:00:00`);
+
+  if (period === "daily") {
+    const end = new Date(base);
+    end.setDate(end.getDate() + 1);
+    return { startDate: toDateString(base), endDate: toDateString(end) };
+  }
+
+  if (period === "weekly") {
+    const start = new Date(base);
+    const diffToMonday = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - diffToMonday);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return { startDate: toDateString(start), endDate: toDateString(end) };
+  }
+
+  // monthly
+  const start = new Date(base);
+  start.setDate(1);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
+  return { startDate: toDateString(start), endDate: toDateString(end) };
+}
+
+function groupByDay(
+  items: FlatProductionItem[],
+  startDate: string,
+  endDate: string,
+): { date: Date; dateKey: string; items: FlatProductionItem[] }[] {
+  const map = new Map<string, FlatProductionItem[]>();
+  for (const item of items) {
+    const d = new Date(item.deliveredAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+
+  // Fill all days in the range
+  const result: { date: Date; dateKey: string; items: FlatProductionItem[] }[] = [];
+  const cursor = new Date(`${startDate}T00:00:00`);
+  const rangeEnd = new Date(`${endDate}T00:00:00`);
+  while (cursor < rangeEnd) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    result.push({ date: new Date(cursor), dateKey: key, items: map.get(key) ?? [] });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return result.sort(({ dateKey: a }, { dateKey: b }) => b.localeCompare(a));
 }
 
 export const Route = createFileRoute("/app/overview")({
@@ -31,18 +101,65 @@ function DashboardPage() {
     refetchInterval: 60_000,
   });
 
+  const { startDate, endDate } = getPeriodBounds(period, referenceDate);
+
+  const singleDayQuery = useGetProductionOrders({
+    organizationId: organization.id,
+    productionDate: period === "daily" ? referenceDate : undefined,
+  });
+
+  const rangeQuery = useGetProductionOrdersRange({
+    organizationId: organization.id,
+    startDate,
+    endDate,
+    enabled: period !== "daily",
+  });
+
+  const productionIsLoading = period === "daily" ? singleDayQuery.isLoading : rangeQuery.isLoading;
+  const productionIsError = period === "daily" ? singleDayQuery.isError : rangeQuery.isError;
+  const productionError = period === "daily" ? singleDayQuery.error : rangeQuery.error;
+
+  const singleDayItems: FlatProductionItem[] = useMemo(() => {
+    if (period !== "daily") return [];
+    const orders = singleDayQuery.data?.orders ?? [];
+    return orders
+      .flatMap((order) =>
+        order.items.map((item) => ({
+          ...item,
+          order: {
+            id: order.id,
+            isPaid: order.isPaid,
+            orderedAt: order.orderedAt,
+            note: order.note,
+            customer: order.customer,
+          },
+        }))
+      )
+      .sort((a, b) => new Date(a.deliveredAt).getTime() - new Date(b.deliveredAt).getTime());
+  }, [period, singleDayQuery.data]);
+
+  const rangeItems: FlatProductionItem[] = useMemo(
+    () => (period !== "daily" ? (rangeQuery.data?.items ?? []) : []),
+    [period, rangeQuery.data]
+  );
+
+  const allItems = period === "daily" ? singleDayItems : rangeItems;
+  const groupedDays = useMemo(() => groupByDay(rangeItems, startDate, endDate), [rangeItems, startDate, endDate]);
+
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Visão geral</h1>
-          {data ? (
-            <p className="text-sm opacity-60 mt-0.5">
-              {dateRangeFormatter.format(new Date(data.rangeStart))} —{" "}
-              {dateRangeFormatter.format(new Date(data.rangeEnd))}
+          {period === "daily" ? (
+            <p className="text-xs opacity-60 mt-0.5">{formatDayLabel(new Date(`${referenceDate}T00:00:00`))}</p>
+          ) : (
+            <p className="text-xs opacity-60 mt-0.5">
+              {dateRangeFormatter.format(new Date(`${startDate}T00:00:00`))} —{" "}
+              {dateRangeFormatter.format(new Date(new Date(`${endDate}T00:00:00`).getTime() - 1))}
             </p>
-          ) : null}
+          )}
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
@@ -113,7 +230,7 @@ function DashboardPage() {
           </section>
 
           {/* Métricas de pedidos */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <MetricCard label="Pedidos" value={String(data.metrics.totalOrders)} />
             <MetricCard
               label="Pendentes"
@@ -124,29 +241,67 @@ function DashboardPage() {
               label="Ticket médio"
               value={currencyFormatter.format(data.metrics.averageTicket)}
             />
+            <MetricCard
+              label="Entregas"
+              value={productionIsLoading ? "..." : String(allItems.length)}
+            />
           </section>
 
-          {/* Por método de pagamento */}
+          {/* Entregas */}
           <section>
-            <h2 className="font-semibold mb-3">Por método de pagamento</h2>
-            <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-              {[
-                { label: "PIX", icon: "⚡", value: data.byMethod.pix },
-                { label: "Dinheiro", icon: "💵", value: data.byMethod.cash },
-                { label: "Cartão de crédito", icon: "💳", value: data.byMethod.creditCard },
-                { label: "Cartão de débito", icon: "💳", value: data.byMethod.debitCard },
-              ].map(({ label, icon, value }) => (
-                <div key={label} className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                  <div className="w-9 h-9 rounded-full bg-base-200 flex items-center justify-center shrink-0 text-base">
-                    {icon}
-                  </div>
-                  <span className="flex-1 text-sm">{label}</span>
-                  <span className={`text-sm font-semibold tabular-nums ${value > 0 ? "" : "opacity-40"}`}>
-                    {currencyFormatter.format(value)}
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-baseline justify-between mb-3">
+              <div>
+                <h2 className="font-semibold">Entregas</h2>
+              </div>
             </div>
+
+            {productionIsLoading ? (
+              <div className="flex items-center gap-2 text-sm opacity-60">
+                <span className="loading loading-spinner loading-sm" />
+                Carregando entregas...
+              </div>
+            ) : null}
+
+            {productionIsError ? (
+              <p className="text-error text-sm">{productionError?.message}</p>
+            ) : null}
+
+            {!productionIsLoading && !productionIsError && allItems.length === 0 ? (
+              <div className="rounded-box border border-dashed border-base-300 bg-base-100 px-4 py-6 text-sm opacity-60 text-center">
+                Nenhuma entrega para este período.
+              </div>
+            ) : null}
+
+            {/* Diário: lista simples */}
+            {!productionIsLoading && !productionIsError && period === "daily" && singleDayItems.length > 0 ? (
+              <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden border border-base-300">
+                {singleDayItems.map((item) => (
+                  <DeliveryItemRow key={item.id} item={item} />
+                ))}
+              </div>
+            ) : null}
+
+            {/* Semanal / Mensal: agrupado por dia */}
+            {!productionIsLoading && !productionIsError && period !== "daily" && groupedDays.length > 0 ? (
+              <div className="space-y-4">
+                {groupedDays.map(({ date, dateKey, items }) => (
+                  <div key={dateKey}>
+                    <p className="text-xs font-semibold opacity-50 uppercase tracking-wide mb-2">
+                      {formatDayLabel(date)}
+                    </p>
+                    {items.length === 0 ? (
+                      <p className="text-xs opacity-40 italic">Nenhuma entrega.</p>
+                    ) : (
+                      <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden border border-base-300">
+                        {items.map((item) => (
+                          <DeliveryItemRow key={item.id} item={item} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </section>
 
         </div>
@@ -167,5 +322,36 @@ function MetricCard({ label, value, valueClassName }: MetricCardProps) {
       <p className="text-xs opacity-60 uppercase tracking-wide mb-1">{label}</p>
       <p className={`text-xl font-bold ${valueClassName ?? ""}`}>{value}</p>
     </div>
+  );
+}
+
+type DeliveryItemRowProps = {
+  item: FlatProductionItem;
+};
+
+function DeliveryItemRow({ item }: DeliveryItemRowProps) {
+  const { order } = item;
+
+  return (
+    <Link
+      to="/app/order/$orderId"
+      params={{ orderId: order.id }}
+      className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors"
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
+          <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+        </div>
+        <p className="text-xs opacity-50 mt-0.5 truncate">
+          {timeFormatter.format(new Date(item.deliveredAt))}
+          {order.customer ? <> · {order.customer.name}</> : null}
+          {item.note ? <> · {item.note}</> : null}
+        </p>
+      </div>
+      <span className={`badge badge-sm shrink-0 ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+        {order.isPaid ? "Pago" : "Pendente"}
+      </span>
+    </Link>
   );
 }
