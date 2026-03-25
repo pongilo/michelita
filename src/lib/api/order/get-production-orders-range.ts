@@ -57,9 +57,6 @@ const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
     });
 
     const flatItems: FlatProductionItem[] = orders
-      .filter((order) =>
-        order.item.some((item) => item.deliveredAt.getTime() !== order.orderedAt.getTime())
-      )
       .flatMap((order) =>
         order.item.map((item) => ({
           id: item.id,

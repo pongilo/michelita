@@ -228,11 +228,14 @@ function OrderFormRoute() {
               <div className="flex gap-2">
                 <select className="select select-bordered w-full" {...register("customerId")}>
                   <option value="">Sem cliente vinculado</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
+                  {customers.map((customer) => {
+                    const details = [customer.phone, customer.address].filter(Boolean).join(" · ");
+                    return (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}{details ? ` — ${details}` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
                 <button
                   type="button"
@@ -321,11 +324,6 @@ function OrderFormRoute() {
                       />
                       <div>
                         <span className="label-text font-medium">Encomenda</span>
-                        <p className="text-sm opacity-70">
-                          {isEncomenda
-                            ? "Defina a data de entrega deste item."
-                            : "A entrega sera na data do pedido."}
-                        </p>
                       </div>
                     </label>
 
