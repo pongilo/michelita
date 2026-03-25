@@ -29,16 +29,6 @@ function createProductionDate(productionDate: string) {
   return new Date(`${productionDate}T00:00:00`);
 }
 
-function getProductionBoardDates(productionStartDate: string) {
-  const startDate = createProductionDate(productionStartDate);
-
-  return Array.from({ length: 3 }, (_, index) => {
-    const columnDate = new Date(startDate);
-    columnDate.setDate(startDate.getDate() + index);
-    return formatProductionDateInputValue(columnDate);
-  });
-}
-
 function formatProductionColumnTitle(productionDate: string) {
   const formattedTitle = productionColumnTitleFormatter.format(createProductionDate(productionDate));
   return formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1);
@@ -51,16 +41,17 @@ type FlatItem = ProductionOrderItem & {
 function flattenAndSort(orders: ProductionOrder[]): FlatItem[] {
   return orders
     .flatMap((order) =>
-      order.items.map((item) => ({
-        ...item,
-        order: {
-          id: order.id,
-          isPaid: order.isPaid,
-          orderedAt: order.orderedAt,
-          note: order.note,
-          customer: order.customer,
-        },
-      }))
+      order.items
+        .map((item) => ({
+          ...item,
+          order: {
+            id: order.id,
+            isPaid: order.isPaid,
+            orderedAt: order.orderedAt,
+            note: order.note,
+            customer: order.customer,
+          },
+        }))
     )
     .sort((a, b) => new Date(a.deliveredAt).getTime() - new Date(b.deliveredAt).getTime());
 }
@@ -72,31 +63,14 @@ export const Route = createFileRoute("/app/deliveries")({
 function ProductionPage() {
   const { organization } = Route.useRouteContext();
   const [productionStartDate, setProductionStartDate] = useState<string>(getProductionStartDateInputValue);
-  const [firstProductionDate, secondProductionDate, thirdProductionDate] = getProductionBoardDates(productionStartDate);
 
-  const firstProductionColumn = useGetProductionOrders({
+  const productionQuery = useGetProductionOrders({
     organizationId: organization.id,
-    productionDate: firstProductionDate,
+    productionDate: productionStartDate,
   });
-  const secondProductionColumn = useGetProductionOrders({
-    organizationId: organization.id,
-    productionDate: secondProductionDate,
-  });
-  const thirdProductionColumn = useGetProductionOrders({
-    organizationId: organization.id,
-    productionDate: thirdProductionDate,
-  });
-
-  const productionColumns = [
-    { productionDate: firstProductionDate, query: firstProductionColumn },
-    { productionDate: secondProductionDate, query: secondProductionColumn },
-    { productionDate: thirdProductionDate, query: thirdProductionColumn },
-  ];
-
-  const isRefreshingProductionBoard = productionColumns.some((column) => column.query.isFetching);
 
   function handleRefreshProductionBoard() {
-    void Promise.all(productionColumns.map((column) => column.query.refetch()));
+    void productionQuery.refetch();
   }
 
   return (
@@ -106,7 +80,7 @@ function ProductionPage() {
 
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1">
-            <span className="label text-xs">Data inicial</span>
+            <span className="label text-xs">Data</span>
             <input
               type="date"
               className="input input-bordered input-sm"
@@ -118,18 +92,15 @@ function ProductionPage() {
             type="button"
             className="btn btn-outline btn-sm"
             onClick={handleRefreshProductionBoard}
-            disabled={isRefreshingProductionBoard}
+            disabled={productionQuery.isFetching}
           >
-            {isRefreshingProductionBoard ? "Atualizando..." : "Atualizar"}
+            {productionQuery.isFetching ? "Atualizando..." : "Atualizar"}
           </button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {productionColumns.map((column) => (
-          <ProductionBoardColumn key={column.productionDate} productionDate={column.productionDate} query={column.query} />
-        ))}
-      </div>
+      <ProductionBoardColumn productionDate={productionStartDate} query={productionQuery} />
+
     </main>
   );
 }
@@ -156,7 +127,7 @@ function ProductionBoardColumn({ productionDate, query }: ProductionBoardColumnP
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 p-4">
+      <div className="flex-1 space-y-3 p-4 divide-y divide-base-300">
         {query.isLoading ? (
           <div className="rounded-box border border-dashed border-base-300 bg-base-100 p-4 text-sm opacity-70">
             Carregando produção...
@@ -192,9 +163,9 @@ function ProductionItemCard({ item }: ProductionItemCardProps) {
     <Link
       to="/app/order/$orderId"
       params={{ orderId: order.id }}
-      className="card border border-base-300 bg-base-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all"
+      className="transition-all block"
     >
-      <div className="card-body gap-3 p-4">
+      <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             {order.customer ? (
@@ -202,7 +173,6 @@ function ProductionItemCard({ item }: ProductionItemCardProps) {
             ) : (
               <p className="opacity-40 text-sm">Sem cliente</p>
             )}
-            <p className="text-xs opacity-50 mt-0.5">{dateFormatter.format(new Date(order.orderedAt))}</p>
           </div>
           <span className={`badge badge-sm shrink-0 ${order.isPaid ? "badge-info" : "badge-warning"}`}>
             {order.isPaid ? "Pago" : "Pendente"}
@@ -211,11 +181,11 @@ function ProductionItemCard({ item }: ProductionItemCardProps) {
 
         <div>
           <p className="text-sm">
+            <span className="mr-1.5 text-xs opacity-50">
+              {timeFormatter.format(new Date(item.deliveredAt))} · 
+            </span>
             <span className="font-bold text-primary">{item.quantity}x</span>{" "}
             {item.description}
-            <span className="ml-1.5 text-xs opacity-50">
-              · {timeFormatter.format(new Date(item.deliveredAt))}
-            </span>
           </p>
           {item.note && (
             <p className="text-xs opacity-50 mt-0.5">{item.note}</p>

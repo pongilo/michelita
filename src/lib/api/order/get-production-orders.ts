@@ -121,7 +121,13 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
       },
     });
 
-    const productionOrders: ProductionOrder[] = orders.map((order) => {
+    const productionOrders: ProductionOrder[] = orders
+    .filter((order) =>
+      order.item.some(
+        (item) => item.deliveredAt.getTime() !== order.orderedAt.getTime()
+      )
+    )
+    .map((order) => {
       const itemsTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
 
       return {
