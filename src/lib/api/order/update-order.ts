@@ -7,6 +7,7 @@ const orderItemSchema = z.object({
   unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
   quantity: z.number().int().min(1, "Quantidade minima: 1."),
   deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
+  isDelivered: z.boolean().optional(),
   note: z.string().trim().optional(),
 });
 
@@ -136,6 +137,7 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
             quantity: item.quantity,
             total: Number((item.unitPrice * item.quantity).toFixed(2)),
             deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
+            isDelivered: item.isDelivered ?? false,
             note: toOptionalString(item.note),
           })),
         });

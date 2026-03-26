@@ -5,6 +5,7 @@ import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
 import { useGetProductionOrders } from "@/hooks/tanstack/order/use-get-production-orders";
 import { useGetProductionOrdersRange } from "@/hooks/tanstack/order/use-get-production-orders-range";
 import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-order-item-delivery";
+import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import type { FlatProductionItem } from "@/lib/api/order/get-production-orders-range";
 import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
 
@@ -219,13 +220,8 @@ function DashboardPage() {
 
       {data ? (
         <div className="space-y-6">
-
           {/* Métricas financeiras */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricCard
-              label="Vendas"
-              value={currencyFormatter.format(data.metrics.grossRevenue)}
-            />
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <MetricCard
               label="Entradas"
               value={currencyFormatter.format(data.metrics.entry)}
@@ -245,26 +241,25 @@ function DashboardPage() {
 
           {/* Métricas de pedidos */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricCard label="Pedidos" value={String(data.metrics.totalOrders)} />
             <MetricCard
-              label="Pendentes"
-              value={String(data.metrics.pendingOrders)}
-              valueClassName={data.metrics.pendingOrders > 0 ? "text-warning" : undefined}
+              label="Vendas"
+              value={currencyFormatter.format(data.metrics.grossRevenue)}
             />
+            <MetricCard label="Pedidos" value={String(data.metrics.totalOrders)} />
             <MetricCard
               label="Ticket médio"
               value={currencyFormatter.format(data.metrics.averageTicket)}
             />
             <MetricCard
-              label="Entregas"
-              value={productionIsLoading ? "..." : String(allItems.length)}
+              label="Itens vendidos"
+              value={productionIsLoading ? "..." : String(allItems.filter((i) => i.isDelivered).reduce((sum, i) => sum + i.quantity, 0))}
             />
           </section>
 
           {/* Entregas */}
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className="font-semibold">Entregas</h2>
+              <h2 className="font-semibold">Itens vendidos</h2>
               <div className="join">
                 <button
                   type="button"
@@ -365,16 +360,28 @@ type DeliveryItemRowProps = {
   organizationId: string;
 };
 
+const methodLabel: Record<string, string> = {
+  PIX: "Pix",
+  CASH: "Dinheiro",
+  CREDIT_CARD: "Cartão de crédito",
+  DEBIT_CARD: "Cartão de débito",
+};
+
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
 function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
   const { order } = item;
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [updateDate, setUpdateDate] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { mutate, isPending } = useUpdateOrderItemDelivery({ organizationId });
 
+  const orderQuery = useGetOrder({ organizationId, orderId: order.id });
+  const orderDetail = drawerOpen ? orderQuery.data : undefined;
+
   function openConfirmModal() {
     setUpdateDate(false);
     dialogRef.current?.showModal();
-    // close dropdown
     (document.activeElement as HTMLElement | null)?.blur();
   }
 
@@ -392,58 +399,192 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
   }
 
   return (
-    <div className="flex items-center bg-base-100 hover:bg-base-200/50 transition-colors">
-      <Link
-        to="/app/order/$orderId"
-        params={{ orderId: order.id }}
-        className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
-            <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+    <>
+      {/* Row */}
+      <div className="flex items-center bg-base-100 hover:bg-base-200/50 transition-colors">
+        <button
+          type="button"
+          className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3 text-left cursor-pointer"
+          onClick={() => setDrawerOpen(true)}
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
+              <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+            </div>
+            <p className="text-xs opacity-50 mt-0.5 truncate">
+              {timeFormatter.format(new Date(item.deliveredAt))}
+              {order.customer ? <> · {order.customer.name}</> : null}
+              {item.note ? <> · {item.note}</> : null}
+            </p>
           </div>
-          <p className="text-xs opacity-50 mt-0.5 truncate">
-            {timeFormatter.format(new Date(item.deliveredAt))}
-            {order.customer ? <> · {order.customer.name}</> : null}
-            {item.note ? <> · {item.note}</> : null}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`badge badge-sm ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
-            {item.isDelivered ? "Entregue" : "A entregar"}
-          </span>
-          <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-            {order.isPaid ? "Pago" : "Pendente"}
-          </span>
-        </div>
-      </Link>
-
-      <div className="dropdown dropdown-end pr-2">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs btn-circle">
-          <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="5" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="12" cy="19" r="1.5" />
-          </svg>
-        </div>
-        <ul tabIndex={0} className="dropdown-content z-10 menu menu-sm p-1.5 shadow bg-base-100 rounded-box border border-base-200 w-44">
-          {item.isDelivered ? (
-            <li>
-              <button type="button" onClick={handleUndoDelivery} disabled={isPending}>
-                Desfazer entrega
-              </button>
-            </li>
-          ) : (
-            <li>
-              <button type="button" onClick={openConfirmModal} disabled={isPending}>
-                Confirmar entrega
-              </button>
-            </li>
-          )}
-        </ul>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={`badge badge-sm ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
+              {item.isDelivered ? "Entregue" : "A entregar"}
+            </span>
+            <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+              {order.isPaid ? "Pago" : "Pendente"}
+            </span>
+          </div>
+        </button>
       </div>
 
+      {/* Drawer */}
+      {drawerOpen ? (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => setDrawerOpen(false)}
+          />
+          {/* Panel */}
+          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-base-100 shadow-2xl">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between border-b border-base-200 px-5 py-4">
+              <div className="min-w-0">
+                <h2 className="font-semibold truncate">{item.description}</h2>
+                <p className="text-xs opacity-50 mt-0.5">
+                  {timeFormatter.format(new Date(item.deliveredAt))}
+                  {order.customer ? <> · {order.customer.name}</> : null}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-circle shrink-0 ml-2"
+                onClick={() => setDrawerOpen(false)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Drawer body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {orderQuery.isLoading ? (
+                <div className="flex items-center gap-2 text-sm opacity-50">
+                  <span className="loading loading-spinner loading-sm" />
+                  Carregando...
+                </div>
+              ) : orderQuery.isError ? (
+                <p className="text-error text-sm">{orderQuery.error?.message}</p>
+              ) : orderDetail ? (
+                <div className="space-y-5">
+                  {/* Status badges */}
+                  <div className="flex gap-2">
+                    <span className={`badge ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
+                      {item.isDelivered ? "Entregue" : "A entregar"}
+                    </span>
+                    <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
+                      {order.isPaid ? "Pago" : "Pagamento pendente"}
+                    </span>
+                  </div>
+
+                  {/* Cliente */}
+                  {orderDetail.customer ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Cliente</p>
+                      <p className="font-medium">{orderDetail.customer.name}</p>
+                      {orderDetail.customer.phone ? (
+                        <p className="text-sm opacity-60 mt-0.5">{orderDetail.customer.phone}</p>
+                      ) : null}
+                      {orderDetail.customer.address ? (
+                        <p className="text-sm opacity-60 mt-0.5">{orderDetail.customer.address}</p>
+                      ) : null}
+                      {orderDetail.customer.note ? (
+                        <p className="text-sm opacity-60 italic mt-0.5">{orderDetail.customer.note}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* Itens do pedido */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Itens do pedido</p>
+                    <p className="text-xs opacity-50 mb-2">
+                      Realizado em {dateFormatter.format(new Date(orderDetail.orderedAt))}
+                    </p>
+                    {orderDetail.note ? (
+                      <p className="text-sm opacity-60 italic mb-2">{orderDetail.note}</p>
+                    ) : null}
+                    <div className="space-y-2">
+                      {orderDetail.item.map((oi) => (
+                        <div key={oi.id} className="flex items-start justify-between gap-3">
+                          <p className="text-sm min-w-0">
+                            <span className="font-semibold text-primary">{oi.quantity}x</span>{" "}
+                            {oi.description}
+                            {oi.note ? <span className="block text-xs opacity-50 mt-0.5">{oi.note}</span> : null}
+                          </p>
+                          <p className="text-sm shrink-0 tabular-nums font-medium">{currencyFormatter.format(oi.total)}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-base-200">
+                      <span className="text-sm font-semibold opacity-50">Total</span>
+                      <span className="font-bold">{currencyFormatter.format(orderDetail.itemTotal)}</span>
+                    </div>
+                  </div>
+
+                  {/* Transações */}
+                  {orderDetail.transactions.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Transações</p>
+                      <div className="space-y-2">
+                        {orderDetail.transactions.map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm truncate">
+                                {methodLabel[tx.method] ?? tx.method}
+                                {tx.description ? <span className="opacity-60"> · {tx.description}</span> : null}
+                              </p>
+                              <p className="text-xs opacity-50">{dateFormatter.format(new Date(tx.madeAt))}</p>
+                            </div>
+                            <p className={`text-sm font-semibold shrink-0 tabular-nums ${tx.type === "entry" ? "text-success" : "text-error"}`}>
+                              {tx.type === "entry" ? "+" : ""}{currencyFormatter.format(tx.amount)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Drawer footer */}
+            <div className="border-t border-base-200 px-5 py-3 flex gap-2">
+              <Link
+                to="/app/order/$orderId"
+                params={{ orderId: order.id }}
+                className="btn btn-outline btn-sm flex-1"
+                onClick={() => setDrawerOpen(false)}
+              >
+                Ver pedido completo
+              </Link>
+              {item.isDelivered ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { handleUndoDelivery(); setDrawerOpen(false); }}
+                  disabled={isPending}
+                >
+                  Desfazer entrega
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={openConfirmModal}
+                  disabled={isPending}
+                >
+                  Confirmar entrega
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {/* Confirm delivery dialog */}
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-1">Confirmar entrega</h3>
@@ -483,6 +624,6 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
           <button type="submit">fechar</button>
         </form>
       </dialog>
-    </div>
+    </>
   );
 }

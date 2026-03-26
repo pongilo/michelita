@@ -56,6 +56,7 @@ const editItemsSchema = z.object({
         unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
         quantity: z.number().int().min(1, "Quantidade minima: 1."),
         deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
+        isDelivered: z.boolean(),
         note: z.string().trim().optional(),
       }),
     )
@@ -66,7 +67,7 @@ type EditInfoValues = z.infer<typeof editInfoSchema>;
 type EditItemsValues = z.infer<typeof editItemsSchema>;
 
 function emptyItem(): EditItemsValues["items"][number] {
-  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetimeNow(), note: "" };
+  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetimeNow(), isDelivered: false, note: "" };
 }
 
 // ── Route ────────────────────────────────────────────────────────────────────
@@ -166,6 +167,7 @@ function OrderDetailsPage() {
               unitPrice: item.unitPrice,
               quantity: item.quantity,
               deliveredAt: toLocalDatetimeInput(item.deliveredAt),
+              isDelivered: item.isDelivered,
               note: item.note ?? "",
             }))
           : [emptyItem()],
@@ -216,6 +218,7 @@ function OrderDetailsPage() {
           unitPrice: item.unitPrice,
           quantity: item.quantity,
           deliveredAt: item.deliveredAt,
+          isDelivered: item.isDelivered,
           note: item.note?.trim() ? item.note.trim() : undefined,
         })),
       });
@@ -369,22 +372,43 @@ function OrderDetailsPage() {
           <section>
             <h2 className="font-semibold mb-3">Cliente</h2>
             {order.customer ? (
-              <Link
-                to="/app/customers/$customerId"
-                params={{ customerId: order.customer.id }}
-                className="flex items-center gap-3 px-4 py-3 bg-base-100 border border-base-300 rounded-box hover:bg-base-200/50 transition-colors"
-              >
-                <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
-                  {order.customer.name.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium leading-snug truncate">{order.customer.name}</p>
-                  {order.customer.phone ? (
-                    <p className="text-xs opacity-50 truncate">{order.customer.phone}</p>
-                  ) : null}
-                </div>
-                <span className="text-xs opacity-40">Ver perfil →</span>
-              </Link>
+              <div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
+                <Link
+                  to="/app/customers/$customerId"
+                  params={{ customerId: order.customer.id }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-base-200/50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
+                    {order.customer.name.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium leading-snug truncate">{order.customer.name}</p>
+                  </div>
+                  <span className="text-xs opacity-40">Ver perfil →</span>
+                </Link>
+                {(order.customer.phone || order.customer.address || order.customer.note) ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-base-200 border-t border-base-200">
+                    {order.customer.phone ? (
+                      <div className="px-4 py-3">
+                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Telefone</p>
+                        <p className="text-sm">{order.customer.phone}</p>
+                      </div>
+                    ) : null}
+                    {order.customer.address ? (
+                      <div className="px-4 py-3">
+                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Endereço</p>
+                        <p className="text-sm">{order.customer.address}</p>
+                      </div>
+                    ) : null}
+                    {order.customer.note ? (
+                      <div className="px-4 py-3">
+                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Observação</p>
+                        <p className="text-sm">{order.customer.note}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
                 Sem cliente vinculado
@@ -654,6 +678,15 @@ function OrderDetailsPage() {
                           />
                         </label>
                       </div>
+
+                      <label className="label cursor-pointer justify-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          {...registerItems(`items.${index}.isDelivered`)}
+                        />
+                        <span className="label-text">Item entregue</span>
+                      </label>
 
                       <div className="text-sm opacity-70">Subtotal: R$ {itemSubtotal.toFixed(2)}</div>
                     </div>

@@ -30,6 +30,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             name: true,
             phone: true,
             address: true,
+            note: true,
           },
         },
         item: {
@@ -43,6 +44,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             quantity: true,
             total: true,
             deliveredAt: true,
+            isDelivered: true,
             note: true,
           },
         },
@@ -98,6 +100,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         quantity: item.quantity,
         total: Number(item.total),
         deliveredAt: item.deliveredAt,
+        isDelivered: item.isDelivered,
         note: item.note,
       })),
       itemTotal,
