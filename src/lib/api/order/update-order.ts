@@ -18,6 +18,8 @@ const updateOrderSchema = z.object({
   orderedAt: z.string().optional(),
   isPaid: z.boolean().optional(),
   note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).nullable().optional(),
+  discount: z.number().min(0).nullable().optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item.").optional(),
 }).superRefine((value, ctx) => {
   const hasDataToUpdate =
@@ -25,6 +27,8 @@ const updateOrderSchema = z.object({
     value.orderedAt !== undefined ||
     value.isPaid !== undefined ||
     value.note !== undefined ||
+    value.shippingFee !== undefined ||
+    value.discount !== undefined ||
     value.items !== undefined;
 
   if (!hasDataToUpdate) {
@@ -94,6 +98,8 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
       orderedAt?: Date;
       isPaid?: boolean;
       note?: string | null;
+      shippingFee?: number | null;
+      discount?: number | null;
     } = {};
 
     if (data.customerId !== undefined) {
@@ -110,6 +116,14 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
 
     if (data.note !== undefined) {
       updateData.note = toOptionalString(data.note);
+    }
+
+    if (data.shippingFee !== undefined) {
+      updateData.shippingFee = data.shippingFee;
+    }
+
+    if (data.discount !== undefined) {
+      updateData.discount = data.discount;
     }
 
     await prisma.$transaction(async (transaction) => {

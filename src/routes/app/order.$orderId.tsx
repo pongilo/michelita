@@ -46,6 +46,8 @@ const editInfoSchema = z.object({
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
   isPaid: z.boolean(),
   note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
 });
 
 const editItemsSchema = z.object({
@@ -119,7 +121,7 @@ function OrderDetailsPage() {
     formState: { errors: infoErrors },
   } = useForm<EditInfoValues>({
     resolver: zodResolver(editInfoSchema),
-    defaultValues: { customerId: "", orderedAt: localDatetimeNow(), isPaid: false, note: "" },
+    defaultValues: { customerId: "", orderedAt: localDatetimeNow(), isPaid: false, note: "", shippingFee: 0, discount: 0 },
   });
 
   useEffect(() => {
@@ -129,6 +131,8 @@ function OrderDetailsPage() {
         orderedAt: toLocalDatetimeInput(order.orderedAt),
         isPaid: order.isPaid,
         note: order.note ?? "",
+        shippingFee: order.shippingFee ?? 0,
+        discount: order.discount ?? 0,
       });
     }
   }, [order, isEditInfoModalOpen, resetInfo]);
@@ -198,6 +202,8 @@ function OrderDetailsPage() {
         orderedAt: values.orderedAt,
         isPaid: values.isPaid,
         note: values.note,
+        shippingFee: values.shippingFee ?? null,
+        discount: values.discount ?? null,
       });
       setIsEditInfoModalOpen(false);
       setActionSuccess("Informações do pedido atualizadas.");
@@ -358,7 +364,14 @@ function OrderDetailsPage() {
             </div>
             <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
               <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Total</p>
-              <p className="font-bold text-lg">{currencyFormatter.format(order.itemTotal)}</p>
+              <p className="font-bold text-lg">{currencyFormatter.format(order.total)}</p>
+              {(order.shippingFee || order.discount) ? (
+                <p className="text-xs opacity-50 mt-1">
+                  Itens: {currencyFormatter.format(order.itemTotal)}
+                  {order.shippingFee ? ` + Frete: ${currencyFormatter.format(order.shippingFee)}` : ""}
+                  {order.discount ? ` − Desconto: ${currencyFormatter.format(order.discount)}` : ""}
+                </p>
+              ) : null}
             </div>
             {order.note ? (
               <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4 col-span-2 sm:col-span-1">
@@ -548,6 +561,31 @@ function OrderDetailsPage() {
                   {...registerInfo("note")}
                 />
               </label>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 block">
+                  <span className="label">Frete / taxa adicional</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="input input-bordered w-full"
+                    placeholder="0,00"
+                    {...registerInfo("shippingFee", { valueAsNumber: true })}
+                  />
+                </label>
+                <label className="space-y-1 block">
+                  <span className="label">Desconto</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="input input-bordered w-full"
+                    placeholder="0,00"
+                    {...registerInfo("discount", { valueAsNumber: true })}
+                  />
+                </label>
+              </div>
 
               <label className="label cursor-pointer justify-start gap-3">
                 <input type="checkbox" className="checkbox" {...registerInfo("isPaid")} />

@@ -22,6 +22,8 @@ const createOrderFormSchema = z.object({
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
   isPaid: z.boolean(),
   note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
   items: z
     .array(
       z.object({
@@ -101,6 +103,8 @@ function OrderFormRoute() {
       orderedAt: localDatetimeNow(),
       isPaid: false,
       note: "",
+      shippingFee: 0,
+      discount: 0,
       items: [emptyItem(localDatetimeNow())],
       transactions: [],
     },
@@ -127,6 +131,8 @@ function OrderFormRoute() {
   const watchedItems = watch("items");
   const watchedCustomerId = watch("customerId");
   const watchedOrderedAt = watch("orderedAt");
+  const watchedShippingFee = watch("shippingFee");
+  const watchedDiscount = watch("discount");
 
   useEffect(() => {
     watchedItems.forEach((item, index) => {
@@ -143,6 +149,12 @@ function OrderFormRoute() {
       return sum + price * qty;
     }, 0);
   }, [watchedItems]);
+
+  const total = useMemo(() => {
+    const fee = Number(watchedShippingFee) || 0;
+    const disc = Number(watchedDiscount) || 0;
+    return subtotal + fee - disc;
+  }, [subtotal, watchedShippingFee, watchedDiscount]);
 
   async function handleCreateCustomer(values: CustomerFormValues) {
     setCustomerModalError("");
@@ -174,6 +186,8 @@ function OrderFormRoute() {
         orderedAt: values.orderedAt,
         isPaid: values.isPaid,
         note: values.note,
+        shippingFee: values.shippingFee || undefined,
+        discount: values.discount || undefined,
         items: values.items.map((item) => ({
           description: item.description,
           unitPrice: item.unitPrice,
@@ -204,6 +218,8 @@ function OrderFormRoute() {
         orderedAt: newOrderedAt,
         isPaid: false,
         note: "",
+        shippingFee: 0,
+        discount: 0,
         items: [emptyItem(newOrderedAt)],
         transactions: [],
       });
@@ -403,10 +419,51 @@ function OrderFormRoute() {
             })}
           </section>
 
-          <section className="rounded-box bg-base-200 p-4 text-sm">
-            <div className="flex justify-between">
-              <span>Total dos itens</span>
+          <section className="rounded-box bg-base-200 p-4 text-sm space-y-3">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1">
+                <span className="label">Frete / taxa adicional</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="input input-bordered input-sm w-full"
+                  placeholder="0,00"
+                  {...register("shippingFee", { valueAsNumber: true })}
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="label">Desconto</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="input input-bordered input-sm w-full"
+                  placeholder="0,00"
+                  {...register("discount", { valueAsNumber: true })}
+                />
+              </label>
+            </div>
+            <div className="divider my-0" />
+            <div className="flex justify-between text-opacity-70">
+              <span>Subtotal dos itens</span>
               <span>R$ {subtotal.toFixed(2)}</span>
+            </div>
+            {(Number(watchedShippingFee) || 0) > 0 ? (
+              <div className="flex justify-between text-opacity-70">
+                <span>+ Frete</span>
+                <span>R$ {(Number(watchedShippingFee) || 0).toFixed(2)}</span>
+              </div>
+            ) : null}
+            {(Number(watchedDiscount) || 0) > 0 ? (
+              <div className="flex justify-between text-opacity-70">
+                <span>− Desconto</span>
+                <span>R$ {(Number(watchedDiscount) || 0).toFixed(2)}</span>
+              </div>
+            ) : null}
+            <div className="flex justify-between font-semibold text-base">
+              <span>Total</span>
+              <span>R$ {total.toFixed(2)}</span>
             </div>
           </section>
 

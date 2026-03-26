@@ -79,6 +79,8 @@ model Order {
   isPaid         Boolean  @default(false) @map("is_paid")
   orderedAt      DateTime @map("ordered_at") @db.Timestamptz
   note           String?
+  shippingFee    Decimal? @map("shipping_fee") @db.Decimal(10, 2)
+  discount       Decimal? @db.Decimal(10, 2)
 
   organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   customer         Customer?          @relation(fields: [customerId], references: [id], onDelete: Cascade)

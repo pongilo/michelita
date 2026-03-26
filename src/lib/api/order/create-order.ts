@@ -17,6 +17,8 @@ export const createOrderSchema = z.object({
   orderedAt: z.string().trim().min(1, "Data/hora do pedido e obrigatoria."),
   isPaid: z.boolean().default(false),
   note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item."),
 });
 
@@ -67,6 +69,8 @@ const createOrderServerFn = createServerFn({ method: "POST" })
         orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
         isPaid: data.isPaid,
         note: toOptionalString(data.note),
+        shippingFee: data.shippingFee ?? null,
+        discount: data.discount ?? null,
         item: {
           create: data.items.map((item) => ({
             description: item.description,
