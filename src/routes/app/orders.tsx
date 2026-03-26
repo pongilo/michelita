@@ -233,11 +233,6 @@ function OrdersPage() {
                           </Link>
                         </li>
                         <li>
-                          <Link to="/app/order/edit/$orderId" params={{ orderId: order.id }}>
-                            Editar pedido
-                          </Link>
-                        </li>
-                        <li>
                           <button
                             type="button"
                             disabled={isUpdatingOrder || isDeletingOrder}

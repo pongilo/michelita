@@ -27,10 +27,10 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
-  { to: "/app/overview", icon: HouseIcon, label: "Página inicial", subNav: [] },
-  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos", subNav: [] },
-  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes", subNav: [] },
-  { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações", subNav: [] },
+  { to: "/app/overview", icon: HouseIcon, label: "Página inicial" },
+  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
+  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
+  { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
 ] as const;
 
 function PrivateLayout() {
@@ -129,7 +129,7 @@ function PrivateLayout() {
           </div>
 
           <ul className="menu w-full px-3 py-2 space-y-0.5">
-            {navItems.map(({ to, icon: Icon, label, subNav }) => (
+            {navItems.map(({ to, icon: Icon, label }) => (
               <li key={to}>
                 <Link
                   to={to}
@@ -140,23 +140,6 @@ function PrivateLayout() {
                   <Icon className="size-4" />
                   <span>{label}</span>
                 </Link>
-                {subNav.length > 0 && (
-                  <ul>
-                    {subNav.map((subNavItem) => (
-                      <li key={subNavItem.to}>
-                        <Link
-                          to={subNavItem.to}
-                          activeOptions={{ exact: true }}
-                          className="opacity-60!"
-                          activeProps={{ className: "text-primary opacity-100!" }}
-                        >
-                          <subNavItem.icon className="size-4" />
-                          <span>{subNavItem.label}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )} 
               </li>
             ))}
           </ul>

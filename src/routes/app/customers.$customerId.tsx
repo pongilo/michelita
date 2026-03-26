@@ -7,7 +7,6 @@ import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-custome
 import { useLinkCustomerTransaction } from "@/hooks/tanstack/customer/use-link-customer-transaction";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
-import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
@@ -80,9 +79,6 @@ function CustomerDetailsPage() {
     organizationId: organization.id,
   });
   const { mutateAsync: updateTransaction, isPending: isUpdatingTransaction } = useUpdateTransaction({
-    organizationId: organization.id,
-  });
-  const { mutateAsync: deleteTransaction, isPending: isDeletingTransaction } = useDeleteTransaction({
     organizationId: organization.id,
   });
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
@@ -256,26 +252,6 @@ function CustomerDetailsPage() {
     }
   }
 
-  async function handleDeleteTransaction(transactionId: string) {
-    setActionError("");
-
-    const confirmed = window.confirm(
-      "Deseja realmente excluir esta transacao? Esta acao nao pode ser desfeita.",
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await deleteTransaction({
-        id: transactionId,
-        organizationId: organization.id,
-      });
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Erro ao excluir transacao.");
-    }
-  }
-
   return (
     <main className="mx-auto w-full max-w-4xl px-5 py-8">
 
@@ -437,7 +413,7 @@ function CustomerDetailsPage() {
                     key={transaction.id}
                     type="button"
                     className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
-                    disabled={isSubmittingTransactionForm || isDeletingTransaction || isDeletingCustomer}
+                    disabled={isSubmittingTransactionForm || isDeletingCustomer}
                     onClick={() => handleStartTransactionEdit(transaction.id)}
                   >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>

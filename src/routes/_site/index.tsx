@@ -18,9 +18,9 @@ function HomePage() {
             <a href="https://wa.me/5519981904593" target="_blank" className="text-nowrap px-5 py-3 rounded-full font-body font-bold text-michelita-purple bg-michelita-yellow hover:bg-michelita-yellow/80 duration-150">
               Fazer meu pedido
             </a>
-            <Link to="/#sabores" className="text-nowrap px-5 py-3 rounded-full font-body font-bold text-michelita-yellow hover:bg-white/10 duration-150">
+            <a href="/#sabores" className="text-nowrap px-5 py-3 rounded-full font-body font-bold text-michelita-yellow hover:bg-white/10 duration-150">
               Ver sabores
-            </Link>
+            </a>
           </div>
         </div>
         <div className="flex-1">

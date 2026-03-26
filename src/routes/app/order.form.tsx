@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -359,7 +359,7 @@ function OrderFormRoute() {
                       </label>
 
                       <label className="space-y-1">
-                        <span className="label">Preco unitario</span>
+                        <span className="label">Preço unitário</span>
                         <input
                           type="number"
                           min="0"
