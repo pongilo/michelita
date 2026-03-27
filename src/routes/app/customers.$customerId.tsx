@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
@@ -61,12 +62,6 @@ function CustomerDetailsPage() {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
-  const [transactionFormError, setTransactionFormError] = useState("");
-  const [transactionFormSuccess, setTransactionFormSuccess] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [linkError, setLinkError] = useState("");
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
     organizationId: organization.id,
@@ -105,43 +100,30 @@ function CustomerDetailsPage() {
   const isSubmittingTransactionForm = isCreatingTransaction || isUpdatingTransaction;
 
   function handleStartEdit() {
-    setFormError("");
     setIsEditModalOpen(true);
   }
 
   function handleCloseEditModal() {
-    setFormError("");
     setIsEditModalOpen(false);
   }
 
   function handleOpenTransactionModal() {
-    setTransactionFormError("");
-    setTransactionFormSuccess("");
     setEditingTransactionId(null);
     setIsTransactionModalOpen(true);
   }
 
   function handleStartTransactionEdit(transactionId: string) {
-    setTransactionFormError("");
-    setTransactionFormSuccess("");
     setEditingTransactionId(transactionId);
     setIsTransactionModalOpen(true);
   }
 
   function handleCloseTransactionModal() {
-    setTransactionFormError("");
     setEditingTransactionId(null);
     setIsTransactionModalOpen(false);
   }
 
   async function onSubmit(values: CustomerFormValues) {
-    if (!data) {
-      return;
-    }
-
-    setFormError("");
-    setFormSuccess("");
-
+    if (!data) return;
     try {
       await updateCustomer({
         id: data.customer.id,
@@ -150,22 +132,15 @@ function CustomerDetailsPage() {
         address: values.address?.trim() || undefined,
         note: values.note?.trim() || undefined,
       });
-
-      setFormSuccess("Cliente atualizado com sucesso.");
+      toast.success("Cliente atualizado com sucesso.");
       setIsEditModalOpen(false);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Erro ao atualizar cliente.");
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar cliente.");
     }
   }
 
   async function handleSubmitCustomerTransaction(values: TransactionFormValues) {
-    if (!data) {
-      return;
-    }
-
-    setTransactionFormError("");
-    setTransactionFormSuccess("");
-
+    if (!data) return;
     try {
       if (editingTransaction) {
         await updateTransaction({
@@ -178,8 +153,7 @@ function CustomerDetailsPage() {
           linkedCustomerId: data.customer.id,
           description: values.description,
         });
-
-        setTransactionFormSuccess("Transação atualizada com sucesso.");
+        toast.success("Transação atualizada com sucesso.");
       } else {
         const transaction = await createTransaction({
           organizationId: organization.id,
@@ -190,65 +164,42 @@ function CustomerDetailsPage() {
           linkedCustomerId: data.customer.id,
           description: values.description,
         });
-
-        setTransactionFormSuccess(`Transação ${transaction.id.slice(0, 8)} registrada com sucesso.`);
+        toast.success(`Transação ${transaction.id.slice(0, 8)} registrada com sucesso.`);
       }
-
       setEditingTransactionId(null);
       setIsTransactionModalOpen(false);
     } catch (error) {
-      setTransactionFormError(
+      toast.error(
         error instanceof Error
           ? error.message
           : editingTransaction
-            ? "Erro ao atualizar transacao."
-            : "Erro ao registrar transacao.",
+            ? "Erro ao atualizar transação."
+            : "Erro ao registrar transação.",
       );
     }
   }
 
   async function handleDeleteCustomer() {
-    if (!data) {
-      return;
-    }
-
-    setActionError("");
-
-    const confirmed = window.confirm(
-      "Deseja realmente excluir este cliente? Esta acao nao pode ser desfeita.",
-    );
-    if (!confirmed) {
-      return;
-    }
-
+    if (!data) return;
+    const confirmed = window.confirm("Deseja realmente excluir este cliente? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
     try {
-      await deleteCustomer({
-        id: data.customer.id,
-        organizationId: organization.id,
-      });
-
-      await navigate({
-        to: "/app/customers",
-      });
+      await deleteCustomer({ id: data.customer.id, organizationId: organization.id });
+      await navigate({ to: "/app/customers" });
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Erro ao excluir cliente.");
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir cliente.");
     }
   }
 
   async function handleLinkTransaction() {
     if (!selectedTransactionId) return;
-    setLinkError("");
     try {
-      await linkTransaction({
-        organizationId: organization.id,
-        customerId,
-        transactionId: selectedTransactionId,
-      });
+      await linkTransaction({ organizationId: organization.id, customerId, transactionId: selectedTransactionId });
       setIsLinkModalOpen(false);
       setSelectedTransactionId("");
-      setTransactionFormSuccess("Transacao vinculada ao cliente.");
+      toast.success("Transação vinculada ao cliente.");
     } catch (err) {
-      setLinkError(err instanceof Error ? err.message : "Erro ao vincular transacao.");
+      toast.error(err instanceof Error ? err.message : "Erro ao vincular transação.");
     }
   }
 
@@ -292,9 +243,6 @@ function CustomerDetailsPage() {
         </div>
       ) : null}
       {isError ? <p className="text-error text-sm">{error.message}</p> : null}
-      {actionError ? <div className="alert alert-error mb-5"><span>{actionError}</span></div> : null}
-      {transactionFormSuccess ? <div className="alert alert-success mb-5"><span>{transactionFormSuccess}</span></div> : null}
-      {formSuccess ? <div className="alert alert-success mb-5"><span>{formSuccess}</span></div> : null}
 
       {data ? (
         <div className="space-y-5">
@@ -445,7 +393,7 @@ function CustomerDetailsPage() {
         isOpen={isEditModalOpen}
         mode="edit"
         isSubmitting={isUpdatingCustomer}
-        errorMessage={formError}
+        errorMessage=""
         successMessage=""
         initialValues={
           data
@@ -486,11 +434,6 @@ function CustomerDetailsPage() {
               </label>
             )}
 
-            {linkError ? (
-              <div className="alert alert-error mt-3">
-                <span>{linkError}</span>
-              </div>
-            ) : null}
 
             <div className="modal-action">
               <button
@@ -531,7 +474,7 @@ function CustomerDetailsPage() {
               }
             : undefined
         }
-        errorMessage={transactionFormError}
+        errorMessage=""
         successMessage=""
         initialValues={
           data

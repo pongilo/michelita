@@ -11,6 +11,7 @@ import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import appCss from '@/styles.css?url'
+import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient();
     
@@ -70,6 +71,7 @@ function RootComponent() {
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <TanStackRouterDevtools />
+        <Toaster />
         <Scripts />
       </body>
     </html>

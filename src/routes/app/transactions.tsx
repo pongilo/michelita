@@ -35,6 +35,7 @@ function getTransactionsPeriodBounds(period: TransactionsPeriod, referenceDate: 
   return { start, end };
 }
 
+import { toast } from "sonner";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
@@ -43,6 +44,12 @@ import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-tr
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { PeriodFilter } from "@/components/ui/period-filter";
+import { ListContainer } from "@/components/ui/list-container";
 
 const methodLabel: Record<string, string> = {
   pix: "PIX",
@@ -101,10 +108,7 @@ function TransactionsPage() {
   });
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState("");
 
   const editingTransaction = useMemo(
     () => transactions.find((t) => t.id === editingTransactionId) ?? null,
@@ -130,9 +134,6 @@ function TransactionsPage() {
   }, [transactions]);
 
   async function onSubmit(values: TransactionFormValues) {
-    setFormError("");
-    setFormSuccess("");
-
     try {
       if (editingTransaction) {
         await updateTransaction({
@@ -146,7 +147,7 @@ function TransactionsPage() {
           linkedOrderId: values.linkedOrderId ? values.linkedOrderId : null,
           description: values.description,
         });
-        setFormSuccess("Transacao atualizada com sucesso.");
+        toast.success("Transação atualizada com sucesso.");
       } else {
         const transaction = await createTransaction({
           organizationId: organization.id,
@@ -158,142 +159,97 @@ function TransactionsPage() {
           linkedOrderId: values.linkedOrderId ? values.linkedOrderId : undefined,
           description: values.description,
         });
-        setFormSuccess(`Transacao ${transaction.id.slice(0, 8)} registrada com sucesso.`);
+        toast.success(`Transação ${transaction.id.slice(0, 8)} registrada com sucesso.`);
       }
 
       setEditingTransactionId(null);
       setIsFormModalOpen(false);
     } catch (error) {
-      setFormError(
+      toast.error(
         error instanceof Error
           ? error.message
           : editingTransactionId
-            ? "Erro ao atualizar transacao."
-            : "Erro ao registrar transacao.",
+            ? "Erro ao atualizar transação."
+            : "Erro ao registrar transação.",
       );
     }
   }
 
   function handleStartEdit(transaction: (typeof transactions)[number]) {
     setEditingTransactionId(transaction.id);
-    setFormError("");
     setIsFormModalOpen(true);
   }
 
   function handleCancelEdit() {
     setIsFormModalOpen(false);
     setEditingTransactionId(null);
-    setFormError("");
   }
 
   async function handleDeleteTransaction(transactionId: string) {
-    setActionError("");
-    const confirmed = window.confirm("Deseja realmente excluir esta transacao? Esta acao nao pode ser desfeita.");
+    const confirmed = window.confirm("Deseja realmente excluir esta transação? Esta ação não pode ser desfeita.");
     if (!confirmed) return;
 
     try {
       await deleteTransaction({ id: transactionId, organizationId: organization.id });
       if (editingTransactionId === transactionId) handleCancelEdit();
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Erro ao excluir transacao.");
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir transação.");
     }
   }
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Transações</h1>
-          <p className="text-sm opacity-60 mt-0.5">
+      <PageHeader>
+        <PageHeader.Info>
+          <PageHeader.Title>Transações</PageHeader.Title>
+          <PageHeader.Subtitle>
             {dateRangeFormatter.format(start)} — {dateRangeFormatter.format(rangeEnd)}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="space-y-1">
-            <span className="label text-xs">Período</span>
-            <select
-              className="select select-bordered select-sm"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as TransactionsPeriod)}
-            >
-              <option value="daily">Diário</option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensal</option>
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="label text-xs">Data de referência</span>
-            <input
-              type="date"
-              className="input input-bordered input-sm"
-              value={referenceDate}
-              onChange={(e) => setReferenceDate(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            {isFetching ? <span className="loading loading-spinner loading-xs" /> : null}
-            {isFetching ? "Atualizando..." : "Atualizar"}
-          </button>
+          </PageHeader.Subtitle>
+        </PageHeader.Info>
+        <PageHeader.Controls>
+          <PeriodFilter>
+            <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as TransactionsPeriod)} />
+            <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
+            <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
+          </PeriodFilter>
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            onClick={() => { setEditingTransactionId(null); setFormError(""); setIsFormModalOpen(true); }}
+            onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
           >
             + Nova transação
           </button>
-        </div>
-      </div>
+        </PageHeader.Controls>
+      </PageHeader>
 
-      {formSuccess ? (
-        <div className="alert alert-success mb-5">
-          <span>{formSuccess}</span>
-        </div>
-      ) : null}
-
-      {actionError ? (
-        <div className="alert alert-error mb-5">
-          <span>{actionError}</span>
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="loading loading-spinner loading-sm" />
-          Carregando transações...
-        </div>
-      ) : null}
+      {isLoading ? <LoadingState label="Carregando transações..." /> : null}
 
       {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
       {!isLoading && !isError && transactions.length === 0 ? (
-        <div className="card border border-base-300 bg-base-100">
-          <div className="card-body items-center text-center py-16">
-            <div className="text-5xl mb-3">💰</div>
-            <h3 className="font-semibold text-lg">Nenhuma transação neste período</h3>
-            <p className="text-sm opacity-60 max-w-xs">Registre entradas e saídas para acompanhar o financeiro da confeitaria.</p>
+        <EmptyState>
+          <EmptyState.Icon>💰</EmptyState.Icon>
+          <EmptyState.Title>Nenhuma transação neste período</EmptyState.Title>
+          <EmptyState.Description>
+            Registre entradas e saídas para acompanhar o financeiro da confeitaria.
+          </EmptyState.Description>
+          <EmptyState.Action>
             <button
               type="button"
-              className="btn btn-primary btn-sm mt-4"
-              onClick={() => { setEditingTransactionId(null); setFormError(""); setIsFormModalOpen(true); }}
+              className="btn btn-primary btn-sm"
+              onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
             >
               + Nova transação
             </button>
-          </div>
-        </div>
+          </EmptyState.Action>
+        </EmptyState>
       ) : null}
 
       {!isLoading && !isError && transactions.length > 0 ? (
         <div className="flex flex-col-reverse gap-6 lg:flex-row lg:items-start">
           {/* Histórico */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden">
+            <ListContainer>
               {transactions.map((transaction) => (
                 <button
                   key={transaction.id}
@@ -337,27 +293,27 @@ function TransactionsPage() {
                   </span>
                 </button>
               ))}
-            </div>
+            </ListContainer>
           </div>
 
           {/* Sidebar: resumo + por método */}
           <div className="flex flex-col gap-4 lg:w-72 shrink-0">
             {/* Summary cards */}
             <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
-              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
-                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Entradas</p>
-                <p className="text-lg font-bold text-success">{currencyFormatter.format(summary.entries)}</p>
-              </div>
-              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
-                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saídas</p>
-                <p className="text-lg font-bold text-error">{currencyFormatter.format(summary.exits)}</p>
-              </div>
-              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-3">
-                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saldo</p>
-                <p className={`text-lg font-bold ${summary.balance >= 0 ? "text-success" : "text-error"}`}>
+              <MetricCard>
+                <MetricCard.Label>Entradas</MetricCard.Label>
+                <MetricCard.Value className="text-success">{currencyFormatter.format(summary.entries)}</MetricCard.Value>
+              </MetricCard>
+              <MetricCard>
+                <MetricCard.Label>Saídas</MetricCard.Label>
+                <MetricCard.Value className="text-error">{currencyFormatter.format(summary.exits)}</MetricCard.Value>
+              </MetricCard>
+              <MetricCard>
+                <MetricCard.Label>Saldo</MetricCard.Label>
+                <MetricCard.Value className={summary.balance >= 0 ? "text-success" : "text-error"}>
                   {currencyFormatter.format(summary.balance)}
-                </p>
-              </div>
+                </MetricCard.Value>
+              </MetricCard>
             </div>
 
             {/* Por método de pagamento */}
@@ -395,7 +351,7 @@ function TransactionsPage() {
           id: o.id,
           label: `#${o.id.slice(0, 8)}${o.customer ? ` – ${o.customer.name}` : ""} (${datetimeFormatter.format(new Date(o.orderedAt))})`,
         }))}
-        errorMessage={formError}
+        errorMessage=""
         successMessage=""
         initialValues={
           editingTransaction

@@ -1,8 +1,14 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchInput } from "@/components/ui/search-input";
+import { ListContainer } from "@/components/ui/list-container";
 
 export const Route = createFileRoute("/app/customers")({
   component: CustomersPage,
@@ -26,9 +32,6 @@ function CustomersPage() {
   });
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
-  const [actionError, setActionError] = useState("");
 
   const isCustomerProfileRoute =
     location.pathname.startsWith("/app/customers/") && location.pathname !== "/app/customers";
@@ -38,10 +41,6 @@ function CustomersPage() {
   }
 
   async function onSubmit(values: CustomerFormValues) {
-    setFormError("");
-    setFormSuccess("");
-    setActionError("");
-
     try {
       const customer = await createCustomer({
         organizationId: organization.id,
@@ -51,99 +50,69 @@ function CustomersPage() {
         note: values.note?.trim() || undefined,
       });
 
-      setFormSuccess(`Cliente ${customer.name} criado com sucesso.`);
+      toast.success(`Cliente ${customer.name} criado com sucesso.`);
       setIsCreateModalOpen(false);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Erro ao criar cliente.");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar cliente.");
     }
   }
 
-
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Clientes</h1>
+      <PageHeader>
+        <PageHeader.Info>
+          <PageHeader.Title>Clientes</PageHeader.Title>
           {!isLoading && !isError && (
-            <p className="text-sm opacity-60 mt-0.5">
+            <PageHeader.Subtitle>
               {customers.length} {customers.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
-            </p>
+            </PageHeader.Subtitle>
           )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="input input-bordered input-sm flex items-center gap-2 w-64">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 opacity-50">
-              <path fillRule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clipRule="evenodd" />
-            </svg>
-            <input
-              type="search"
-              placeholder="Nome, telefone ou endereço"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="grow bg-transparent outline-none"
-            />
-          </label>
+        </PageHeader.Info>
+        <PageHeader.Controls>
+          <SearchInput value={search} onChange={setSearch} placeholder="Nome, telefone ou endereço" />
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            onClick={() => { setFormError(""); setFormSuccess(""); setIsCreateModalOpen(true); }}
+            onClick={() => setIsCreateModalOpen(true)}
           >
             + Novo cliente
           </button>
-        </div>
-      </div>
+        </PageHeader.Controls>
+      </PageHeader>
 
-      {formSuccess ? (
-        <div className="alert alert-success mb-5">
-          <span>{formSuccess}</span>
-        </div>
-      ) : null}
-
-      {actionError ? (
-        <div className="alert alert-error mb-5">
-          <span>{actionError}</span>
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="loading loading-spinner loading-sm" />
-          Carregando clientes...
-        </div>
-      ) : null}
+      {isLoading ? <LoadingState label="Carregando clientes..." /> : null}
 
       {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
       {!isLoading && !isError && customers.length === 0 ? (
-        <div className="card border border-base-300 bg-base-100">
-          <div className="card-body items-center text-center py-16">
-            <div className="text-5xl mb-3">👥</div>
-            <h3 className="font-semibold text-lg">Nenhum cliente ainda</h3>
-            <p className="text-sm opacity-60 max-w-xs">Cadastre seus primeiros clientes para vincular pedidos e transações.</p>
+        <EmptyState>
+          <EmptyState.Icon>👥</EmptyState.Icon>
+          <EmptyState.Title>Nenhum cliente ainda</EmptyState.Title>
+          <EmptyState.Description>
+            Cadastre seus primeiros clientes para vincular pedidos e transações.
+          </EmptyState.Description>
+          <EmptyState.Action>
             <button
               type="button"
-              className="btn btn-primary btn-sm mt-4"
-              onClick={() => { setFormError(""); setFormSuccess(""); setIsCreateModalOpen(true); }}
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsCreateModalOpen(true)}
             >
               + Novo cliente
             </button>
-          </div>
-        </div>
+          </EmptyState.Action>
+        </EmptyState>
       ) : null}
 
       {!isLoading && !isError && customers.length > 0 && filteredCustomers.length === 0 ? (
-        <div className="card border border-base-300 bg-base-100">
-          <div className="card-body items-center text-center py-12">
-            <div className="text-4xl mb-2">🔍</div>
-            <p className="font-medium">Nenhum cliente encontrado</p>
-            <p className="text-sm opacity-60">Nenhum resultado para "{search}"</p>
-          </div>
-        </div>
+        <EmptyState compact>
+          <EmptyState.Icon>🔍</EmptyState.Icon>
+          <EmptyState.Title>Nenhum cliente encontrado</EmptyState.Title>
+          <EmptyState.Description>Nenhum resultado para "{search}"</EmptyState.Description>
+        </EmptyState>
       ) : null}
 
       {!isLoading && !isError && filteredCustomers.length > 0 ? (
-        <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden">
+        <ListContainer>
           {filteredCustomers.map((customer) => (
             <Link
               key={customer.id}
@@ -165,16 +134,16 @@ function CustomersPage() {
               </span>
             </Link>
           ))}
-        </div>
+        </ListContainer>
       ) : null}
 
       <CustomerFormModal
         isOpen={isCreateModalOpen}
         mode="create"
         isSubmitting={isCreatingCustomer}
-        errorMessage={formError}
+        errorMessage=""
         successMessage=""
-        onClose={() => { setIsCreateModalOpen(false); setFormError(""); }}
+        onClose={() => setIsCreateModalOpen(false)}
         onSubmit={onSubmit}
       />
     </main>

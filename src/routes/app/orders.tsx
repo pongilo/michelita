@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
@@ -101,37 +102,29 @@ function OrdersPage() {
   const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({
     organizationId: organization.id,
   });
-  const [actionError, setActionError] = useState("");
-
   async function handleTogglePaid(orderId: string, currentPaid: boolean) {
-    setActionError("");
-
     try {
       await updateOrder({
         id: orderId,
         organizationId: organization.id,
         isPaid: !currentPaid,
       });
-    } catch (actionError) {
-      setActionError(actionError instanceof Error ? actionError.message : "Nao foi possivel atualizar o pagamento.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível atualizar o pagamento.");
     }
   }
 
   async function handleDeleteOrder(orderId: string) {
-    setActionError("");
-
-    const confirmed = window.confirm("Deseja realmente excluir este pedido? Esta acao nao pode ser desfeita.");
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm("Deseja realmente excluir este pedido? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
 
     try {
       await deleteOrder({
         id: orderId,
         organizationId: organization.id,
       });
-    } catch (actionError) {
-      setActionError(actionError instanceof Error ? actionError.message : "Nao foi possivel excluir o pedido.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível excluir o pedido.");
     }
   }
 
@@ -185,11 +178,6 @@ function OrdersPage() {
         </div>
       </div>
 
-      {actionError ? (
-        <div className="alert alert-error mb-4">
-          <span>{actionError}</span>
-        </div>
-      ) : null}
 
       {isLoading ? <p>Carregando pedidos...</p> : null}
       {isError ? <p className="text-error">{error.message}</p> : null}

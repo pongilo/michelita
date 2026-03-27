@@ -8,6 +8,11 @@ import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-or
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import type { FlatProductionItem } from "@/lib/api/order/get-production-orders-range";
 import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { PeriodFilter } from "@/components/ui/period-filter";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -163,134 +168,81 @@ function DashboardPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Visão geral</h1>
-          {period === "daily" ? (
-            <p className="text-xs opacity-60 mt-0.5">{formatDayLabel(new Date(`${referenceDate}T00:00:00`))}</p>
-          ) : (
-            <p className="text-xs opacity-60 mt-0.5">
-              {dateRangeFormatter.format(new Date(`${startDate}T00:00:00`))} —{" "}
-              {dateRangeFormatter.format(new Date(new Date(`${endDate}T00:00:00`).getTime() - 1))}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="space-y-1">
-            <span className="label text-xs">Período</span>
-            <select
-              className="select select-bordered select-sm"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as DashboardPeriod)}
-            >
-              <option value="daily">Diário</option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensal</option>
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="label text-xs">Data de referência</span>
-            <input
-              type="date"
-              className="input input-bordered input-sm"
-              value={referenceDate}
-              onChange={(e) => setReferenceDate(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            {isFetching ? <span className="loading loading-spinner loading-xs" /> : null}
-            {isFetching ? "Atualizando..." : "Atualizar"}
-          </button>
-        </div>
-      </div>
+      <PageHeader>
+        <PageHeader.Info>
+          <PageHeader.Title>Visão geral</PageHeader.Title>
+          <PageHeader.Subtitle>
+            {period === "daily"
+              ? formatDayLabel(new Date(`${referenceDate}T00:00:00`))
+              : `${dateRangeFormatter.format(new Date(`${startDate}T00:00:00`))} — ${dateRangeFormatter.format(new Date(new Date(`${endDate}T00:00:00`).getTime() - 1))}`}
+          </PageHeader.Subtitle>
+        </PageHeader.Info>
+        <PageHeader.Controls>
+          <PeriodFilter>
+            <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as DashboardPeriod)} />
+            <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
+            <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
+          </PeriodFilter>
+        </PageHeader.Controls>
+      </PageHeader>
 
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="loading loading-spinner loading-sm" />
-          Carregando dados...
-        </div>
-      ) : null}
+      {isLoading ? <LoadingState label="Carregando dados..." /> : null}
       {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
       {data ? (
         <div className="space-y-6">
           {/* Métricas financeiras */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <MetricCard
-              label="Entradas"
-              value={currencyFormatter.format(data.metrics.entry)}
-              valueClassName="text-success"
-            />
-            <MetricCard
-              label="Saídas"
-              value={currencyFormatter.format(data.metrics.exit)}
-              valueClassName="text-error"
-            />
-            <MetricCard
-              label="Saldo"
-              value={currencyFormatter.format(data.metrics.balance)}
-              valueClassName={data.metrics.balance >= 0 ? "text-success" : "text-error"}
-            />
+            <MetricCard>
+              <MetricCard.Label>Entradas</MetricCard.Label>
+              <MetricCard.Value className="text-success">{currencyFormatter.format(data.metrics.entry)}</MetricCard.Value>
+            </MetricCard>
+            <MetricCard>
+              <MetricCard.Label>Saídas</MetricCard.Label>
+              <MetricCard.Value className="text-error">{currencyFormatter.format(data.metrics.exit)}</MetricCard.Value>
+            </MetricCard>
+            <MetricCard>
+              <MetricCard.Label>Saldo</MetricCard.Label>
+              <MetricCard.Value className={data.metrics.balance >= 0 ? "text-success" : "text-error"}>
+                {currencyFormatter.format(data.metrics.balance)}
+              </MetricCard.Value>
+            </MetricCard>
           </section>
 
           {/* Métricas de pedidos */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricCard
-              label="Vendas"
-              value={currencyFormatter.format(data.metrics.grossRevenue)}
-            />
-            <MetricCard label="Pedidos" value={String(data.metrics.totalOrders)} />
-            <MetricCard
-              label="Ticket médio"
-              value={currencyFormatter.format(data.metrics.averageTicket)}
-            />
-            <MetricCard
-              label="Itens vendidos"
-              value={productionIsLoading ? "..." : String(allItems.filter((i) => i.isDelivered).reduce((sum, i) => sum + i.quantity, 0))}
-            />
+            <MetricCard>
+              <MetricCard.Label>Vendas</MetricCard.Label>
+              <MetricCard.Value>{currencyFormatter.format(data.metrics.grossRevenue)}</MetricCard.Value>
+            </MetricCard>
+            <MetricCard>
+              <MetricCard.Label>Pedidos</MetricCard.Label>
+              <MetricCard.Value>{String(data.metrics.totalOrders)}</MetricCard.Value>
+            </MetricCard>
+            <MetricCard>
+              <MetricCard.Label>Ticket médio</MetricCard.Label>
+              <MetricCard.Value>{currencyFormatter.format(data.metrics.averageTicket)}</MetricCard.Value>
+            </MetricCard>
+            <MetricCard>
+              <MetricCard.Label>Itens vendidos</MetricCard.Label>
+              <MetricCard.Value>
+                {productionIsLoading ? "..." : String(allItems.filter((i) => i.isDelivered).reduce((sum, i) => sum + i.quantity, 0))}
+              </MetricCard.Value>
+            </MetricCard>
           </section>
 
           {/* Entregas */}
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className="font-semibold">Itens vendidos</h2>
-              <div className="join">
-                <button
-                  type="button"
-                  className={`join-item btn btn-xs ${deliveryFilter === "all" ? "btn-primary" : "btn-ghost border border-base-300"}`}
-                  onClick={() => setDeliveryFilter("all")}
-                >
-                  Todas
-                </button>
-                <button
-                  type="button"
-                  className={`join-item btn btn-xs ${deliveryFilter === "pending" ? "btn-warning" : "btn-ghost border border-base-300"}`}
-                  onClick={() => setDeliveryFilter("pending")}
-                >
-                  A entregar
-                </button>
-                <button
-                  type="button"
-                  className={`join-item btn btn-xs ${deliveryFilter === "delivered" ? "btn-success" : "btn-ghost border border-base-300"}`}
-                  onClick={() => setDeliveryFilter("delivered")}
-                >
-                  Entregues
-                </button>
-              </div>
+              <ToggleGroup value={deliveryFilter} onChange={setDeliveryFilter}>
+                <ToggleGroup.Item value="all">Todas</ToggleGroup.Item>
+                <ToggleGroup.Item value="pending" activeVariant="btn-warning">A entregar</ToggleGroup.Item>
+                <ToggleGroup.Item value="delivered" activeVariant="btn-success">Entregues</ToggleGroup.Item>
+              </ToggleGroup>
             </div>
 
-            {productionIsLoading ? (
-              <div className="flex items-center gap-2 text-sm opacity-60">
-                <span className="loading loading-spinner loading-sm" />
-                Carregando entregas...
-              </div>
-            ) : null}
+            {productionIsLoading ? <LoadingState label="Carregando entregas..." /> : null}
 
             {productionIsError ? (
               <p className="text-error text-sm">{productionError?.message}</p>
@@ -340,20 +292,6 @@ function DashboardPage() {
   );
 }
 
-type MetricCardProps = {
-  label: string;
-  value: string;
-  valueClassName?: string;
-};
-
-function MetricCard({ label, value, valueClassName }: MetricCardProps) {
-  return (
-    <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-      <p className="text-xs opacity-60 uppercase tracking-wide mb-1">{label}</p>
-      <p className={`text-xl font-bold ${valueClassName ?? ""}`}>{value}</p>
-    </div>
-  );
-}
 
 type DeliveryItemRowProps = {
   item: FlatProductionItem;
