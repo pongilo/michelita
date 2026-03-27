@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -73,10 +74,7 @@ export const Route = createFileRoute("/app/order/form")({
 });
 
 function OrderFormRoute() {
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [customerModalError, setCustomerModalError] = useState("");
   const { organization } = Route.useRouteContext();
 
   const { data: customers = [], isLoading: isLoadingCustomers } = useGetCustomers({
@@ -162,8 +160,6 @@ function OrderFormRoute() {
   }, [subtotal, watchedShippingFee, watchedDiscount]);
 
   async function handleCreateCustomer(values: CustomerFormValues) {
-    setCustomerModalError("");
-
     try {
       const customer = await createCustomer({
         organizationId: organization.id,
@@ -176,13 +172,11 @@ function OrderFormRoute() {
       setValue("customerId", customer.id, { shouldValidate: true });
       setIsCustomerModalOpen(false);
     } catch (error) {
-      setCustomerModalError(error instanceof Error ? error.message : "Erro ao criar cliente.");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar cliente.");
     }
   }
 
   async function onSubmit(values: CreateOrderFormValues) {
-    setErrorMessage("");
-    setSuccessMessage("");
 
     try {
       const order = await createOrder({
@@ -216,7 +210,7 @@ function OrderFormRoute() {
         });
       }
 
-      setSuccessMessage(`Pedido criado com sucesso. ID: ${order.id}`);
+      toast.success(`Pedido criado com sucesso. ID: ${order.id}`);
       const newOrderedAt = localDatetimeNow();
       reset({
         customerId: "",
@@ -229,7 +223,7 @@ function OrderFormRoute() {
         transactions: [],
       });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao registrar pedido.");
+      toast.error(error instanceof Error ? error.message : "Erro ao registrar pedido.");
     }
   }
 
@@ -664,18 +658,6 @@ function OrderFormRoute() {
             ))}
           </section>
 
-          {errorMessage ? (
-            <div className="alert alert-error">
-              <span>{errorMessage}</span>
-            </div>
-          ) : null}
-
-          {successMessage ? (
-            <div className="alert alert-success">
-              <span>{successMessage}</span>
-            </div>
-          ) : null}
-
           <div className="flex justify-end">
             <button type="submit" disabled={isPending} className="btn btn-primary">
               {isPending ? "Salvando..." : "Registrar pedido"}
@@ -687,7 +669,7 @@ function OrderFormRoute() {
         isOpen={isCustomerModalOpen}
         mode="create"
         isSubmitting={isCreatingCustomer}
-        errorMessage={customerModalError}
+        errorMessage=""
         successMessage=""
         onClose={() => setIsCustomerModalOpen(false)}
         onSubmit={handleCreateCustomer}

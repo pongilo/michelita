@@ -139,9 +139,6 @@ function OrderDetailsPage() {
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
   const [isEditItemsModalOpen, setIsEditItemsModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState("");
-  const [formError, setFormError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [actionSuccess, setActionSuccess] = useState("");
 
   // ── Edit info form ───────────────────────────────────────────────────────
   const {
@@ -217,13 +214,12 @@ function OrderDetailsPage() {
       await deleteOrder({ id: orderId, organizationId: organization.id });
       navigate({ to: "/app/orders" });
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Erro ao deletar pedido.");
+      toast.error(err instanceof Error ? err.message : "Erro ao deletar pedido.");
     }
   }
 
   async function handleSaveInfo(values: EditInfoValues) {
     if (!order) return;
-    setFormError("");
     try {
       await updateOrder({
         id: order.id,
@@ -236,15 +232,14 @@ function OrderDetailsPage() {
         discount: values.discount ?? null,
       });
       setIsEditInfoModalOpen(false);
-      setActionSuccess("Informações do pedido atualizadas.");
+      toast.success("Informações do pedido atualizadas.");
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Erro ao atualizar pedido.");
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar pedido.");
     }
   }
 
   async function handleSaveItems(values: EditItemsValues) {
     if (!order) return;
-    setFormError("");
     try {
       await updateOrder({
         id: order.id,
@@ -259,9 +254,9 @@ function OrderDetailsPage() {
         })),
       });
       setIsEditItemsModalOpen(false);
-      setActionSuccess("Itens do pedido atualizados.");
+      toast.success("Itens do pedido atualizados.");
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Erro ao atualizar itens.");
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar itens.");
     }
   }
 
@@ -273,7 +268,6 @@ function OrderDetailsPage() {
   const availableToLink = allTransactions.filter((t) => !linkedTransactionIds.has(t.id));
 
   async function handleCreateTransaction(values: TransactionFormValues) {
-    setFormError("");
     try {
       await createTransaction({
         organizationId: organization.id,
@@ -286,34 +280,32 @@ function OrderDetailsPage() {
         description: values.description,
       });
       setIsNewTransactionModalOpen(false);
-      setActionSuccess("Transacao criada e vinculada ao pedido.");
+      toast.success("Transacao criada e vinculada ao pedido.");
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Erro ao criar transacao.");
+      toast.error(err instanceof Error ? err.message : "Erro ao criar transacao.");
     }
   }
 
   async function handleLinkTransaction() {
     if (!selectedTransactionId) return;
-    setActionError("");
     try {
       await link.mutateAsync({ organizationId: organization.id, orderId, transactionId: selectedTransactionId });
       setIsLinkModalOpen(false);
       setSelectedTransactionId("");
-      setActionSuccess("Transacao vinculada ao pedido.");
+      toast.success("Transacao vinculada ao pedido.");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Erro ao vincular transacao.");
+      toast.error(err instanceof Error ? err.message : "Erro ao vincular transacao.");
     }
   }
 
   async function handleUnlinkTransaction(transactionId: string) {
-    setActionError("");
     const confirmed = window.confirm("Deseja desvincular esta transacao do pedido?");
     if (!confirmed) return;
     try {
       await unlink.mutateAsync({ organizationId: organization.id, orderId, transactionId });
-      setActionSuccess("Transacao desvinculada do pedido.");
+      toast.success("Transacao desvinculada do pedido.");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Erro ao desvincular transacao.");
+      toast.error(err instanceof Error ? err.message : "Erro ao desvincular transacao.");
     }
   }
 
@@ -354,14 +346,14 @@ function OrderDetailsPage() {
             <button
               type="button"
               className="btn btn-sm btn-outline"
-              onClick={() => { setFormError(""); setIsEditItemsModalOpen(true); }}
+              onClick={() => setIsEditItemsModalOpen(true)}
             >
               Editar itens
             </button>
             <button
               type="button"
               className="btn btn-sm btn-primary"
-              onClick={() => { setFormError(""); setIsEditInfoModalOpen(true); }}
+              onClick={() => setIsEditInfoModalOpen(true)}
             >
               Editar pedido
             </button>
@@ -379,13 +371,6 @@ function OrderDetailsPage() {
 
       {order ? (
         <div className="space-y-5">
-          {actionSuccess ? (
-            <div className="alert alert-success"><span>{actionSuccess}</span></div>
-          ) : null}
-          {actionError ? (
-            <div className="alert alert-error"><span>{actionError}</span></div>
-          ) : null}
-
           {/* Info geral */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
@@ -577,14 +562,14 @@ function OrderDetailsPage() {
                 <button
                   type="button"
                   className="btn btn-xs btn-outline"
-                  onClick={() => { setActionError(""); setActionSuccess(""); setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
+                  onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
                 >
                   Vincular
                 </button>
                 <button
                   type="button"
                   className="btn btn-xs btn-primary"
-                  onClick={() => { setFormError(""); setActionSuccess(""); setIsNewTransactionModalOpen(true); }}
+                  onClick={() => setIsNewTransactionModalOpen(true)}
                 >
                   + Nova
                 </button>
@@ -703,12 +688,6 @@ function OrderDetailsPage() {
                   <p className="text-sm opacity-70">Marque quando o pedido já estiver quitado.</p>
                 </div>
               </label>
-
-              {formError ? (
-                <div className="alert alert-error">
-                  <span>{formError}</span>
-                </div>
-              ) : null}
 
               <div className="modal-action">
                 <button
@@ -854,12 +833,6 @@ function OrderDetailsPage() {
                 <span>R$ {itemsSubtotal.toFixed(2)}</span>
               </div>
 
-              {formError ? (
-                <div className="alert alert-error">
-                  <span>{formError}</span>
-                </div>
-              ) : null}
-
               <div className="modal-action">
                 <button
                   type="button"
@@ -887,7 +860,7 @@ function OrderDetailsPage() {
           customers={[]}
           fixedLinkedOrder={fixedLinkedOrder}
           fixedLinkedCustomer={fixedLinkedCustomer}
-          errorMessage={formError}
+          errorMessage=""
           successMessage=""
           initialValues={{ madeAt: localDatetimeNow() }}
           onClose={() => setIsNewTransactionModalOpen(false)}
@@ -924,12 +897,6 @@ function OrderDetailsPage() {
               </label>
             )}
 
-            {actionError ? (
-              <div className="alert alert-error mt-3">
-                <span>{actionError}</span>
-              </div>
-            ) : null}
-
             <div className="modal-action">
               <button
                 type="button"
@@ -937,7 +904,6 @@ function OrderDetailsPage() {
                 onClick={() => {
                   setIsLinkModalOpen(false);
                   setSelectedTransactionId("");
-                  setActionError("");
                 }}
               >
                 Cancelar

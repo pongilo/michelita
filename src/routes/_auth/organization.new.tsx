@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
@@ -24,8 +24,6 @@ export const Route = createFileRoute("/_auth/organization/new")({
 function CreateOrganizationPage() {
   const navigate = useNavigate();
   const { userId } = Route.useRouteContext();
-  
-  const [error, setError] = useState("");
   const { mutateAsync: createOrganization } = useCreateOrganization();
 
   const {
@@ -37,8 +35,6 @@ function CreateOrganizationPage() {
   });
 
   async function onSubmit(values: CreateOrganizationFormValues) {
-    setError("");
-
     await createOrganization(
       { name: values.name, ownerId: userId },
       {
@@ -46,7 +42,7 @@ function CreateOrganizationPage() {
           await navigate({ to: "/app/overview" });
         },
         onError: (error) => {
-          setError(error.message);
+          toast.error(error.message);
         }
       }
     );
@@ -79,12 +75,6 @@ function CreateOrganizationPage() {
                 <span className="text-error-content text-sm">{errors.name.message}</span>
               ) : null}
             </label>
-
-            {error ? (
-              <div className="alert alert-error">
-                <span>{error}</span>
-              </div>
-            ) : null}
 
             <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
               {isSubmitting ? "Criando..." : "Criar organizacao"}

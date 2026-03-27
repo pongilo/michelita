@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { z } from "zod";
 import { updateUser } from "@/lib/api/auth/update-user";
 import { updatePassword } from "@/lib/api/auth/update-password";
@@ -32,11 +32,6 @@ function AccountPage() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
 
-  const [profileSuccess, setProfileSuccess] = useState("");
-  const [profileError, setProfileError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-
   const {
     register: registerProfile,
     handleSubmit: handleSubmitProfile,
@@ -60,26 +55,22 @@ function AccountPage() {
   });
 
   async function onSubmitProfile(values: ProfileValues) {
-    setProfileError("");
-    setProfileSuccess("");
     try {
       await updateUser({ name: values.name, email: values.email });
-      setProfileSuccess("Perfil atualizado com sucesso.");
+      toast.success("Perfil atualizado com sucesso.");
       router.invalidate();
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : "Erro ao atualizar perfil.");
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar perfil.");
     }
   }
 
   async function onSubmitPassword(values: PasswordValues) {
-    setPasswordError("");
-    setPasswordSuccess("");
     try {
       await updatePassword({ password: values.password, confirmPassword: values.confirmPassword });
-      setPasswordSuccess("Senha alterada com sucesso.");
+      toast.success("Senha alterada com sucesso.");
       resetPassword();
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : "Erro ao alterar senha.");
+      toast.error(err instanceof Error ? err.message : "Erro ao alterar senha.");
     }
   }
 
@@ -90,17 +81,6 @@ function AccountPage() {
       {/* Perfil */}
       <section className="mb-8">
         <h2 className="text-base font-semibold mb-4">Informações pessoais</h2>
-
-        {profileSuccess && (
-          <div className="alert alert-success mb-4">
-            <span>{profileSuccess}</span>
-          </div>
-        )}
-        {profileError && (
-          <div className="alert alert-error mb-4">
-            <span>{profileError}</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-4">
           <label className="form-control w-full">
@@ -151,17 +131,6 @@ function AccountPage() {
       {/* Senha */}
       <section>
         <h2 className="text-base font-semibold mb-4">Alterar senha</h2>
-
-        {passwordSuccess && (
-          <div className="alert alert-success mb-4">
-            <span>{passwordSuccess}</span>
-          </div>
-        )}
-        {passwordError && (
-          <div className="alert alert-error mb-4">
-            <span>{passwordError}</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="space-y-4">
           <label className="form-control w-full">

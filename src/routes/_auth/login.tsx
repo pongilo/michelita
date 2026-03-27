@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
 
@@ -18,7 +18,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
 
   const { mutateAsync: signIn } = useSignIn()
 
@@ -31,16 +30,14 @@ function LoginPage() {
   });
 
   async function onSubmit({ email, password }: LoginFormValues) {
-    setError("");
-
     await signIn({ email, password }, {
       onSuccess: async () => {
         await navigate({ to: "/app/overview" });
       },
       onError: (error) => {
-        setError(error.message)
+        toast.error(error.message);
       }
-    })    
+    })
   }
 
   return (
@@ -76,12 +73,6 @@ function LoginPage() {
               ) : null}
             </label>
 
-            {error ? (
-              <div className="alert alert-error">
-                <span>{error}</span>
-              </div>
-            ) : null}
-            
             <button
               type="submit"
               disabled={isSubmitting}

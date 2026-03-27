@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
 
@@ -25,7 +25,6 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
   const { mutateAsync: signUp } = useSignUp();
 
   const {
@@ -37,8 +36,6 @@ function RegisterPage() {
   });
 
   async function onSubmit({ name, email, password }: RegisterFormValues) {
-    setError("");
-
     await signUp(
       { name, email, password },
       {
@@ -51,7 +48,7 @@ function RegisterPage() {
           await navigate({ to: "/app/overview" });
         },
         onError: (error) => {
-          setError(error.message);
+          toast.error(error.message);
         }
       }
     );
@@ -117,12 +114,6 @@ function RegisterPage() {
                 </span>
               ) : null}
             </label>
-
-            {error && (
-              <div className="alert alert-error">
-                <span>{error}</span>
-              </div>
-            )}
 
             <button
               type="submit"
