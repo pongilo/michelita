@@ -11,9 +11,8 @@ export function useUpdateOrderItemDelivery({ organizationId }: UseUpdateOrderIte
   return useMutation({
     mutationFn: updateOrderItemDelivery,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard", organizationId, "daily"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", organizationId, "daily"] });
+      queryClient.invalidateQueries({ queryKey: ["order", organizationId] });
     },
   });
 }

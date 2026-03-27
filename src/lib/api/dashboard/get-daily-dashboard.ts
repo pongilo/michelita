@@ -89,6 +89,8 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
           orderedAt: true,
           note: true,
           customerId: true,
+          shippingFee: true,
+          discount: true,
           customer: {
             select: {
               id: true,
@@ -156,7 +158,8 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     const pendingOrders = ordersToday.filter((order) => !order.isPaid).length;
     const totalItems = ordersToday.reduce((sum, order) => sum + order.item.length, 0);
     const grossRevenue = ordersToday.reduce((sum, order) => {
-      const orderTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
+      const itemTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
+      const orderTotal = itemTotal + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0);
       return sum + orderTotal;
     }, 0);
 
@@ -233,7 +236,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         })),
       recentOrders: ordersToday.slice(0, 6).map((order) => ({
         total: Number(
-          order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0).toFixed(2),
+          (order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0) + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0)).toFixed(2),
         ),
         id: order.id,
         orderedAt: order.orderedAt,

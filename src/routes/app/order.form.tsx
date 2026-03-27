@@ -47,9 +47,9 @@ function localDatetimeNow() {
   return local.toISOString().slice(0, 16);
 }
 
-function emptyItem(orderedAt?: string): CreateOrderFormValues["items"][number] {
+function emptyItem(orderedAt?: string, isEncomenda = false): CreateOrderFormValues["items"][number] {
   return {
-    isEncomenda: false,
+    isEncomenda,
     description: "",
     unitPrice: 0,
     quantity: 1,
@@ -127,6 +127,11 @@ function OrderFormRoute() {
     control,
     name: "transactions",
   });
+
+  const [showNote, setShowNote] = useState<Record<string, boolean>>({});
+  const [showOrderNote, setShowOrderNote] = useState(false);
+  const [orderIsEncomenda, setOrderIsEncomenda] = useState(false);
+  const [orderDeliveredAt, setOrderDeliveredAt] = useState("");
 
   const watchedItems = watch("items");
   const watchedCustomerId = watch("customerId");
@@ -276,15 +281,37 @@ function OrderFormRoute() {
             </label>
           </section>
 
-          <label className="space-y-1 block">
-            <span className="label">Observacao do pedido</span>
-            <textarea
-              className="textarea textarea-bordered w-full"
-              rows={3}
-              placeholder="Observacoes gerais do pedido (opcional)"
-              {...register("note")}
-            />
-          </label>
+          {showOrderNote ? (
+            <label className="space-y-1 block">
+              <div className="flex items-center justify-between">
+                <span className="label">Observação do pedido</span>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost text-error opacity-60"
+                  onClick={() => {
+                    setValue("note", "");
+                    setShowOrderNote(false);
+                  }}
+                >
+                  Remover
+                </button>
+              </div>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={3}
+                autoFocus
+                {...register("note")}
+              />
+            </label>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-xs btn-ghost btn-block justify-start text-xs opacity-50"
+              onClick={() => setShowOrderNote(true)}
+            >
+              + Adicionar observação do pedido
+            </button>
+          )}
 
           <div>
             <label className="label cursor-pointer justify-start gap-3">
@@ -299,10 +326,57 @@ function OrderFormRoute() {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">Itens do pedido</h2>
-              <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(watchedOrderedAt))}>
+              <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(orderIsEncomenda && orderDeliveredAt ? orderDeliveredAt : watchedOrderedAt, orderIsEncomenda))}>
                 Adicionar item
               </button>
             </div>
+
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-sm"
+                checked={orderIsEncomenda}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setOrderIsEncomenda(checked);
+                  if (checked) {
+                    setOrderDeliveredAt(watchedOrderedAt);
+                  } else {
+                    setOrderDeliveredAt("");
+                  }
+                  itemFields.forEach((_, i) => {
+                    setValue(`items.${i}.isEncomenda`, checked);
+                    if (!checked) {
+                      setValue(`items.${i}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
+                    }
+                  });
+                }}
+              />
+              <div>
+                <span className="label-text font-medium">Encomenda (todos os itens)</span>
+              </div>
+            </label>
+
+            {orderIsEncomenda ? (
+              <label className="space-y-1">
+                <span className="label">Data/hora de entrega (todos os itens)</span>
+                <input
+                  type="datetime-local"
+                  className="input input-bordered w-full"
+                  value={orderDeliveredAt}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setOrderDeliveredAt(val);
+                    if (val) {
+                      itemFields.forEach((_, i) => {
+                        setValue(`items.${i}.deliveredAt`, val, { shouldValidate: true });
+                      });
+                    }
+                  }}
+                />
+                <p className="text-xs opacity-50">Cada item pode ter sua data ajustada individualmente abaixo.</p>
+              </label>
+            ) : null}
 
             {itemFields.map((field, index) => {
               const itemSubtotal = watchedItems[index]
@@ -406,10 +480,39 @@ function OrderFormRoute() {
                         </label>
                       ) : null}
 
-                      <label className={`space-y-1 ${isEncomenda ? "md:col-span-2" : "md:col-span-3"}`}>
-                        <span className="label">Observacao</span>
-                        <input type="text" className="input input-bordered w-full" {...register(`items.${index}.note`)} />
-                      </label>
+                      <div className={`flex flex-col justify-end ${isEncomenda ? "md:col-span-2" : "md:col-span-3"}`}>
+                        {showNote[field.id] ? (
+                          <label className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="label">Observação</span>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-ghost text-error opacity-60"
+                                onClick={() => {
+                                  setValue(`items.${index}.note`, "");
+                                  setShowNote((prev) => ({ ...prev, [field.id]: false }));
+                                }}
+                              >
+                                Remover
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              className="input input-bordered w-full"
+                              autoFocus
+                              {...register(`items.${index}.note`)}
+                            />
+                          </label>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-ghost btn-block justify-start text-xs opacity-50"
+                            onClick={() => setShowNote((prev) => ({ ...prev, [field.id]: true }))}
+                          >
+                            + Adicionar observação
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="text-sm opacity-70">Subtotal do item: R$ {itemSubtotal.toFixed(2)}</div>

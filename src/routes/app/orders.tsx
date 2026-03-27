@@ -278,12 +278,29 @@ function OrdersPage() {
                   ))}
                 </ul>
 
-                <div className="flex items-center justify-between gap-2 border-t border-base-300 pt-2">
-                  {order.note
-                    ? <p className="text-xs italic opacity-50">{order.note}</p>
-                    : <span />
-                  }
-                  <span className="text-sm font-bold">{currencyFormatter.format(order.itemTotal)}</span>
+                <div className="flex flex-col gap-1 border-t border-base-300 pt-2">
+                  {order.note && (
+                    <p className="text-xs italic opacity-50">{order.note}</p>
+                  )}
+                  {(order.shippingFee || order.discount) ? (
+                    <div className="flex flex-col gap-0.5 text-xs opacity-50">
+                      {order.shippingFee ? (
+                        <div className="flex justify-between">
+                          <span>+ Frete</span>
+                          <span>{currencyFormatter.format(order.shippingFee)}</span>
+                        </div>
+                      ) : null}
+                      {order.discount ? (
+                        <div className="flex justify-between">
+                          <span>− Desconto</span>
+                          <span>{currencyFormatter.format(order.discount)}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-end">
+                    <span className="text-sm font-bold">{currencyFormatter.format(order.total)}</span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -518,9 +518,23 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
                         </div>
                       ))}
                     </div>
-                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-base-200">
-                      <span className="text-sm font-semibold opacity-50">Total</span>
-                      <span className="font-bold">{currencyFormatter.format(orderDetail.itemTotal)}</span>
+                    <div className="mt-3 pt-3 border-t border-base-200 space-y-1">
+                      {orderDetail.shippingFee ? (
+                        <div className="flex justify-between items-center text-xs opacity-50">
+                          <span>+ Frete</span>
+                          <span>{currencyFormatter.format(orderDetail.shippingFee)}</span>
+                        </div>
+                      ) : null}
+                      {orderDetail.discount ? (
+                        <div className="flex justify-between items-center text-xs opacity-50">
+                          <span>− Desconto</span>
+                          <span>{currencyFormatter.format(orderDetail.discount)}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold opacity-50">Total</span>
+                        <span className="font-bold">{currencyFormatter.format(orderDetail.total)}</span>
+                      </div>
                     </div>
                   </div>
 

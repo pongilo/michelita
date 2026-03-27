@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
@@ -9,6 +9,7 @@ import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useLinkOrderTransaction } from "@/hooks/tanstack/order/use-link-order-transaction";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
+import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-order-item-delivery";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
@@ -102,6 +103,34 @@ function OrderDetailsPage() {
   const { link, unlink } = useLinkOrderTransaction({ organizationId: organization.id, orderId });
   const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({ organizationId: organization.id });
   const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({ organizationId: organization.id });
+  const { mutate: updateItemDelivery, mutateAsync: updateItemDeliveryAsync, isPending: isUpdatingDelivery } = useUpdateOrderItemDelivery({ organizationId: organization.id });
+
+  // ── Delivery dialog state ─────────────────────────────────────────────────
+  const deliveryDialogRef = useRef<HTMLDialogElement>(null);
+  const [pendingDeliveryItemId, setPendingDeliveryItemId] = useState<string | null>(null);
+  const [updateDeliveryDate, setUpdateDeliveryDate] = useState(false);
+
+  function openDeliveryDialog(itemId: string) {
+    setPendingDeliveryItemId(itemId);
+    setUpdateDeliveryDate(false);
+    deliveryDialogRef.current?.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+  }
+
+  function handleConfirmDelivery() {
+    if (!pendingDeliveryItemId) return;
+    const now = new Date().toISOString();
+    updateItemDelivery(
+      { orderItemId: pendingDeliveryItemId, isDelivered: true, deliveredAt: updateDeliveryDate ? now : undefined },
+      { onSuccess: () => { deliveryDialogRef.current?.close(); setPendingDeliveryItemId(null); } },
+    );
+  }
+
+  async function handleMarkAllDelivered() {
+    if (!order) return;
+    const undelivered = order.item.filter((i) => !i.isDelivered);
+    await Promise.all(undelivered.map((i) => updateItemDeliveryAsync({ orderItemId: i.id, isDelivered: true })));
+  }
 
   // ── Modal state ──────────────────────────────────────────────────────────
   const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
@@ -431,7 +460,19 @@ function OrderDetailsPage() {
 
           {/* Itens */}
           <section>
-            <h2 className="font-semibold mb-3">Itens</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Itens</h2>
+              {order.item.some((i) => !i.isDelivered) ? (
+                <button
+                  type="button"
+                  className="btn btn-xs btn-outline"
+                  disabled={isUpdatingDelivery}
+                  onClick={handleMarkAllDelivered}
+                >
+                  Marcar todos como entregues
+                </button>
+              ) : null}
+            </div>
             {order.item.length === 0 ? (
               <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
                 Nenhum item cadastrado.
@@ -450,15 +491,82 @@ function OrderDetailsPage() {
                         {item.note ? ` · ${item.note}` : ""}
                       </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                      <p className="text-xs opacity-40">{currencyFormatter.format(item.unitPrice)} un.</p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                        <p className="text-xs opacity-40">{currencyFormatter.format(item.unitPrice)} un.</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`badge badge-sm ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
+                          {item.isDelivered ? "Entregue" : "A entregar"}
+                        </span>
+                        {item.isDelivered ? (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-ghost opacity-50"
+                            disabled={isUpdatingDelivery}
+                            onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}
+                          >
+                            Desmarcar
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-ghost text-success"
+                            disabled={isUpdatingDelivery}
+                            onClick={() => openDeliveryDialog(item.id)}
+                          >
+                            Marcar entregue
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </section>
+
+          {/* Dialog de confirmação de entrega */}
+          <dialog ref={deliveryDialogRef} className="modal">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg mb-1">Confirmar entrega</h3>
+              <p className="text-sm opacity-70 mb-4">
+                Deseja marcar este item como entregue?
+              </p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={updateDeliveryDate}
+                  onChange={(e) => setUpdateDeliveryDate(e.target.checked)}
+                />
+                <span className="text-sm">Atualizar data de entrega para agora</span>
+              </label>
+              <div className="modal-action mt-4">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => deliveryDialogRef.current?.close()}
+                  disabled={isUpdatingDelivery}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={handleConfirmDelivery}
+                  disabled={isUpdatingDelivery}
+                >
+                  {isUpdatingDelivery ? <span className="loading loading-spinner loading-xs" /> : null}
+                  Confirmar
+                </button>
+              </div>
+            </div>
+            <form method="dialog" className="modal-backdrop">
+              <button type="submit">fechar</button>
+            </form>
+          </dialog>
 
           {/* Transações */}
           <section>
