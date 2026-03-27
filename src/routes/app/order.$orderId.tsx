@@ -481,11 +481,11 @@ function OrderDetailsPage() {
               <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
                 {order.item.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                    <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
-                      {item.quantity}
-                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
+                        <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
+                      </div>
                       <p className="text-xs opacity-50 truncate">
                         {datetimeFormatter.format(new Date(item.deliveredAt))}
                         {item.note ? ` · ${item.note}` : ""}
