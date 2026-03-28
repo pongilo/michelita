@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
 import { useGetProductionOrders } from "@/hooks/tanstack/order/use-get-production-orders";
 import { useGetProductionOrdersRange } from "@/hooks/tanstack/order/use-get-production-orders-range";
@@ -10,10 +10,15 @@ import type { FlatProductionItem } from "@/lib/api/order/get-production-orders-r
 import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/loading-state";
-import { MetricCard } from "@/components/ui/metric-card";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { PeriodFilter } from "@/components/ui/period-filter";
 import { ToggleGroup } from "@/components/ui/toggle-group";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -188,48 +193,62 @@ function DashboardPage() {
       </PageHeader>
 
       {isLoading ? <LoadingState label="Carregando dados..." /> : null}
-      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
+      {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
       {data ? (
         <div className="space-y-6">
           {/* Métricas financeiras */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <MetricCard>
-              <MetricCard.Label>Entradas</MetricCard.Label>
-              <MetricCard.Value className="text-success">{currencyFormatter.format(data.metrics.entry)}</MetricCard.Value>
-            </MetricCard>
-            <MetricCard>
-              <MetricCard.Label>Saídas</MetricCard.Label>
-              <MetricCard.Value className="text-error">{currencyFormatter.format(data.metrics.exit)}</MetricCard.Value>
-            </MetricCard>
-            <MetricCard>
-              <MetricCard.Label>Saldo</MetricCard.Label>
-              <MetricCard.Value className={data.metrics.balance >= 0 ? "text-success" : "text-error"}>
-                {currencyFormatter.format(data.metrics.balance)}
-              </MetricCard.Value>
-            </MetricCard>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Entradas</CardDescription>
+                <CardTitle className="text-xl text-success">{currencyFormatter.format(data.metrics.entry)}</CardTitle>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Saídas</CardDescription>
+                <CardTitle className="text-xl text-destructive">{currencyFormatter.format(data.metrics.exit)}</CardTitle>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Saldo</CardDescription>
+                <CardTitle className={`text-xl ${data.metrics.balance >= 0 ? "text-success" : "text-destructive"}`}>
+                  {currencyFormatter.format(data.metrics.balance)}
+                </CardTitle>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Métricas de pedidos */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricCard>
-              <MetricCard.Label>Vendas</MetricCard.Label>
-              <MetricCard.Value>{currencyFormatter.format(data.metrics.grossRevenue)}</MetricCard.Value>
-            </MetricCard>
-            <MetricCard>
-              <MetricCard.Label>Pedidos</MetricCard.Label>
-              <MetricCard.Value>{String(data.metrics.totalOrders)}</MetricCard.Value>
-            </MetricCard>
-            <MetricCard>
-              <MetricCard.Label>Ticket médio</MetricCard.Label>
-              <MetricCard.Value>{currencyFormatter.format(data.metrics.averageTicket)}</MetricCard.Value>
-            </MetricCard>
-            <MetricCard>
-              <MetricCard.Label>Itens vendidos</MetricCard.Label>
-              <MetricCard.Value>
-                {productionIsLoading ? "..." : String(allItems.filter((i) => i.isDelivered).reduce((sum, i) => sum + i.quantity, 0))}
-              </MetricCard.Value>
-            </MetricCard>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Vendas</CardDescription>
+                <CardTitle className="text-xl">{currencyFormatter.format(data.metrics.grossRevenue)}</CardTitle>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Pedidos</CardDescription>
+                <CardTitle className="text-xl">{String(data.metrics.totalOrders)}</CardTitle>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Ticket médio</CardDescription>
+                <CardTitle className="text-xl">{currencyFormatter.format(data.metrics.averageTicket)}</CardTitle>
+              </CardContent>
+            </Card>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-1">
+                <CardDescription>Itens vendidos</CardDescription>
+                <CardTitle className="text-xl">
+                  {productionIsLoading ? "..." : String(allItems.filter((i) => i.isDelivered).reduce((sum, i) => sum + i.quantity, 0))}
+                </CardTitle>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Entregas */}
@@ -238,30 +257,30 @@ function DashboardPage() {
               <h2 className="font-semibold">Itens vendidos</h2>
               <ToggleGroup value={deliveryFilter} onChange={setDeliveryFilter}>
                 <ToggleGroup.Item value="all">Todas</ToggleGroup.Item>
-                <ToggleGroup.Item value="pending" activeVariant="btn-warning">A entregar</ToggleGroup.Item>
-                <ToggleGroup.Item value="delivered" activeVariant="btn-success">Entregues</ToggleGroup.Item>
+                <ToggleGroup.Item value="pending" activeClassName="bg-amber-100 text-amber-800">A entregar</ToggleGroup.Item>
+                <ToggleGroup.Item value="delivered" activeClassName="bg-green-100 text-green-800">Entregues</ToggleGroup.Item>
               </ToggleGroup>
             </div>
 
             {productionIsLoading ? <LoadingState label="Carregando entregas..." /> : null}
 
             {productionIsError ? (
-              <p className="text-error text-sm">{productionError?.message}</p>
+              <p className="text-destructive text-sm">{productionError?.message}</p>
             ) : null}
 
             {!productionIsLoading && !productionIsError && filteredItems.length === 0 ? (
-              <div className="rounded-box border border-dashed border-base-300 bg-base-100 px-4 py-6 text-sm opacity-60 text-center">
+              <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-6 text-sm opacity-60 text-center">
                 Nenhuma entrega para este período.
               </div>
             ) : null}
 
             {/* Diário: lista simples */}
             {!productionIsLoading && !productionIsError && period === "daily" && filteredItems.length > 0 ? (
-              <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden border border-base-300">
+              <ItemGroup>
                 {filteredItems.map((item) => (
                   <DeliveryItemRow key={item.id} item={item} organizationId={organization.id} />
                 ))}
-              </div>
+              </ItemGroup>
             ) : null}
 
             {/* Semanal / Mensal: agrupado por dia */}
@@ -275,11 +294,11 @@ function DashboardPage() {
                     {items.length === 0 ? (
                       <p className="text-xs opacity-40 italic">Nenhuma entrega.</p>
                     ) : (
-                      <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden border border-base-300">
+                      <ItemGroup>
                         {items.map((item) => (
                           <DeliveryItemRow key={item.id} item={item} organizationId={organization.id} />
                         ))}
-                      </div>
+                      </ItemGroup>
                     )}
                   </div>
                 ))}
@@ -312,7 +331,7 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
   const { order } = item;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updateDate, setUpdateDate] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { mutate, isPending } = useUpdateOrderItemDelivery({ organizationId });
 
   const orderQuery = useGetOrder({ organizationId, orderId: order.id });
@@ -320,7 +339,7 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
 
   function openConfirmModal() {
     setUpdateDate(false);
-    dialogRef.current?.showModal();
+    setIsConfirmOpen(true);
     (document.activeElement as HTMLElement | null)?.blur();
   }
 
@@ -328,7 +347,7 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
     const now = new Date().toISOString();
     mutate(
       { orderItemId: item.id, isDelivered: true, deliveredAt: updateDate ? now : undefined },
-      { onSuccess: () => dialogRef.current?.close() },
+      { onSuccess: () => setIsConfirmOpen(false) },
     );
   }
 
@@ -340,249 +359,173 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
   return (
     <>
       {/* Row */}
-      <div className="flex items-center bg-base-100 hover:bg-base-200/50 transition-colors">
-        <Button
-          variant="ghost"
-          className="flex flex-1 min-w-0 h-auto items-center gap-3 px-4 py-3 text-left rounded-none justify-start"
-          onClick={() => setDrawerOpen(true)}
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
-              <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
-            </div>
-            <p className="text-xs opacity-50 mt-0.5 truncate">
-              {timeFormatter.format(new Date(item.deliveredAt))}
-              {order.customer ? <> · {order.customer.name}</> : null}
-              {item.note ? <> · {item.note}</> : null}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`badge badge-sm ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
-              {item.isDelivered ? "Entregue" : "A entregar"}
-            </span>
-            <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-              {order.isPaid ? "Pago" : "Pendente"}
-            </span>
-          </div>
-        </Button>
-      </div>
+      <Item variant="outline" className="cursor-pointer" onClick={() => setDrawerOpen(true)}>
+        <ItemContent>
+          <ItemTitle>
+            <span className="text-primary shrink-0">{item.quantity}x</span>
+            {item.description}
+          </ItemTitle>
+          <ItemDescription>
+            {timeFormatter.format(new Date(item.deliveredAt))}
+            {order.customer ? <> · {order.customer.name}</> : null}
+            {item.note ? <> · {item.note}</> : null}
+          </ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+            {item.isDelivered ? "Entregue" : "A entregar"}
+          </Badge>
+          <Badge className={order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+            {order.isPaid ? "Pago" : "Pendente"}
+          </Badge>
+        </ItemActions>
+      </Item>
 
       {/* Drawer */}
-      {drawerOpen ? (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/40"
-            onClick={() => setDrawerOpen(false)}
-          />
-          {/* Panel */}
-          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-base-100 shadow-2xl">
-            {/* Drawer header */}
-            <div className="flex items-center justify-between border-b border-base-200 px-5 py-4">
-              <div className="min-w-0">
-                <h2 className="font-semibold truncate">{item.description}</h2>
-                <p className="text-xs opacity-50 mt-0.5">
-                  {timeFormatter.format(new Date(item.deliveredAt))}
-                  {order.customer ? <> · {order.customer.name}</> : null}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0 ml-2"
-                onClick={() => setDrawerOpen(false)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </Button>
-            </div>
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle className="truncate">{item.description}</DrawerTitle>
+            <DrawerDescription>
+              {timeFormatter.format(new Date(item.deliveredAt))}
+              {order.customer ? <> · {order.customer.name}</> : null}
+            </DrawerDescription>
+          </DrawerHeader>
 
-            {/* Drawer body */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              {orderQuery.isLoading ? (
-                <div className="flex items-center gap-2 text-sm opacity-50">
-                  <span className="loading loading-spinner loading-sm" />
-                  Carregando...
+          <div className="flex-1 overflow-y-auto px-4 py-2">
+            {orderQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            ) : orderQuery.isError ? (
+              <p className="text-destructive text-sm">{orderQuery.error?.message}</p>
+            ) : orderDetail ? (
+              <div className="space-y-5">
+                {/* Status badges */}
+                <div className="flex gap-2">
+                  <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+                    {item.isDelivered ? "Entregue" : "A entregar"}
+                  </Badge>
+                  <Badge className={order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                    {order.isPaid ? "Pago" : "Pagamento pendente"}
+                  </Badge>
                 </div>
-              ) : orderQuery.isError ? (
-                <p className="text-error text-sm">{orderQuery.error?.message}</p>
-              ) : orderDetail ? (
-                <div className="space-y-5">
-                  {/* Status badges */}
-                  <div className="flex gap-2">
-                    <span className={`badge ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
-                      {item.isDelivered ? "Entregue" : "A entregar"}
-                    </span>
-                    <span className={`badge ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                      {order.isPaid ? "Pago" : "Pagamento pendente"}
-                    </span>
-                  </div>
 
-                  {/* Cliente */}
-                  {orderDetail.customer ? (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Cliente</p>
-                      <p className="font-medium">{orderDetail.customer.name}</p>
-                      {orderDetail.customer.phone ? (
-                        <p className="text-sm opacity-60 mt-0.5">{orderDetail.customer.phone}</p>
-                      ) : null}
-                      {orderDetail.customer.address ? (
-                        <p className="text-sm opacity-60 mt-0.5">{orderDetail.customer.address}</p>
-                      ) : null}
-                      {orderDetail.customer.note ? (
-                        <p className="text-sm opacity-60 italic mt-0.5">{orderDetail.customer.note}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {/* Itens do pedido */}
+                {/* Cliente */}
+                {orderDetail.customer ? (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Itens do pedido</p>
-                    <p className="text-xs opacity-50 mb-2">
-                      Realizado em {dateFormatter.format(new Date(orderDetail.orderedAt))}
-                    </p>
-                    {orderDetail.note ? (
-                      <p className="text-sm opacity-60 italic mb-2">{orderDetail.note}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Cliente</p>
+                    <p className="font-medium">{orderDetail.customer.name}</p>
+                    {orderDetail.customer.phone ? <p className="text-sm text-muted-foreground mt-0.5">{orderDetail.customer.phone}</p> : null}
+                    {orderDetail.customer.address ? <p className="text-sm text-muted-foreground mt-0.5">{orderDetail.customer.address}</p> : null}
+                    {orderDetail.customer.note ? <p className="text-sm text-muted-foreground italic mt-0.5">{orderDetail.customer.note}</p> : null}
+                  </div>
+                ) : null}
+
+                {/* Itens do pedido */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Itens do pedido</p>
+                  <p className="text-xs text-muted-foreground mb-2">Realizado em {dateFormatter.format(new Date(orderDetail.orderedAt))}</p>
+                  {orderDetail.note ? <p className="text-sm text-muted-foreground italic mb-2">{orderDetail.note}</p> : null}
+                  <div className="space-y-2">
+                    {orderDetail.item.map((oi) => (
+                      <div key={oi.id} className="flex items-start justify-between gap-3">
+                        <p className="text-sm min-w-0">
+                          <span className="font-semibold text-primary">{oi.quantity}x</span>{" "}{oi.description}
+                          {oi.note ? <span className="block text-xs text-muted-foreground mt-0.5">{oi.note}</span> : null}
+                        </p>
+                        <p className="text-sm shrink-0 tabular-nums font-medium">{currencyFormatter.format(oi.total)}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t space-y-1">
+                    {orderDetail.shippingFee ? (
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>+ Frete</span><span>{currencyFormatter.format(orderDetail.shippingFee)}</span>
+                      </div>
                     ) : null}
+                    {orderDetail.discount ? (
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>− Desconto</span><span>{currencyFormatter.format(orderDetail.discount)}</span>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-muted-foreground">Total</span>
+                      <span className="font-bold">{currencyFormatter.format(orderDetail.total)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transações */}
+                {orderDetail.transactions.length > 0 ? (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Transações</p>
                     <div className="space-y-2">
-                      {orderDetail.item.map((oi) => (
-                        <div key={oi.id} className="flex items-start justify-between gap-3">
-                          <p className="text-sm min-w-0">
-                            <span className="font-semibold text-primary">{oi.quantity}x</span>{" "}
-                            {oi.description}
-                            {oi.note ? <span className="block text-xs opacity-50 mt-0.5">{oi.note}</span> : null}
+                      {orderDetail.transactions.map((tx) => (
+                        <div key={tx.id} className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm truncate">
+                              {methodLabel[tx.method] ?? tx.method}
+                              {tx.description ? <span className="text-muted-foreground"> · {tx.description}</span> : null}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{dateFormatter.format(new Date(tx.madeAt))}</p>
+                          </div>
+                          <p className={`text-sm font-semibold shrink-0 tabular-nums ${tx.type === "entry" ? "text-success" : "text-destructive"}`}>
+                            {tx.type === "entry" ? "+" : ""}{currencyFormatter.format(tx.amount)}
                           </p>
-                          <p className="text-sm shrink-0 tabular-nums font-medium">{currencyFormatter.format(oi.total)}</p>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-3 pt-3 border-t border-base-200 space-y-1">
-                      {orderDetail.shippingFee ? (
-                        <div className="flex justify-between items-center text-xs opacity-50">
-                          <span>+ Frete</span>
-                          <span>{currencyFormatter.format(orderDetail.shippingFee)}</span>
-                        </div>
-                      ) : null}
-                      {orderDetail.discount ? (
-                        <div className="flex justify-between items-center text-xs opacity-50">
-                          <span>− Desconto</span>
-                          <span>{currencyFormatter.format(orderDetail.discount)}</span>
-                        </div>
-                      ) : null}
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold opacity-50">Total</span>
-                        <span className="font-bold">{currencyFormatter.format(orderDetail.total)}</span>
-                      </div>
-                    </div>
                   </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
 
-                  {/* Transações */}
-                  {orderDetail.transactions.length > 0 ? (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide opacity-40 mb-2">Transações</p>
-                      <div className="space-y-2">
-                        {orderDetail.transactions.map((tx) => (
-                          <div key={tx.id} className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-sm truncate">
-                                {methodLabel[tx.method] ?? tx.method}
-                                {tx.description ? <span className="opacity-60"> · {tx.description}</span> : null}
-                              </p>
-                              <p className="text-xs opacity-50">{dateFormatter.format(new Date(tx.madeAt))}</p>
-                            </div>
-                            <p className={`text-sm font-semibold shrink-0 tabular-nums ${tx.type === "entry" ? "text-success" : "text-error"}`}>
-                              {tx.type === "entry" ? "+" : ""}{currencyFormatter.format(tx.amount)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-
-            {/* Drawer footer */}
-            <div className="border-t border-base-200 px-5 py-3 flex gap-2">
-              <Link
-                to="/app/order/$orderId"
-                params={{ orderId: order.id }}
-                className="btn btn-outline btn-sm flex-1"
-                onClick={() => setDrawerOpen(false)}
-              >
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="flex-1 inline-flex items-center justify-center rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors">
                 Ver pedido completo
               </Link>
-              {item.isDelivered ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { handleUndoDelivery(); setDrawerOpen(false); }}
-                  disabled={isPending}
-                >
-                  Desfazer entrega
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-success text-white hover:bg-success/80"
-                  onClick={openConfirmModal}
-                  disabled={isPending}
-                >
-                  Confirmar entrega
-                </Button>
-              )}
-            </div>
-          </div>
-        </>
-      ) : null}
+            </DrawerClose>
+            {item.isDelivered ? (
+              <Button type="button" variant="ghost" size="sm" onClick={() => { handleUndoDelivery(); setDrawerOpen(false); }} disabled={isPending}>
+                Desfazer entrega
+              </Button>
+            ) : (
+              <Button type="button" size="sm" className="bg-success text-white hover:bg-success/80" onClick={openConfirmModal} disabled={isPending}>
+                Confirmar entrega
+              </Button>
+            )}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {/* Confirm delivery dialog */}
-      <dialog ref={dialogRef} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-1">Confirmar entrega</h3>
-          <p className="text-sm opacity-70 mb-4">
-            Tem certeza que deseja marcar <span className="font-medium opacity-100">{item.description}</span> como entregue?
-          </p>
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar entrega</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja marcar <span className="font-medium text-foreground">{item.description}</span> como entregue?
+            </DialogDescription>
+          </DialogHeader>
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
+            <Checkbox
               checked={updateDate}
-              onChange={(e) => setUpdateDate(e.target.checked)}
+              onCheckedChange={(checked) => setUpdateDate(!!checked)}
             />
             <span className="text-sm">Atualizar data de entrega para agora</span>
           </label>
-          <div className="modal-action mt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => dialogRef.current?.close()}
-              disabled={isPending}
-            >
+          <DialogFooter>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirmOpen(false)} disabled={isPending}>
               Cancelar
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="bg-success text-white hover:bg-success/80"
-              onClick={handleConfirmDelivery}
-              disabled={isPending}
-            >
-              {isPending ? <span className="loading loading-spinner loading-xs" /> : null}
+            <Button type="button" size="sm" className="bg-success text-white hover:bg-success/80" onClick={handleConfirmDelivery} disabled={isPending}>
+              {isPending ? <span className="animate-spin size-3 rounded-full border-2 border-current border-t-transparent" /> : null}
               Confirmar
             </Button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <Button type="submit">fechar</Button>
-        </form>
-      </dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -47,10 +47,10 @@ import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/uti
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MetricCard } from "@/components/ui/metric-card";
 import { PeriodFilter } from "@/components/ui/period-filter";
-import { ListContainer } from "@/components/ui/list-container";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 
 const methodLabel: Record<string, string> = {
   pix: "PIX",
@@ -248,29 +248,27 @@ function TransactionsPage() {
         <div className="flex flex-col-reverse gap-6 lg:flex-row lg:items-start">
           {/* Histórico */}
           <div className="flex-1 min-w-0">
-            <ListContainer>
+            <ItemGroup>
               {transactions.map((transaction) => (
-                <Button
+                <Item
                   key={transaction.id}
-                  variant="ghost"
-                  className="h-auto w-full justify-start rounded-none px-4 py-3 text-left"
+                  variant="outline"
+                  render={<button />}
                   onClick={() => handleStartEdit(transaction)}
+                  className="cursor-pointer text-left"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-base ${
-                      transaction.type === "entry"
-                        ? "bg-success/15 text-success"
-                        : "bg-error/15 text-error"
+                  <ItemMedia
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-base ${
+                      transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"
                     }`}
                   >
                     {transaction.type === "entry" ? "↑" : "↓"}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium leading-snug truncate">
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>
                       {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                    </p>
-                    <p className="text-sm opacity-50 truncate">
+                    </ItemTitle>
+                    <ItemDescription>
                       {methodIcon[transaction.method]} {methodLabel[transaction.method] ?? transaction.method}
                       {" · "}
                       {datetimeFormatter.format(new Date(transaction.madeAt))}
@@ -280,63 +278,74 @@ function TransactionsPage() {
                       {transaction.linkedOrders.length > 0 && (
                         <> · {transaction.linkedOrders.map((o) => `#${o.id.slice(0, 8)}`).join(", ")}</>
                       )}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`font-semibold tabular-nums shrink-0 ${
-                      transaction.type === "entry" ? "text-success" : "text-error"
-                    }`}
-                  >
-                    {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                  </span>
-                </Button>
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className={`font-semibold tabular-nums ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                    </span>
+                  </ItemActions>
+                </Item>
               ))}
-            </ListContainer>
+            </ItemGroup>
           </div>
 
           {/* Sidebar: resumo + por método */}
           <div className="flex flex-col gap-4 lg:w-72 shrink-0">
             {/* Summary cards */}
             <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
-              <MetricCard>
-                <MetricCard.Label>Entradas</MetricCard.Label>
-                <MetricCard.Value className="text-success">{currencyFormatter.format(summary.entries)}</MetricCard.Value>
-              </MetricCard>
-              <MetricCard>
-                <MetricCard.Label>Saídas</MetricCard.Label>
-                <MetricCard.Value className="text-error">{currencyFormatter.format(summary.exits)}</MetricCard.Value>
-              </MetricCard>
-              <MetricCard>
-                <MetricCard.Label>Saldo</MetricCard.Label>
-                <MetricCard.Value className={summary.balance >= 0 ? "text-success" : "text-error"}>
-                  {currencyFormatter.format(summary.balance)}
-                </MetricCard.Value>
-              </MetricCard>
+              <Card size="sm">
+                <CardHeader>
+                  <CardDescription>Entradas</CardDescription>
+                  <CardTitle className="text-success text-xl">{currencyFormatter.format(summary.entries)}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card size="sm">
+                <CardHeader>
+                  <CardDescription>Saídas</CardDescription>
+                  <CardTitle className="text-error text-xl">{currencyFormatter.format(summary.exits)}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card size="sm">
+                <CardHeader>
+                  <CardDescription>Saldo</CardDescription>
+                  <CardTitle className={`text-xl ${summary.balance >= 0 ? "text-success" : "text-error"}`}>
+                    {currencyFormatter.format(summary.balance)}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
             </div>
 
             {/* Por método de pagamento */}
-            <div>
-              <h2 className="font-semibold mb-2 text-sm">Por método de pagamento</h2>
-              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-                {[
-                  { key: "pix", label: "PIX", icon: "⚡", value: byMethod.pix },
-                  { key: "cash", label: "Dinheiro", icon: "💵", value: byMethod.cash },
-                  { key: "credit_card", label: "Cartão de crédito", icon: "💳", value: byMethod.credit_card },
-                  { key: "debit_card", label: "Cartão de débito", icon: "💳", value: byMethod.debit_card },
-                ].map(({ key, label, icon, value }) => (
-                  <div key={key} className="flex items-center gap-3 px-3 py-2.5 bg-base-100">
-                    <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center shrink-0 text-sm">
-                      {icon}
-                    </div>
-                    <span className="flex-1 text-sm">{label}</span>
-                    <span className={`text-sm font-semibold tabular-nums ${value > 0 ? "" : "opacity-40"}`}>
-                      {currencyFormatter.format(value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>Por método de pagamento</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ItemGroup>
+                  {[
+                    { key: "pix", label: "PIX", icon: "⚡", value: byMethod.pix },
+                    { key: "cash", label: "Dinheiro", icon: "💵", value: byMethod.cash },
+                    { key: "credit_card", label: "Cartão de crédito", icon: "💳", value: byMethod.credit_card },
+                    { key: "debit_card", label: "Cartão de débito", icon: "💳", value: byMethod.debit_card },
+                  ].map(({ key, label, icon, value }) => (
+                    <Item key={key} size="sm">
+                      <ItemMedia className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                        {icon}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{label}</ItemTitle>
+                      </ItemContent>
+                      <ItemActions>
+                        <span className={`text-sm font-semibold tabular-nums ${value > 0 ? "" : "opacity-40"}`}>
+                          {currencyFormatter.format(value)}
+                        </span>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              </CardContent>
+            </Card>
           </div>
         </div>
       ) : null}

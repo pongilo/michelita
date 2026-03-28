@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { updateOrganization } from "@/lib/api/organization/update-organization";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
@@ -49,28 +51,17 @@ function SettingsPage() {
         <h2 className="text-base font-semibold mb-4">Informações da confeitaria</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">Nome da confeitaria</span>
-            </div>
-            <input
-              type="text"
-              className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
-              {...register("name")}
-            />
-            {errors.name && (
-              <div className="label">
-                <span className="label-text-alt text-error">{errors.name.message}</span>
-              </div>
-            )}
-          </label>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Nome da confeitaria</FieldLabel>
+              <Input type="text" {...register("name")} />
+              {errors.name && <FieldError>{errors.name.message}</FieldError>}
+            </Field>
+          </FieldGroup>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : null}
-              Salvar alterações
+              {isSubmitting ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>
         </form>

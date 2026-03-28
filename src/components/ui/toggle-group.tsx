@@ -23,24 +23,26 @@ type ToggleGroupProps<T extends string> = {
 function ToggleGroupRoot<T extends string>({ value, onChange, children }: ToggleGroupProps<T>) {
   return (
     <ToggleGroupContext.Provider value={{ value, onChange: onChange as (v: string) => void }}>
-      <div className="join">{children}</div>
+      <div className="flex rounded-lg border border-border overflow-hidden">{children}</div>
     </ToggleGroupContext.Provider>
   );
 }
 
 type ToggleGroupItemProps = {
   value: string;
-  activeVariant?: string;
+  activeClassName?: string;
   children: ReactNode;
 };
 
-function ToggleGroupItem({ value, activeVariant = "btn-primary", children }: ToggleGroupItemProps) {
+function ToggleGroupItem({ value, activeClassName = "bg-primary text-primary-foreground", children }: ToggleGroupItemProps) {
   const { value: selectedValue, onChange } = useToggleGroupContext();
   const isActive = selectedValue === value;
   return (
     <button
       type="button"
-      className={`join-item btn btn-xs ${isActive ? activeVariant : "btn-ghost border border-base-300"}`}
+      className={`px-3 h-7 text-xs font-medium border-r border-border last:border-r-0 transition-colors ${
+        isActive ? activeClassName : "text-muted-foreground hover:bg-muted"
+      }`}
       onClick={() => onChange(value)}
     >
       {children}

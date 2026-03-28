@@ -246,8 +246,7 @@ function OrderFormRoute() {
         <h1 className="text-2xl font-semibold">Novo pedido</h1>
       </div>
 
-      <div className="bg-base-100">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <section className="grid gap-4 md:grid-cols-2">
             <Field>
               <FieldLabel>Cliente (opcional)</FieldLabel>
@@ -408,8 +407,8 @@ function OrderFormRoute() {
               const isOrder = watchedItems[index]?.isOrder ?? false;
 
               return (
-                <div key={field.id} className="card border border-base-300 bg-base-100">
-                  <div className="card-body gap-3 p-4">
+                <div key={field.id} className="rounded-2xl border border-border bg-card">
+                  <div className="flex flex-col gap-3 p-4">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Item {index + 1}</span>
                       {itemFields.length > 1 ? (
@@ -417,7 +416,7 @@ function OrderFormRoute() {
                           type="button"
                           variant="ghost"
                           size="xs"
-                          className="text-error"
+                          className="text-destructive"
                           onClick={() => removeItem(index)}
                         >
                           Remover
@@ -536,7 +535,7 @@ function OrderFormRoute() {
             })}
           </section>
 
-          <section className="rounded-box bg-base-200 p-4 text-sm space-y-3">
+          <section className="rounded-2xl bg-muted p-4 text-sm space-y-3">
             <FieldGroup>
               <div className="grid gap-3 md:grid-cols-2">
                 <Field>
@@ -561,7 +560,7 @@ function OrderFormRoute() {
                 </Field>
               </div>
             </FieldGroup>
-            <div className="divider my-0" />
+            <div className="border-t border-border my-0" />
             <div className="flex justify-between text-opacity-70">
               <span>Subtotal dos itens</span>
               <span>R$ {subtotal.toFixed(2)}</span>
@@ -613,7 +612,7 @@ function OrderFormRoute() {
                       type="button"
                       variant="ghost"
                       size="xs"
-                      className="text-error"
+                      className="text-destructive"
                       onClick={() => removeTransaction(index)}
                     >
                       Remover
@@ -703,7 +702,6 @@ function OrderFormRoute() {
             </Button>
           </div>
         </form>
-      </div>
       <CustomerFormModal
         isOpen={isCustomerModalOpen}
         mode="create"

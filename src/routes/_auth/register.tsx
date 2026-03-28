@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -59,10 +60,11 @@ function RegisterPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card shadow-xs card-lg bg-base-100">
-        <div className="card-body">
-          <h1 className="card-title">Criar conta</h1>
-
+      <Card className="shadow-xs">
+        <CardHeader>
+          <CardTitle>Criar conta</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <FieldGroup>
               <Field>
@@ -94,8 +96,8 @@ function RegisterPage() {
               </Button>
             </FieldGroup>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

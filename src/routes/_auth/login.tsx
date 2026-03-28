@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -45,17 +46,19 @@ function LoginPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card shadow-xs card-lg bg-base-100">
-        <div className="card-body">
-          <h1 className="card-title">Login</h1>
+      <Card className="shadow-xs">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <FieldGroup>
               <Field>
                 <FieldLabel>E-mail</FieldLabel>
-                <Input 
+                <Input
                   id="email"
                   type="email"
-                  {...register("email")} 
+                  {...register("email")}
                 />
                 {errors.email && (
                   <FieldError>{errors.email.message}</FieldError>
@@ -64,7 +67,7 @@ function LoginPage() {
 
               <Field>
                 <FieldLabel>Senha</FieldLabel>
-                <Input 
+                <Input
                   id="password"
                   type="password"
                   {...register("password")}
@@ -83,8 +86,8 @@ function LoginPage() {
               </Button>
             </FieldGroup>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

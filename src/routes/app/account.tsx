@@ -6,6 +6,9 @@ import { z } from "zod";
 import { updateUser } from "@/lib/api/auth/update-user";
 import { updatePassword } from "@/lib/api/auth/update-password";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 export const Route = createFileRoute("/app/account")({
   component: AccountPage,
@@ -84,94 +87,52 @@ function AccountPage() {
         <h2 className="text-base font-semibold mb-4">Informações pessoais</h2>
 
         <form onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-4">
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">Nome</span>
-            </div>
-            <input
-              type="text"
-              className={`input input-bordered w-full${profileErrors.name ? " input-error" : ""}`}
-              {...registerProfile("name")}
-            />
-            {profileErrors.name && (
-              <div className="label">
-                <span className="label-text-alt text-error">{profileErrors.name.message}</span>
-              </div>
-            )}
-          </label>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Nome</FieldLabel>
+              <Input type="text" {...registerProfile("name")} />
+              {profileErrors.name && <FieldError>{profileErrors.name.message}</FieldError>}
+            </Field>
 
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">E-mail</span>
-            </div>
-            <input
-              type="email"
-              className={`input input-bordered w-full${profileErrors.email ? " input-error" : ""}`}
-              {...registerProfile("email")}
-            />
-            {profileErrors.email && (
-              <div className="label">
-                <span className="label-text-alt text-error">{profileErrors.email.message}</span>
-              </div>
-            )}
-          </label>
+            <Field>
+              <FieldLabel>E-mail</FieldLabel>
+              <Input type="email" {...registerProfile("email")} />
+              {profileErrors.email && <FieldError>{profileErrors.email.message}</FieldError>}
+            </Field>
+          </FieldGroup>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmittingProfile}>
-              {isSubmittingProfile ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : null}
-              Salvar alterações
+              {isSubmittingProfile ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>
         </form>
       </section>
 
-      <div className="divider" />
+      <Separator />
 
       {/* Senha */}
-      <section>
+      <section className="mt-8">
         <h2 className="text-base font-semibold mb-4">Alterar senha</h2>
 
         <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="space-y-4">
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">Nova senha</span>
-            </div>
-            <input
-              type="password"
-              className={`input input-bordered w-full${passwordErrors.password ? " input-error" : ""}`}
-              {...registerPassword("password")}
-            />
-            {passwordErrors.password && (
-              <div className="label">
-                <span className="label-text-alt text-error">{passwordErrors.password.message}</span>
-              </div>
-            )}
-          </label>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Nova senha</FieldLabel>
+              <Input type="password" {...registerPassword("password")} />
+              {passwordErrors.password && <FieldError>{passwordErrors.password.message}</FieldError>}
+            </Field>
 
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">Confirmar nova senha</span>
-            </div>
-            <input
-              type="password"
-              className={`input input-bordered w-full${passwordErrors.confirmPassword ? " input-error" : ""}`}
-              {...registerPassword("confirmPassword")}
-            />
-            {passwordErrors.confirmPassword && (
-              <div className="label">
-                <span className="label-text-alt text-error">{passwordErrors.confirmPassword.message}</span>
-              </div>
-            )}
-          </label>
+            <Field>
+              <FieldLabel>Confirmar nova senha</FieldLabel>
+              <Input type="password" {...registerPassword("confirmPassword")} />
+              {passwordErrors.confirmPassword && <FieldError>{passwordErrors.confirmPassword.message}</FieldError>}
+            </Field>
+          </FieldGroup>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmittingPassword}>
-              {isSubmittingPassword ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : null}
-              Alterar senha
+              {isSubmittingPassword ? "Alterando..." : "Alterar senha"}
             </Button>
           </div>
         </form>

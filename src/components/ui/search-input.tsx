@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+
 type SearchInputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -6,12 +8,12 @@ type SearchInputProps = {
 
 export function SearchInput({ value, onChange, placeholder = "Pesquisar..." }: SearchInputProps) {
   return (
-    <label className="input input-bordered input-sm flex items-center gap-2 w-64">
+    <div className="relative flex items-center w-64">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         fill="currentColor"
-        className="h-4 w-4 opacity-50"
+        className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
       >
         <path
           fillRule="evenodd"
@@ -19,13 +21,13 @@ export function SearchInput({ value, onChange, placeholder = "Pesquisar..." }: S
           clipRule="evenodd"
         />
       </svg>
-      <input
+      <Input
         type="search"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="grow bg-transparent outline-none"
+        className="pl-9"
       />
-    </label>
+    </div>
   );
 }

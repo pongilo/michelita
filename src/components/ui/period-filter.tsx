@@ -1,14 +1,22 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
-const DEFAULT_PERIOD_OPTIONS = [
+export const DEFAULT_PERIOD_OPTIONS = [
   { value: "daily", label: "Diário" },
   { value: "weekly", label: "Semanal" },
   { value: "monthly", label: "Mensal" },
 ];
 
 function PeriodFilterRoot({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return <div className="flex gap-2">{children}</div>;
 }
 
 type SelectProps = {
@@ -19,20 +27,18 @@ type SelectProps = {
 
 function PeriodFilterSelect({ value, onChange, options = DEFAULT_PERIOD_OPTIONS }: SelectProps) {
   return (
-    <label className="space-y-1">
-      <span className="label text-xs">Período</span>
-      <select
-        className="select select-bordered select-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
+    <Select value={value} onValueChange={(v) => v && onChange(v)}>
+      <SelectTrigger>
+        <SelectValue>{options.find((o) => o.value === value)?.label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </label>
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -43,15 +49,11 @@ type DateInputProps = {
 
 function PeriodFilterDateInput({ value, onChange }: DateInputProps) {
   return (
-    <label className="space-y-1">
-      <span className="label text-xs">Data de referência</span>
-      <input
-        type="date"
-        className="input input-bordered input-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </label>
+    <Input
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }
 
@@ -65,11 +67,10 @@ function PeriodFilterRefresh({ isFetching = false, onClick }: RefreshProps) {
     <Button
       type="button"
       variant="outline"
-      size="sm"
       onClick={onClick}
       disabled={isFetching}
     >
-      {isFetching ? <span className="loading loading-spinner loading-xs" /> : null}
+      {isFetching ? <span className="animate-spin size-3 rounded-full border-2 border-current border-t-transparent" /> : null}
       {isFetching ? "Atualizando..." : "Atualizar"}
     </Button>
   );

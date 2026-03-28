@@ -1,9 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
@@ -108,14 +116,14 @@ function OrderDetailsPage() {
   const { mutate: updateItemDelivery, mutateAsync: updateItemDeliveryAsync, isPending: isUpdatingDelivery } = useUpdateOrderItemDelivery({ organizationId: organization.id });
 
   // ── Delivery dialog state ─────────────────────────────────────────────────
-  const deliveryDialogRef = useRef<HTMLDialogElement>(null);
+  const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
   const [pendingDeliveryItemId, setPendingDeliveryItemId] = useState<string | null>(null);
   const [updateDeliveryDate, setUpdateDeliveryDate] = useState(false);
 
   function openDeliveryDialog(itemId: string) {
     setPendingDeliveryItemId(itemId);
     setUpdateDeliveryDate(false);
-    deliveryDialogRef.current?.showModal();
+    setIsDeliveryDialogOpen(true);
     (document.activeElement as HTMLElement | null)?.blur();
   }
 
@@ -124,7 +132,7 @@ function OrderDetailsPage() {
     const now = new Date().toISOString();
     updateItemDelivery(
       { orderItemId: pendingDeliveryItemId, isDelivered: true, deliveredAt: updateDeliveryDate ? now : undefined },
-      { onSuccess: () => { deliveryDialogRef.current?.close(); setPendingDeliveryItemId(null); } },
+      { onSuccess: () => { setIsDeliveryDialogOpen(false); setPendingDeliveryItemId(null); } },
     );
   }
 
@@ -329,9 +337,9 @@ function OrderDetailsPage() {
             Pedido #{order?.id.slice(0, 8)}
           </h1>
           {order && (
-            <span className={`badge ${order.isPaid ? "badge-success" : "badge-warning"}`}>
+            <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
               {order.isPaid ? "Pago" : "Pendente"}
-            </span>
+            </Badge>
           )}
         </div>
         {order ? (
@@ -367,507 +375,411 @@ function OrderDetailsPage() {
 
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
           Carregando pedido...
         </div>
       ) : null}
-      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
+      {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
       {order ? (
         <div className="space-y-5">
           {/* Info geral */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Data</p>
-              <p className="font-semibold text-sm">{datetimeFormatter.format(new Date(order.orderedAt))}</p>
-            </div>
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Total</p>
-              <p className="font-bold text-lg">{currencyFormatter.format(order.total)}</p>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Data</CardDescription>
+                <CardTitle className="text-sm">{datetimeFormatter.format(new Date(order.orderedAt))}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Total</CardDescription>
+                <CardTitle className="text-lg">{currencyFormatter.format(order.total)}</CardTitle>
+              </CardHeader>
               {(order.shippingFee || order.discount) ? (
-                <p className="text-xs opacity-50 mt-1">
-                  Itens: {currencyFormatter.format(order.itemTotal)}
-                  {order.shippingFee ? ` + Frete: ${currencyFormatter.format(order.shippingFee)}` : ""}
-                  {order.discount ? ` − Desconto: ${currencyFormatter.format(order.discount)}` : ""}
-                </p>
+                <CardContent className="pt-0">
+                  <p className="text-xs text-muted-foreground">
+                    Itens: {currencyFormatter.format(order.itemTotal)}
+                    {order.shippingFee ? ` + Frete: ${currencyFormatter.format(order.shippingFee)}` : ""}
+                    {order.discount ? ` − Desconto: ${currencyFormatter.format(order.discount)}` : ""}
+                  </p>
+                </CardContent>
               ) : null}
-            </div>
+            </Card>
             {order.note ? (
-              <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4 col-span-2 sm:col-span-1">
-                <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Observação</p>
-                <p className="text-sm">{order.note}</p>
-              </div>
+              <Card size="sm" className="col-span-2 sm:col-span-1">
+                <CardHeader>
+                  <CardDescription>Observação</CardDescription>
+                  <CardTitle className="text-sm">{order.note}</CardTitle>
+                </CardHeader>
+              </Card>
             ) : null}
           </section>
 
           {/* Cliente */}
-          <section>
-            <h2 className="font-semibold mb-3">Cliente</h2>
-            {order.customer ? (
-              <div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
-                <Link
-                  to="/app/customers/$customerId"
-                  params={{ customerId: order.customer.id }}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-base-200/50 transition-colors"
-                >
-                  <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-sm font-bold">
-                    {order.customer.name.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium leading-snug truncate">{order.customer.name}</p>
-                  </div>
-                  <span className="text-xs opacity-40">Ver perfil →</span>
-                </Link>
-                {(order.customer.phone || order.customer.address || order.customer.note) ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-base-200 border-t border-base-200">
-                    {order.customer.phone ? (
-                      <div className="px-4 py-3">
-                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Telefone</p>
-                        <p className="text-sm">{order.customer.phone}</p>
-                      </div>
-                    ) : null}
-                    {order.customer.address ? (
-                      <div className="px-4 py-3">
-                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Endereço</p>
-                        <p className="text-sm">{order.customer.address}</p>
-                      </div>
-                    ) : null}
-                    {order.customer.note ? (
-                      <div className="px-4 py-3">
-                        <p className="text-xs opacity-50 uppercase tracking-wide mb-1">Observação</p>
-                        <p className="text-sm">{order.customer.note}</p>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
-                Sem cliente vinculado
-              </div>
-            )}
-          </section>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {order.customer ? (
+                <ItemGroup>
+                  <Item size="sm" variant="outline" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                    <ItemMedia className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold">
+                      {order.customer.name.slice(0, 1).toUpperCase()}
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>{order.customer.name}</ItemTitle>
+                    </ItemContent>
+                    <ItemActions>
+                      <span className="text-xs text-muted-foreground">Ver perfil →</span>
+                    </ItemActions>
+                  </Item>
+                  {order.customer.phone ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{order.customer.phone}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                  {order.customer.address ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{order.customer.address}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                  {order.customer.note ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{order.customer.note}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                </ItemGroup>
+              ) : (
+                <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Itens */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Itens</h2>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Itens</CardTitle>
               {order.item.some((i) => !i.isDelivered) ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  disabled={isUpdatingDelivery}
-                  onClick={handleMarkAllDelivered}
-                >
-                  Marcar todos como entregues
-                </Button>
+                <CardAction>
+                  <Button type="button" variant="outline" size="xs" disabled={isUpdatingDelivery} onClick={handleMarkAllDelivered}>
+                    Marcar todos como entregues
+                  </Button>
+                </CardAction>
               ) : null}
-            </div>
-            {order.item.length === 0 ? (
-              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
-                Nenhum item cadastrado.
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-                {order.item.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-primary text-sm shrink-0">{item.quantity}x</span>
-                        <p className="font-medium text-sm leading-snug truncate">{item.description}</p>
-                      </div>
-                      <p className="text-xs opacity-50 truncate">
-                        {datetimeFormatter.format(new Date(item.deliveredAt))}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                        <p className="text-xs opacity-40">{currencyFormatter.format(item.unitPrice)} un.</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`badge badge-sm ${item.isDelivered ? "badge-success" : "badge-ghost"}`}>
-                          {item.isDelivered ? "Entregue" : "A entregar"}
-                        </span>
-                        {item.isDelivered ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="opacity-50"
-                            disabled={isUpdatingDelivery}
-                            onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}
-                          >
-                            Desmarcar
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="text-success"
-                            disabled={isUpdatingDelivery}
-                            onClick={() => openDeliveryDialog(item.id)}
-                          >
-                            Marcar entregue
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {order.item.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
+              ) : (
+                <ItemGroup>
+                  {order.item.map((item) => (
+                    <Item key={item.id} size="sm" variant="outline">
+                      <ItemContent>
+                        <ItemTitle>
+                          <span className="font-bold text-primary">{item.quantity}x</span>{" "}{item.description}
+                        </ItemTitle>
+                        <ItemDescription>
+                          {datetimeFormatter.format(new Date(item.deliveredAt))}
+                          {item.note ? ` · ${item.note}` : ""}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                          <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+                            {item.isDelivered ? "Entregue" : "A entregar"}
+                          </Badge>
+                          {item.isDelivered ? (
+                            <Button type="button" variant="ghost" size="xs" className="opacity-50" disabled={isUpdatingDelivery} onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}>
+                              Desmarcar
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="ghost" size="xs" className="text-success" disabled={isUpdatingDelivery} onClick={() => openDeliveryDialog(item.id)}>
+                              Marcar entregue
+                            </Button>
+                          )}
+                        </div>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Dialog de confirmação de entrega */}
-          <dialog ref={deliveryDialogRef} className="modal">
-            <div className="modal-box">
-              <h3 className="font-bold text-lg mb-1">Confirmar entrega</h3>
-              <p className="text-sm opacity-70 mb-4">
-                Deseja marcar este item como entregue?
-              </p>
+          <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar entrega</DialogTitle>
+                <DialogDescription>Deseja marcar este item como entregue?</DialogDescription>
+              </DialogHeader>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-sm"
+                <Checkbox
                   checked={updateDeliveryDate}
-                  onChange={(e) => setUpdateDeliveryDate(e.target.checked)}
+                  onCheckedChange={(checked) => setUpdateDeliveryDate(!!checked)}
                 />
                 <span className="text-sm">Atualizar data de entrega para agora</span>
               </label>
-              <div className="modal-action mt-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deliveryDialogRef.current?.close()}
-                  disabled={isUpdatingDelivery}
-                >
+              <DialogFooter>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setIsDeliveryDialogOpen(false)} disabled={isUpdatingDelivery}>
                   Cancelar
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-success text-white hover:bg-success/80"
-                  onClick={handleConfirmDelivery}
-                  disabled={isUpdatingDelivery}
-                >
-                  {isUpdatingDelivery ? <span className="loading loading-spinner loading-xs" /> : null}
+                <Button type="button" size="sm" className="bg-success text-white hover:bg-success/80" onClick={handleConfirmDelivery} disabled={isUpdatingDelivery}>
+                  {isUpdatingDelivery ? <span className="animate-spin size-3 rounded-full border-2 border-current border-t-transparent" /> : null}
                   Confirmar
                 </Button>
-              </div>
-            </div>
-            <form method="dialog" className="modal-backdrop">
-              <Button type="submit">fechar</Button>
-            </form>
-          </dialog>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Transações */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Transações</h2>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
-                >
-                  Vincular
-                </Button>
-                <Button
-                  type="button"
-                  size="xs"
-                  onClick={() => setIsNewTransactionModalOpen(true)}
-                >
-                  + Nova
-                </Button>
-              </div>
-            </div>
-
-            {order.transactions.length === 0 ? (
-              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
-                Nenhuma transação vinculada.
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-                {order.transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {transaction.type === "entry" ? "↑" : "↓"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-snug truncate">
-                        {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                      </p>
-                      <p className="text-xs opacity-50 truncate">
-                        {methodLabel[transaction.method] ?? transaction.method}
-                        {" · "}
-                        {datetimeFormatter.format(new Date(transaction.madeAt))}
-                        {transaction.linkedCustomers.length > 0 && (
-                          <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
-                        )}
-                      </p>
-                    </div>
-                    <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
-                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      className="text-error shrink-0"
-                      disabled={unlink.isPending}
-                      onClick={() => handleUnlinkTransaction(transaction.id)}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Transações</CardTitle>
+              <CardAction>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="xs" onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
+                    Vincular
+                  </Button>
+                  <Button type="button" size="xs" onClick={() => setIsNewTransactionModalOpen(true)}>
+                    + Nova
+                  </Button>
+                </div>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {order.transactions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma transação vinculada.</p>
+              ) : (
+                <ItemGroup>
+                  {order.transactions.map((transaction) => (
+                    <Item key={transaction.id} size="sm" variant="outline">
+                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
+                        {transaction.type === "entry" ? "↑" : "↓"}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>
+                          {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                        </ItemTitle>
+                        <ItemDescription>
+                          {methodLabel[transaction.method] ?? transaction.method}
+                          {" · "}
+                          {datetimeFormatter.format(new Date(transaction.madeAt))}
+                          {transaction.linkedCustomers.length > 0 && (
+                            <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
+                          )}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                          {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                        </span>
+                        <Button type="button" variant="ghost" size="xs" className="text-destructive" disabled={unlink.isPending} onClick={() => handleUnlinkTransaction(transaction.id)}>
+                          ×
+                        </Button>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              )}
+            </CardContent>
+          </Card>
         </div>
       ) : null}
 
       {/* ── Modal: Editar informações gerais ─────────────────────────────── */}
-      {isEditInfoModalOpen ? (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">Editar informações do pedido</h3>
-
+      <Dialog open={isEditInfoModalOpen} onOpenChange={(open) => !open && setIsEditInfoModalOpen(false)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar informações do pedido</DialogTitle>
+          </DialogHeader>
             <form onSubmit={handleSubmitInfo(handleSaveInfo)} className="space-y-4">
-              <label className="space-y-1 block">
-                <span className="label">Cliente (opcional)</span>
-                <select className="select select-bordered w-full" {...registerInfo("customerId")}>
-                  <option value="">Sem cliente vinculado</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>Cliente (opcional)</FieldLabel>
+                  <select className="flex h-9 w-full rounded-lg border border-input bg-input/30 px-3 py-1 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" {...registerInfo("customerId")}>
+                    <option value="">Sem cliente vinculado</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
-              <label className="space-y-1 block">
-                <span className="label">Data/hora do pedido</span>
-                <input type="datetime-local" className="input input-bordered w-full" {...registerInfo("orderedAt")} />
-                {infoErrors.orderedAt ? (
-                  <span className="text-error-content text-sm">{infoErrors.orderedAt.message}</span>
-                ) : null}
-              </label>
+                <Field>
+                  <FieldLabel>Data/hora do pedido</FieldLabel>
+                  <Input type="datetime-local" {...registerInfo("orderedAt")} />
+                  {infoErrors.orderedAt ? (
+                    <FieldError>{infoErrors.orderedAt.message}</FieldError>
+                  ) : null}
+                </Field>
 
-              <label className="space-y-1 block">
-                <span className="label">Observação (opcional)</span>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  placeholder="Observações gerais do pedido"
-                  {...registerInfo("note")}
-                />
-              </label>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1 block">
-                  <span className="label">Frete / taxa adicional</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="input input-bordered w-full"
-                    placeholder="0,00"
-                    {...registerInfo("shippingFee", { valueAsNumber: true })}
+                <Field>
+                  <FieldLabel>Observação (opcional)</FieldLabel>
+                  <textarea
+                    className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    rows={3}
+                    placeholder="Observações gerais do pedido"
+                    {...registerInfo("note")}
                   />
-                </label>
-                <label className="space-y-1 block">
-                  <span className="label">Desconto</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="input input-bordered w-full"
-                    placeholder="0,00"
-                    {...registerInfo("discount", { valueAsNumber: true })}
-                  />
-                </label>
-              </div>
+                </Field>
 
-              <label className="label cursor-pointer justify-start gap-3">
-                <input type="checkbox" className="checkbox" {...registerInfo("isPaid")} />
-                <div>
-                  <span className="label-text">Pedido pago</span>
-                  <p className="text-sm opacity-70">Marque quando o pedido já estiver quitado.</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field>
+                    <FieldLabel>Frete / taxa adicional</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      {...registerInfo("shippingFee", { valueAsNumber: true })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Desconto</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      {...registerInfo("discount", { valueAsNumber: true })}
+                    />
+                  </Field>
                 </div>
-              </label>
 
-              <div className="modal-action">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsEditInfoModalOpen(false)}
-                >
+                <label className="flex cursor-pointer items-center gap-3">
+                  <Checkbox {...registerInfo("isPaid")} />
+                  <div>
+                    <span className="text-sm font-medium">Pedido pago</span>
+                    <p className="text-sm opacity-70">Marque quando o pedido já estiver quitado.</p>
+                  </div>
+                </label>
+              </FieldGroup>
+
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setIsEditInfoModalOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isUpdatingOrder}>
                   {isUpdatingOrder ? "Salvando..." : "Salvar"}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsEditInfoModalOpen(false)} />
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Modal: Editar itens ───────────────────────────────────────────── */}
-      {isEditItemsModalOpen ? (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-3xl">
-            <h3 className="font-bold text-lg mb-4">Editar itens do pedido</h3>
+      <Dialog open={isEditItemsModalOpen} onOpenChange={(open) => !open && setIsEditItemsModalOpen(false)}>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar itens do pedido</DialogTitle>
+          </DialogHeader>
 
-            <form onSubmit={handleSubmitItems(handleSaveItems)} className="space-y-4">
-              <div className="space-y-3">
-                {itemFields.map((field, index) => {
-                  const itemSubtotal =
-                    (Number(watchedItems[index]?.unitPrice) || 0) * (Number(watchedItems[index]?.quantity) || 0);
+          <form onSubmit={handleSubmitItems(handleSaveItems)} className="space-y-4">
+            <div className="space-y-3">
+              {itemFields.map((field, index) => {
+                const itemSubtotal =
+                  (Number(watchedItems[index]?.unitPrice) || 0) * (Number(watchedItems[index]?.quantity) || 0);
 
-                  return (
-                    <div key={field.id} className="rounded-box border border-base-300 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">Item {index + 1}</span>
-                        {itemFields.length > 1 ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="text-error"
-                            onClick={() => removeItem(index)}
-                          >
-                            Remover
-                          </Button>
-                        ) : null}
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <label className="space-y-1 md:col-span-2">
-                          <span className="label">Descrição</span>
-                          <input
-                            type="text"
-                            className="input input-bordered w-full"
-                            {...registerItems(`items.${index}.description`)}
-                          />
-                          {itemsErrors.items?.[index]?.description ? (
-                            <span className="text-error-content text-sm">
-                              {itemsErrors.items[index]?.description?.message}
-                            </span>
-                          ) : null}
-                        </label>
-
-                        <label className="space-y-1">
-                          <span className="label">Preço unitário</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            className="input input-bordered w-full"
-                            {...registerItems(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                          />
-                          {itemsErrors.items?.[index]?.unitPrice ? (
-                            <span className="text-error-content text-sm">
-                              {itemsErrors.items[index]?.unitPrice?.message}
-                            </span>
-                          ) : null}
-                        </label>
-
-                        <label className="space-y-1">
-                          <span className="label">Quantidade</span>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            className="input input-bordered w-full"
-                            {...registerItems(`items.${index}.quantity`, { valueAsNumber: true })}
-                          />
-                          {itemsErrors.items?.[index]?.quantity ? (
-                            <span className="text-error-content text-sm">
-                              {itemsErrors.items[index]?.quantity?.message}
-                            </span>
-                          ) : null}
-                        </label>
-
-                        <label className="space-y-1">
-                          <span className="label">Data/hora de entrega</span>
-                          <input
-                            type="datetime-local"
-                            className="input input-bordered w-full"
-                            {...registerItems(`items.${index}.deliveredAt`)}
-                          />
-                          {itemsErrors.items?.[index]?.deliveredAt ? (
-                            <span className="text-error-content text-sm">
-                              {itemsErrors.items[index]?.deliveredAt?.message}
-                            </span>
-                          ) : null}
-                        </label>
-
-                        <label className="space-y-1">
-                          <span className="label">Observação</span>
-                          <input
-                            type="text"
-                            className="input input-bordered w-full"
-                            {...registerItems(`items.${index}.note`)}
-                          />
-                        </label>
-                      </div>
-
-                      <label className="label cursor-pointer justify-start gap-3">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          {...registerItems(`items.${index}.isDelivered`)}
-                        />
-                        <span className="label-text">Item entregue</span>
-                      </label>
-
-                      <div className="text-sm opacity-70">Subtotal: R$ {itemSubtotal.toFixed(2)}</div>
+                return (
+                  <div key={field.id} className="rounded-2xl border border-border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">Item {index + 1}</span>
+                      {itemFields.length > 1 ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          className="text-destructive"
+                          onClick={() => removeItem(index)}
+                        >
+                          Remover
+                        </Button>
+                      ) : null}
                     </div>
-                  );
-                })}
-              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => appendItem(emptyItem())}
-              >
-                + Adicionar item
+                    <FieldGroup>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <Field className="md:col-span-2">
+                          <FieldLabel>Descrição</FieldLabel>
+                          <Input type="text" {...registerItems(`items.${index}.description`)} />
+                          {itemsErrors.items?.[index]?.description ? (
+                            <FieldError>{itemsErrors.items[index]?.description?.message}</FieldError>
+                          ) : null}
+                        </Field>
+
+                        <Field>
+                          <FieldLabel>Preço unitário</FieldLabel>
+                          <Input type="number" min="0" step="0.01" {...registerItems(`items.${index}.unitPrice`, { valueAsNumber: true })} />
+                          {itemsErrors.items?.[index]?.unitPrice ? (
+                            <FieldError>{itemsErrors.items[index]?.unitPrice?.message}</FieldError>
+                          ) : null}
+                        </Field>
+
+                        <Field>
+                          <FieldLabel>Quantidade</FieldLabel>
+                          <Input type="number" min="1" step="1" {...registerItems(`items.${index}.quantity`, { valueAsNumber: true })} />
+                          {itemsErrors.items?.[index]?.quantity ? (
+                            <FieldError>{itemsErrors.items[index]?.quantity?.message}</FieldError>
+                          ) : null}
+                        </Field>
+
+                        <Field>
+                          <FieldLabel>Data/hora de entrega</FieldLabel>
+                          <Input type="datetime-local" {...registerItems(`items.${index}.deliveredAt`)} />
+                          {itemsErrors.items?.[index]?.deliveredAt ? (
+                            <FieldError>{itemsErrors.items[index]?.deliveredAt?.message}</FieldError>
+                          ) : null}
+                        </Field>
+
+                        <Field>
+                          <FieldLabel>Observação</FieldLabel>
+                          <Input type="text" {...registerItems(`items.${index}.note`)} />
+                        </Field>
+                      </div>
+                    </FieldGroup>
+
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <Checkbox {...registerItems(`items.${index}.isDelivered`)} />
+                      <span className="text-sm font-medium">Item entregue</span>
+                    </label>
+
+                    <div className="text-sm opacity-70">Subtotal: R$ {itemSubtotal.toFixed(2)}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => appendItem(emptyItem())}>
+              + Adicionar item
+            </Button>
+
+            <div className="rounded-2xl bg-muted px-4 py-3 text-sm flex justify-between">
+              <span>Total dos itens</span>
+              <span>R$ {itemsSubtotal.toFixed(2)}</span>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setIsEditItemsModalOpen(false)}>
+                Cancelar
               </Button>
-
-              <div className="rounded-box bg-base-200 px-4 py-3 text-sm flex justify-between">
-                <span>Total dos itens</span>
-                <span>R$ {itemsSubtotal.toFixed(2)}</span>
-              </div>
-
-              <div className="modal-action">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsEditItemsModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isUpdatingOrder}>
-                  {isUpdatingOrder ? "Salvando..." : "Salvar itens"}
-                </Button>
-              </div>
-            </form>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsEditItemsModalOpen(false)} />
-        </div>
-      ) : null}
+              <Button type="submit" disabled={isUpdatingOrder}>
+                {isUpdatingOrder ? "Salvando..." : "Salvar itens"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Modal: Nova transação ─────────────────────────────────────────── */}
       {order ? (
@@ -887,57 +799,53 @@ function OrderDetailsPage() {
       ) : null}
 
       {/* ── Modal: Vincular transação existente ──────────────────────────── */}
-      {isLinkModalOpen ? (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">Vincular transação existente</h3>
+      <Dialog open={isLinkModalOpen} onOpenChange={(open) => { if (!open) { setIsLinkModalOpen(false); setSelectedTransactionId(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Vincular transação existente</DialogTitle>
+          </DialogHeader>
 
-            {availableToLink.length === 0 ? (
-              <p className="text-sm opacity-70">Nenhuma transacao disponivel para vincular no periodo atual.</p>
-            ) : (
-              <label className="space-y-1">
-                <span className="label">Selecione a transacao</span>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedTransactionId}
-                  onChange={(e) => setSelectedTransactionId(e.target.value)}
-                >
-                  <option value="">Selecione...</option>
+          {availableToLink.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma transacao disponivel para vincular no periodo atual.</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Selecione a transacao</p>
+              <Select value={selectedTransactionId} onValueChange={(v) => setSelectedTransactionId(v ?? "")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
                   {availableToLink.map((t) => (
-                    <option key={t.id} value={t.id}>
+                    <SelectItem key={t.id} value={t.id}>
                       #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"}{" "}
                       {currencyFormatter.format(Math.abs(t.amount))} –{" "}
                       {datetimeFormatter.format(new Date(t.madeAt))}
                       {t.description ? ` – ${t.description}` : ""}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
-            )}
-
-            <div className="modal-action">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setIsLinkModalOpen(false);
-                  setSelectedTransactionId("");
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                disabled={!selectedTransactionId || link.isPending}
-                onClick={handleLinkTransaction}
-              >
-                {link.isPending ? "Vinculando..." : "Vincular"}
-              </Button>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsLinkModalOpen(false)} />
-        </div>
-      ) : null}
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => { setIsLinkModalOpen(false); setSelectedTransactionId(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={!selectedTransactionId || link.isPending}
+              onClick={handleLinkTransaction}
+            >
+              {link.isPending ? "Vinculando..." : "Vincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

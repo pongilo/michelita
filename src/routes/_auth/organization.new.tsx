@@ -6,6 +6,7 @@ import { z } from "zod";
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -58,14 +59,16 @@ function CreateOrganizationPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card shadow-xs card-lg bg-base-100">
-        <div className="card-body">
-          <h1 className="card-title">Criar organizacao</h1>
-          <p className="text-sm opacity-80">
+      <Card className="shadow-xs">
+        <CardHeader>
+          <CardTitle>Criar organizacao</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm opacity-80 mb-4">
             Voce precisa criar uma organizacao para acessar o dashboard.
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <FieldGroup>
               <Field>
                 <FieldLabel>Nome da organizacao</FieldLabel>
@@ -82,8 +85,8 @@ function CreateOrganizationPage() {
           <Button type="button" variant="ghost" onClick={handleSignOut} className="mt-2 w-full">
             Sair
           </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

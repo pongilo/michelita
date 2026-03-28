@@ -6,7 +6,7 @@ type ListContainerProps = {
 
 export function ListContainer({ children }: ListContainerProps) {
   return (
-    <div className="flex flex-col divide-y divide-base-300 rounded-box overflow-hidden">
+    <div className="flex flex-col divide-y divide-border rounded-2xl overflow-hidden">
       {children}
     </div>
   );

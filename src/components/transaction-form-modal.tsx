@@ -258,14 +258,14 @@ export function TransactionFormModal({
         </FieldGroup>
 
         {errorMessage ? (
-          <div className="alert alert-error">
-            <span>{errorMessage}</span>
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
           </div>
         ) : null}
 
         {successMessage ? (
-          <div className="alert alert-success">
-            <span>{successMessage}</span>
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {successMessage}
           </div>
         ) : null}
 
@@ -275,7 +275,7 @@ export function TransactionFormModal({
               <Button
                 type="button"
                 variant="ghost"
-                className="text-error"
+                className="text-destructive"
                 disabled={isSubmitting || isDeleting}
                 onClick={onDelete}
               >

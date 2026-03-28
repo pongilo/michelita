@@ -6,8 +6,8 @@ const EmptyStateContext = createContext(false);
 function EmptyStateRoot({ children, compact = false }: { children: ReactNode; compact?: boolean }) {
   return (
     <EmptyStateContext.Provider value={compact}>
-      <div className="card border border-base-300 bg-base-100">
-        <div className={`card-body items-center text-center ${compact ? "py-12" : "py-16"}`}>
+      <div className="rounded-2xl border border-border bg-card">
+        <div className={`flex flex-col items-center text-center p-6 ${compact ? "py-12" : "py-16"}`}>
           {children}
         </div>
       </div>

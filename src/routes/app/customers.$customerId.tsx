@@ -2,6 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
@@ -223,7 +227,7 @@ function CustomerDetailsPage() {
               type="button"
               variant="ghost"
               size="sm"
-              className="text-error"
+              className="text-destructive"
               disabled={isDeletingCustomer}
               onClick={handleDeleteCustomer}
             >
@@ -241,154 +245,176 @@ function CustomerDetailsPage() {
 
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
           Carregando cliente...
         </div>
       ) : null}
-      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
+      {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
       {data ? (
         <div className="space-y-5">
 
           {/* Contato */}
           {(data.customer.phone || data.customer.address || data.customer.note) ? (
-            <section className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-              {data.customer.phone ? (
-                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                  <span className="text-xs opacity-50 w-20 shrink-0">Telefone</span>
-                  <span className="text-sm">{data.customer.phone}</span>
-                </div>
-              ) : null}
-              {data.customer.address ? (
-                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                  <span className="text-xs opacity-50 w-20 shrink-0">Endereço</span>
-                  <span className="text-sm">{data.customer.address}</span>
-                </div>
-              ) : null}
-              {data.customer.note ? (
-                <div className="flex items-center gap-3 px-4 py-3 bg-base-100">
-                  <span className="text-xs opacity-50 w-20 shrink-0">Observação</span>
-                  <span className="text-sm">{data.customer.note}</span>
-                </div>
-              ) : null}
-            </section>
+            <Card size="sm">
+              <CardContent>
+                <ItemGroup>
+                  {data.customer.phone ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{data.customer.phone}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                  {data.customer.address ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{data.customer.address}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                  {data.customer.note ? (
+                    <Item size="sm">
+                      <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
+                      <ItemContent><ItemTitle>{data.customer.note}</ItemTitle></ItemContent>
+                    </Item>
+                  ) : null}
+                </ItemGroup>
+              </CardContent>
+            </Card>
           ) : null}
 
           {/* Métricas */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Pedidos</p>
-              <p className="font-bold text-lg">{data.metrics.totalOrders}</p>
-            </div>
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Último pedido</p>
-              <p className="font-semibold text-sm">
-                {data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "—"}
-              </p>
-            </div>
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Vendas</p>
-              <p className="font-bold text-lg">{currencyFormatter.format(data.metrics.totalInvoiced)}</p>
-            </div>
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Recebido</p>
-              <p className="font-bold text-lg text-success">{currencyFormatter.format(data.metrics.totalReceived)}</p>
-            </div>
-            <div className="rounded-box border border-base-300 bg-base-100 px-4 py-4 col-span-2 sm:col-span-1">
-              <p className="text-xs opacity-60 uppercase tracking-wide mb-1">Saldo</p>
-              <p className={`font-bold text-lg ${data.metrics.balance >= 0 ? "text-success" : "text-error"}`}>
-                {currencyFormatter.format(data.metrics.balance)}
-              </p>
-            </div>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Pedidos</CardDescription>
+                <CardTitle className="text-lg">{data.metrics.totalOrders}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Último pedido</CardDescription>
+                <CardTitle className="text-sm">
+                  {data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "—"}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Vendas</CardDescription>
+                <CardTitle className="text-lg">{currencyFormatter.format(data.metrics.totalInvoiced)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Recebido</CardDescription>
+                <CardTitle className="text-lg text-success">{currencyFormatter.format(data.metrics.totalReceived)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card size="sm" className="col-span-2 sm:col-span-1">
+              <CardHeader>
+                <CardDescription>Saldo</CardDescription>
+                <CardTitle className={`text-lg ${data.metrics.balance >= 0 ? "text-success" : "text-destructive"}`}>
+                  {currencyFormatter.format(data.metrics.balance)}
+                </CardTitle>
+              </CardHeader>
+            </Card>
           </section>
 
           {/* Pedidos */}
-          <section>
-            <h2 className="font-semibold mb-3">Pedidos</h2>
-            {data.recentOrders.length === 0 ? (
-              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
-                Este cliente ainda não possui pedidos.
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-                {data.recentOrders.map((order) => (
-                  <Link
-                    key={order.id}
-                    to="/app/order/$orderId"
-                    params={{ orderId: order.id }}
-                    className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors"
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-                      {order.isPaid ? "✓" : "!"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-snug">
-                        #{order.id.slice(0, 8)}
-                        {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
-                      </p>
-                      <p className="text-xs opacity-50">
-                        {datetimeFormatter.format(new Date(order.orderedAt))}
-                        {" · "}
-                        {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold shrink-0">
-                      {currencyFormatter.format(order.itemTotal)}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Pedidos</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {data.recentOrders.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
+              ) : (
+                <ItemGroup>
+                  {data.recentOrders.map((order) => (
+                    <Item
+                      key={order.id}
+                      size="sm"
+                      variant="outline"
+                      render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}
+                    >
+                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                        {order.isPaid ? "✓" : "!"}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>
+                          #{order.id.slice(0, 8)}
+                          {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
+                        </ItemTitle>
+                        <ItemDescription>
+                          {datetimeFormatter.format(new Date(order.orderedAt))}
+                          {" · "}
+                          {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <span className="text-sm font-semibold">{currencyFormatter.format(order.itemTotal)}</span>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Transações */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Transações</h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onClick={() => { setLinkError(""); setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
-              >
-                Vincular
-              </Button>
-            </div>
-            {data.recentTransactions.length === 0 ? (
-              <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
-                Sem transações vinculadas a este cliente.
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
-                {data.recentTransactions.map((transaction) => (
-                  <Button
-                    key={transaction.id}
-                    variant="ghost"
-                    className="h-auto w-full justify-start rounded-none px-4 py-3 text-left"
-                    disabled={isSubmittingTransactionForm || isDeletingCustomer}
-                    onClick={() => handleStartTransactionEdit(transaction.id)}
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {transaction.type === "entry" ? "↑" : "↓"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-snug truncate">
-                        {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                      </p>
-                      <p className="text-xs opacity-50 truncate">
-                        {transactionMethodLabel[transaction.method] ?? transaction.method}
-                        {" · "}
-                        {datetimeFormatter.format(new Date(transaction.madeAt))}
-                      </p>
-                    </div>
-                    <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
-                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                    </span>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </section>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Transações</CardTitle>
+              <CardAction>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
+                >
+                  Vincular
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {data.recentTransactions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sem transações vinculadas a este cliente.</p>
+              ) : (
+                <ItemGroup>
+                  {data.recentTransactions.map((transaction) => (
+                    <Item
+                      key={transaction.id}
+                      size="sm"
+                      variant="outline"
+                      render={<button />}
+                      disabled={isSubmittingTransactionForm || isDeletingCustomer}
+                      onClick={() => handleStartTransactionEdit(transaction.id)}
+                      className="cursor-pointer text-left w-full"
+                    >
+                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-destructive"}`}>
+                        {transaction.type === "entry" ? "↑" : "↓"}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>
+                          {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                        </ItemTitle>
+                        <ItemDescription>
+                          {transactionMethodLabel[transaction.method] ?? transaction.method}
+                          {" · "}
+                          {datetimeFormatter.format(new Date(transaction.madeAt))}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-destructive"}`}>
+                          {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                        </span>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              )}
+            </CardContent>
+          </Card>
 
         </div>
       ) : null}
@@ -413,56 +439,50 @@ function CustomerDetailsPage() {
         onSubmit={onSubmit}
       />
 
-      {isLinkModalOpen ? (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">Vincular transação existente</h3>
+      <Dialog open={isLinkModalOpen} onOpenChange={(open) => { if (!open) { setIsLinkModalOpen(false); setSelectedTransactionId(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Vincular transação existente</DialogTitle>
+          </DialogHeader>
 
-            {availableToLink.length === 0 ? (
-              <p className="text-sm opacity-70">Nenhuma transacao disponivel para vincular no periodo atual.</p>
-            ) : (
-              <label className="space-y-1">
-                <span className="label">Selecione a transacao</span>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedTransactionId}
-                  onChange={(e) => setSelectedTransactionId(e.target.value)}
-                >
-                  <option value="">Selecione...</option>
+          {availableToLink.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma transacao disponivel para vincular no periodo atual.</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Selecione a transacao</p>
+              <Select value={selectedTransactionId} onValueChange={setSelectedTransactionId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
                   {availableToLink.map((t) => (
-                    <option key={t.id} value={t.id}>
+                    <SelectItem key={t.id} value={t.id}>
                       #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"} {currencyFormatter.format(Math.abs(t.amount))} – {datetimeFormatter.format(new Date(t.madeAt))}{t.description ? ` – ${t.description}` : ""}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
-            )}
-
-
-            <div className="modal-action">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setIsLinkModalOpen(false);
-                  setSelectedTransactionId("");
-                  setLinkError("");
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                disabled={!selectedTransactionId || isLinking}
-                onClick={handleLinkTransaction}
-              >
-                {isLinking ? "Vinculando..." : "Vincular"}
-              </Button>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsLinkModalOpen(false)} />
-        </div>
-      ) : null}
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => { setIsLinkModalOpen(false); setSelectedTransactionId(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={!selectedTransactionId || isLinking}
+              onClick={handleLinkTransaction}
+            >
+              {isLinking ? "Vinculando..." : "Vincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <TransactionFormModal
         isOpen={isTransactionModalOpen}

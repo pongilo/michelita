@@ -5,11 +5,23 @@ import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DEFAULT_PERIOD_OPTIONS } from "@/components/ui/period-filter";
+import { Input } from "@/components/ui/input";
+import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
 });
+
+const PAYMENT_FILTER = [
+  { value: "all", label: "Todos" },
+  { value: "paid", label: "Pagos" },
+  { value: "pending", label: "Pendentes" },
+];
 
 const timeFormatter = new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" });
 const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
@@ -139,41 +151,38 @@ function OrdersPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="space-y-1">
-            <span className="label text-xs">Periodo</span>
-            <select
-              className="select select-bordered select-sm"
-              value={period}
-              onChange={(event) => setPeriod(event.target.value as OrdersPeriod)}
-            >
-              <option value="daily">Diario</option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensal</option>
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="label text-xs">Data de referencia</span>
-            <input
-              type="date"
-              className="input input-bordered input-sm"
-              value={referenceDate}
-              onChange={(event) => setReferenceDate(event.target.value)}
-            />
-          </label>
-          <label className="space-y-1">
-            <span className="label text-xs">Pagamento</span>
-            <select
-              className="select select-bordered select-sm"
-              value={paymentFilter}
-              onChange={(event) => setPaymentFilter(event.target.value as "all" | "paid" | "pending")}
-            >
-              <option value="all">Todos</option>
-              <option value="paid">Pagos</option>
-              <option value="pending">Pendentes</option>
-            </select>
-          </label>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <div className="flex gap-2">
+          <Select value={period} onValueChange={(v) => v && setPeriod(v)}>
+            <SelectTrigger>
+              <SelectValue>{DEFAULT_PERIOD_OPTIONS.find((o) => o.value === period)?.label}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {DEFAULT_PERIOD_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="date"
+            className="input input-bordered input-sm"
+            value={referenceDate}
+            onChange={(e) => setReferenceDate(e.target.value)}
+          />
+          <Select value={paymentFilter} onValueChange={(v) => v && setPaymentFilter(v)}>
+            <SelectTrigger>
+              <SelectValue>{PAYMENT_FILTER.find((o) => o.value === period)?.label}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_FILTER.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? "Atualizando..." : "Atualizar"}
           </Button>
         </div>
@@ -188,114 +197,91 @@ function OrdersPage() {
       ) : null}
 
       {!isLoading && !isError && orders.length > 0 ? (
-        <div className="space-y-3">
+        <ItemGroup>
           {orders.map((order) => (
-            <div
-              key={order.id}
-              className="card border border-base-300 bg-base-100 shadow-sm"
-            >
-              <div className="card-body gap-3 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <Link to="/app/order/$orderId" params={{ orderId: order.id }} className="min-w-0">
-                    {order.customer?.name ? (
-                      <p className="font-semibold leading-tight">{order.customer.name}</p>
-                    ) : (
-                      <p className="text-sm opacity-40">Sem cliente</p>
-                    )}
-                    <p className="mt-0.5 text-xs opacity-50">{dateFormatter.format(new Date(order.orderedAt))}</p>
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className={`badge badge-sm ${order.isPaid ? "badge-info" : "badge-warning"}`}>
-                      {order.isPaid ? "Pago" : "Pendente"}
-                    </span>
-                    <div className="dropdown dropdown-end">
-                      <label tabIndex={0} className="btn btn-xs btn-outline">
-                        Ações
-                      </label>
-                      <ul
-                        tabIndex={0}
-                        className="menu dropdown-content z-1 mt-1 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow"
-                      >
-                        <li>
-                          <Link to="/app/order/$orderId" params={{ orderId: order.id }}>
-                            Ver pedido
-                          </Link>
-                        </li>
-                        <li>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            disabled={isUpdatingOrder || isDeletingOrder}
-                            onClick={() => handleTogglePaid(order.id, order.isPaid)}
-                          >
-                            {order.isPaid ? "Marcar pendente" : "Marcar pago"}
-                          </Button>
-                        </li>
-                        <li>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start text-error"
-                            disabled={isUpdatingOrder || isDeletingOrder}
-                            onClick={() => handleDeleteOrder(order.id)}
-                          >
-                            Excluir pedido
-                          </Button>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+            <Item key={order.id} variant="outline" className="flex-wrap items-start">
+              <ItemContent>
+                <Link to="/app/order/$orderId" params={{ orderId: order.id }}>
+                  <ItemTitle>
+                    {order.customer?.name ?? <span className="opacity-40">Sem cliente</span>}
+                  </ItemTitle>
+                  <ItemDescription>{dateFormatter.format(new Date(order.orderedAt))}</ItemDescription>
+                </Link>
+              </ItemContent>
+              <ItemActions>
+                <Badge className={order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                  {order.isPaid ? "Pago" : "Pendente"}
+                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
+                    Ações
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}>
+                      Ver pedido
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={isUpdatingOrder || isDeletingOrder}
+                      onClick={() => handleTogglePaid(order.id, order.isPaid)}
+                    >
+                      {order.isPaid ? "Marcar pendente" : "Marcar pago"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={isUpdatingOrder || isDeletingOrder}
+                      onClick={() => handleDeleteOrder(order.id)}
+                    >
+                      Excluir pedido
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ItemActions>
 
-                <ul className="space-y-2">
-                  {order.item.map((item) => (
-                    <li key={item.id} className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-sm">
-                          <span className="font-bold text-primary">{item.quantity}x</span>{" "}
-                          {item.description}
-                          {formatDelivery(item.deliveredAt, order.orderedAt) && (
-                            <span className="ml-1.5 text-xs opacity-50">
-                              · {formatDelivery(item.deliveredAt, order.orderedAt)}
-                            </span>
-                          )}
-                        </span>
-                        {item.note && (
-                          <p className="mt-0.5 text-xs opacity-50">{item.note}</p>
+              <ul className="basis-full space-y-2 border-t border-border pt-3">
+                {order.item.map((item) => (
+                  <li key={item.id} className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-sm">
+                        <span className="font-bold text-primary">{item.quantity}x</span>{" "}
+                        {item.description}
+                        {formatDelivery(item.deliveredAt, order.orderedAt) && (
+                          <span className="ml-1.5 text-xs opacity-50">
+                            · {formatDelivery(item.deliveredAt, order.orderedAt)}
+                          </span>
                         )}
-                      </div>
-                      <span className="mt-0.5 shrink-0 text-xs opacity-60">{currencyFormatter.format(item.total)}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="flex flex-col gap-1 border-t border-base-300 pt-2">
-                  {order.note && (
-                    <p className="text-xs italic opacity-50">{order.note}</p>
-                  )}
-                  {(order.shippingFee || order.discount) ? (
-                    <div className="flex flex-col gap-0.5 text-xs opacity-50">
-                      {order.shippingFee ? (
-                        <div className="flex justify-between">
-                          <span>+ Frete</span>
-                          <span>{currencyFormatter.format(order.shippingFee)}</span>
-                        </div>
-                      ) : null}
-                      {order.discount ? (
-                        <div className="flex justify-between">
-                          <span>− Desconto</span>
-                          <span>{currencyFormatter.format(order.discount)}</span>
-                        </div>
-                      ) : null}
+                      </span>
+                      {item.note && <p className="mt-0.5 text-xs opacity-50">{item.note}</p>}
                     </div>
-                  ) : null}
-                  <div className="flex items-center justify-end">
-                    <span className="text-sm font-bold">{currencyFormatter.format(order.total)}</span>
+                    <span className="mt-0.5 shrink-0 text-xs opacity-60">{currencyFormatter.format(item.total)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="basis-full flex flex-col gap-1 border-t border-border pt-2">
+                {order.note && <p className="text-xs italic opacity-50">{order.note}</p>}
+                {(order.shippingFee || order.discount) ? (
+                  <div className="flex flex-col gap-0.5 text-xs opacity-50">
+                    {order.shippingFee ? (
+                      <div className="flex justify-between">
+                        <span>+ Frete</span>
+                        <span>{currencyFormatter.format(order.shippingFee)}</span>
+                      </div>
+                    ) : null}
+                    {order.discount ? (
+                      <div className="flex justify-between">
+                        <span>− Desconto</span>
+                        <span>{currencyFormatter.format(order.discount)}</span>
+                      </div>
+                    ) : null}
                   </div>
+                ) : null}
+                <div className="flex items-center justify-end">
+                  <span className="text-sm font-bold">{currencyFormatter.format(order.total)}</span>
                 </div>
               </div>
-            </div>
+            </Item>
           ))}
-        </div>
+        </ItemGroup>
       ) : null}
     </main>
   );

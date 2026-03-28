@@ -8,8 +8,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
-import { ListContainer } from "@/components/ui/list-container";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 
 export const Route = createFileRoute("/app/customers")({
   component: CustomersPage,
@@ -111,29 +112,30 @@ function CustomersPage() {
       ) : null}
 
       {!isLoading && !isError && filteredCustomers.length > 0 ? (
-        <ListContainer>
+        <ItemGroup>
           {filteredCustomers.map((customer) => (
-            <Link
+            <Item
               key={customer.id}
-              to="/app/customers/$customerId"
-              params={{ customerId: customer.id }}
-              className="flex items-center gap-4 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors"
+              variant="outline"
+              render={<Link to="/app/customers/$customerId" params={{ customerId: customer.id }} />}
             >
-              <div className="bg-primary/15 text-primary rounded-full w-10 h-10 flex items-center justify-center shrink-0">
+              <ItemMedia className="bg-primary/15 text-primary rounded-full w-10 h-10 flex items-center justify-center">
                 <span className="text-sm font-bold">{customer.name.slice(0, 1).toUpperCase()}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium leading-snug truncate">{customer.name}</p>
-                <p className="text-sm opacity-50 truncate">
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{customer.name}</ItemTitle>
+                <ItemDescription>
                   {[customer.phone, customer.address].filter(Boolean).join(" · ") || "Sem contato"}
-                </p>
-              </div>
-              <span className="badge badge-outline badge-sm shrink-0">
-                {customer._count.order} {customer._count.order === 1 ? "pedido" : "pedidos"}
-              </span>
-            </Link>
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                <Badge variant="outline">
+                  {customer._count.order} {customer._count.order === 1 ? "pedido" : "pedidos"}
+                </Badge>
+              </ItemActions>
+            </Item>
           ))}
-        </ListContainer>
+        </ItemGroup>
       ) : null}
 
       <CustomerFormModal

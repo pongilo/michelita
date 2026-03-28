@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_auth")({
 
 function AuthLayout() {
   return (
-    <div className="h-screen bg-base-200">
+    <div className="h-screen bg-muted">
       <Outlet />
     </div>
   );
