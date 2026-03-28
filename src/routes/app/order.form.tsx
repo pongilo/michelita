@@ -28,7 +28,7 @@ const createOrderFormSchema = z.object({
   items: z
     .array(
       z.object({
-        isEncomenda: z.boolean(),
+        isOrder: z.boolean(),
         description: z.string().trim().min(1, "Descricao do item e obrigatoria."),
         unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
         quantity: z.number().int().min(1, "Quantidade minima: 1."),
@@ -48,9 +48,9 @@ function localDatetimeNow() {
   return local.toISOString().slice(0, 16);
 }
 
-function emptyItem(orderedAt?: string, isEncomenda = false): CreateOrderFormValues["items"][number] {
+function emptyItem(orderedAt?: string, isOrder = false): CreateOrderFormValues["items"][number] {
   return {
-    isEncomenda,
+    isOrder,
     description: "",
     unitPrice: 0,
     quantity: 1,
@@ -128,7 +128,7 @@ function OrderFormRoute() {
 
   const [showNote, setShowNote] = useState<Record<string, boolean>>({});
   const [showOrderNote, setShowOrderNote] = useState(false);
-  const [orderIsEncomenda, setOrderIsEncomenda] = useState(false);
+  const [orderisOrder, setOrderisOrder] = useState(false);
   const [orderDeliveredAt, setOrderDeliveredAt] = useState("");
 
   const watchedItems = watch("items");
@@ -139,7 +139,7 @@ function OrderFormRoute() {
 
   useEffect(() => {
     watchedItems.forEach((item, index) => {
-      if (!item.isEncomenda) {
+      if (!item.isOrder) {
         setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: false });
       }
     });
@@ -191,8 +191,8 @@ function OrderFormRoute() {
           description: item.description,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
-          deliveredAt: item.isEncomenda ? item.deliveredAt : values.orderedAt,
-          isDelivered: !item.isEncomenda,
+          deliveredAt: item.isOrder ? item.deliveredAt : values.orderedAt,
+          isDelivered: !item.isOrder,
           note: item.note?.trim() ? item.note.trim() : undefined,
         })),
       });
@@ -256,7 +256,7 @@ function OrderFormRoute() {
                   type="button"
                   className="btn btn-outline btn-square"
                   title="Cadastrar novo cliente"
-                  onClick={() => { setCustomerModalError(""); setIsCustomerModalOpen(true); }}
+                  onClick={() => setIsCustomerModalOpen(true)}
                 >
                   +
                 </button>
@@ -320,7 +320,7 @@ function OrderFormRoute() {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">Itens do pedido</h2>
-              <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(orderIsEncomenda && orderDeliveredAt ? orderDeliveredAt : watchedOrderedAt, orderIsEncomenda))}>
+              <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(orderisOrder && orderDeliveredAt ? orderDeliveredAt : watchedOrderedAt, orderisOrder))}>
                 Adicionar item
               </button>
             </div>
@@ -329,17 +329,17 @@ function OrderFormRoute() {
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm"
-                checked={orderIsEncomenda}
+                checked={orderisOrder}
                 onChange={(e) => {
                   const checked = e.target.checked;
-                  setOrderIsEncomenda(checked);
+                  setOrderisOrder(checked);
                   if (checked) {
                     setOrderDeliveredAt(watchedOrderedAt);
                   } else {
                     setOrderDeliveredAt("");
                   }
                   itemFields.forEach((_, i) => {
-                    setValue(`items.${i}.isEncomenda`, checked);
+                    setValue(`items.${i}.isOrder`, checked);
                     if (!checked) {
                       setValue(`items.${i}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
                     }
@@ -351,7 +351,7 @@ function OrderFormRoute() {
               </div>
             </label>
 
-            {orderIsEncomenda ? (
+            {orderisOrder ? (
               <label className="space-y-1">
                 <span className="label">Data/hora de entrega (todos os itens)</span>
                 <input
@@ -376,7 +376,7 @@ function OrderFormRoute() {
               const itemSubtotal = watchedItems[index]
                 ? (Number(watchedItems[index].unitPrice) || 0) * (Number(watchedItems[index].quantity) || 0)
                 : 0;
-              const isEncomenda = watchedItems[index]?.isEncomenda ?? false;
+              const isOrder = watchedItems[index]?.isOrder ?? false;
 
               return (
                 <div key={field.id} className="card border border-base-300 bg-base-100">
@@ -398,7 +398,7 @@ function OrderFormRoute() {
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm"
-                        {...register(`items.${index}.isEncomenda`, {
+                        {...register(`items.${index}.isOrder`, {
                           onChange: (e) => {
                             if (!e.target.checked) {
                               setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
@@ -458,7 +458,7 @@ function OrderFormRoute() {
                         ) : null}
                       </label>
 
-                      {isEncomenda ? (
+                      {isOrder ? (
                         <label className="space-y-1">
                           <span className="label">Data/hora de entrega</span>
                           <input
@@ -474,7 +474,7 @@ function OrderFormRoute() {
                         </label>
                       ) : null}
 
-                      <div className={`flex flex-col justify-end ${isEncomenda ? "md:col-span-2" : "md:col-span-3"}`}>
+                      <div className={`flex flex-col justify-end ${isOrder ? "md:col-span-2" : "md:col-span-3"}`}>
                         {showNote[field.id] ? (
                           <label className="space-y-1">
                             <div className="flex items-center justify-between">
