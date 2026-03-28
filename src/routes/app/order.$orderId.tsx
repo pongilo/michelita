@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
@@ -335,28 +336,31 @@ function OrderDetailsPage() {
         </div>
         {order ? (
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-ghost text-error"
+              variant="ghost"
+              size="sm"
+              className="text-error"
               disabled={isDeletingOrder}
               onClick={handleDeleteOrder}
             >
               {isDeletingOrder ? "Deletando..." : "Deletar"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="btn btn-sm btn-outline"
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditItemsModalOpen(true)}
             >
               Editar itens
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="btn btn-sm btn-primary"
+              size="sm"
               onClick={() => setIsEditInfoModalOpen(true)}
             >
               Editar pedido
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>
@@ -449,14 +453,15 @@ function OrderDetailsPage() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Itens</h2>
               {order.item.some((i) => !i.isDelivered) ? (
-                <button
+                <Button
                   type="button"
-                  className="btn btn-xs btn-outline"
+                  variant="outline"
+                  size="xs"
                   disabled={isUpdatingDelivery}
                   onClick={handleMarkAllDelivered}
                 >
                   Marcar todos como entregues
-                </button>
+                </Button>
               ) : null}
             </div>
             {order.item.length === 0 ? (
@@ -487,23 +492,27 @@ function OrderDetailsPage() {
                           {item.isDelivered ? "Entregue" : "A entregar"}
                         </span>
                         {item.isDelivered ? (
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-xs btn-ghost opacity-50"
+                            variant="ghost"
+                            size="xs"
+                            className="opacity-50"
                             disabled={isUpdatingDelivery}
                             onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}
                           >
                             Desmarcar
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-xs btn-ghost text-success"
+                            variant="ghost"
+                            size="xs"
+                            className="text-success"
                             disabled={isUpdatingDelivery}
                             onClick={() => openDeliveryDialog(item.id)}
                           >
                             Marcar entregue
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -530,27 +539,29 @@ function OrderDetailsPage() {
                 <span className="text-sm">Atualizar data de entrega para agora</span>
               </label>
               <div className="modal-action mt-4">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => deliveryDialogRef.current?.close()}
                   disabled={isUpdatingDelivery}
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn-success btn-sm"
+                  size="sm"
+                  className="bg-success text-white hover:bg-success/80"
                   onClick={handleConfirmDelivery}
                   disabled={isUpdatingDelivery}
                 >
                   {isUpdatingDelivery ? <span className="loading loading-spinner loading-xs" /> : null}
                   Confirmar
-                </button>
+                </Button>
               </div>
             </div>
             <form method="dialog" className="modal-backdrop">
-              <button type="submit">fechar</button>
+              <Button type="submit">fechar</Button>
             </form>
           </dialog>
 
@@ -559,20 +570,21 @@ function OrderDetailsPage() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Transações</h2>
               <div className="flex gap-2">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-xs btn-outline"
+                  variant="outline"
+                  size="xs"
                   onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
                 >
                   Vincular
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn-xs btn-primary"
+                  size="xs"
                   onClick={() => setIsNewTransactionModalOpen(true)}
                 >
                   + Nova
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -603,14 +615,16 @@ function OrderDetailsPage() {
                     <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
                       {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
                     </span>
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-xs btn-ghost text-error shrink-0"
+                      variant="ghost"
+                      size="xs"
+                      className="text-error shrink-0"
                       disabled={unlink.isPending}
                       onClick={() => handleUnlinkTransaction(transaction.id)}
                     >
                       ×
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -690,16 +704,16 @@ function OrderDetailsPage() {
               </label>
 
               <div className="modal-action">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost"
+                  variant="ghost"
                   onClick={() => setIsEditInfoModalOpen(false)}
                 >
                   Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={isUpdatingOrder}>
+                </Button>
+                <Button type="submit" disabled={isUpdatingOrder}>
                   {isUpdatingOrder ? "Salvando..." : "Salvar"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -724,13 +738,15 @@ function OrderDetailsPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-sm">Item {index + 1}</span>
                         {itemFields.length > 1 ? (
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-xs btn-ghost text-error"
+                            variant="ghost"
+                            size="xs"
+                            className="text-error"
                             onClick={() => removeItem(index)}
                           >
                             Remover
-                          </button>
+                          </Button>
                         ) : null}
                       </div>
 
@@ -820,13 +836,15 @@ function OrderDetailsPage() {
                 })}
               </div>
 
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-outline w-full"
+                variant="outline"
+                size="sm"
+                className="w-full"
                 onClick={() => appendItem(emptyItem())}
               >
                 + Adicionar item
-              </button>
+              </Button>
 
               <div className="rounded-box bg-base-200 px-4 py-3 text-sm flex justify-between">
                 <span>Total dos itens</span>
@@ -834,16 +852,16 @@ function OrderDetailsPage() {
               </div>
 
               <div className="modal-action">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost"
+                  variant="ghost"
                   onClick={() => setIsEditItemsModalOpen(false)}
                 >
                   Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={isUpdatingOrder}>
+                </Button>
+                <Button type="submit" disabled={isUpdatingOrder}>
                   {isUpdatingOrder ? "Salvando..." : "Salvar itens"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -898,24 +916,23 @@ function OrderDetailsPage() {
             )}
 
             <div className="modal-action">
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost"
+                variant="ghost"
                 onClick={() => {
                   setIsLinkModalOpen(false);
                   setSelectedTransactionId("");
                 }}
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="btn btn-primary"
                 disabled={!selectedTransactionId || link.isPending}
                 onClick={handleLinkTransaction}
               >
                 {link.isPending ? "Vinculando..." : "Vincular"}
-              </button>
+              </Button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setIsLinkModalOpen(false)} />

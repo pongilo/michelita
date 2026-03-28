@@ -9,6 +9,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { ListContainer } from "@/components/ui/list-container";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app/customers")({
   component: CustomersPage,
@@ -70,13 +71,12 @@ function CustomersPage() {
         </PageHeader.Info>
         <PageHeader.Controls>
           <SearchInput value={search} onChange={setSearch} placeholder="Nome, telefone ou endereço" />
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
+          <Button
+            size="sm"
             onClick={() => setIsCreateModalOpen(true)}
           >
             + Novo cliente
-          </button>
+          </Button>
         </PageHeader.Controls>
       </PageHeader>
 
@@ -92,13 +92,12 @@ function CustomersPage() {
             Cadastre seus primeiros clientes para vincular pedidos e transações.
           </EmptyState.Description>
           <EmptyState.Action>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
+            <Button
+              size="sm"
               onClick={() => setIsCreateModalOpen(true)}
             >
               + Novo cliente
-            </button>
+            </Button>
           </EmptyState.Action>
         </EmptyState>
       ) : null}

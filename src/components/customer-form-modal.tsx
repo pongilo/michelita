@@ -3,6 +3,9 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormModal } from "@/components/form-modal";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 const customerFormSchema = z.object({
   name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do cliente."),
@@ -69,28 +72,43 @@ export function CustomerFormModal({
       maxWidthClassName="max-w-3xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1 md:col-span-2">
-            <input type="text" placeholder="Nome" className="input input-bordered w-full" {...register("name")} />
-            {errors.name ? <span className="text-sm text-error">{errors.name.message}</span> : null}
-          </label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Nome</FieldLabel>
+            <Input type="text" placeholder="Nome" {...register("name")} />
+            <FieldError>{errors.name?.message}</FieldError>
+          </Field>
 
-          <input type="text" placeholder="Telefone (opcional)" className="input input-bordered w-full" {...register("phone")} />
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field>
+              <FieldLabel>Telefone</FieldLabel>
+              <Input type="text" placeholder="Telefone (opcional)" {...register("phone")} />
+              <FieldError>{errors.phone?.message}</FieldError>
+            </Field>
 
-          <textarea
-            placeholder="Endereço (opcional)"
-            className="textarea textarea-bordered w-full md:col-span-2"
-            rows={3}
-            {...register("address")}
-          />
+            <Field className="md:col-span-2">
+              <FieldLabel>Endereço</FieldLabel>
+              <textarea
+                placeholder="Endereço (opcional)"
+                className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+                rows={3}
+                {...register("address")}
+              />
+              <FieldError>{errors.address?.message}</FieldError>
+            </Field>
 
-          <textarea
-            placeholder="Observação (opcional)"
-            className="textarea textarea-bordered w-full md:col-span-2"
-            rows={3}
-            {...register("note")}
-          />
-        </div>
+            <Field className="md:col-span-2">
+              <FieldLabel>Observação</FieldLabel>
+              <textarea
+                placeholder="Observação (opcional)"
+                className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+                rows={3}
+                {...register("note")}
+              />
+              <FieldError>{errors.note?.message}</FieldError>
+            </Field>
+          </div>
+        </FieldGroup>
 
         {errorMessage ? (
           <div className="alert alert-error">
@@ -105,16 +123,16 @@ export function CustomerFormModal({
         ) : null}
 
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose}>
             Cancelar
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? "Salvando..."
               : mode === "create"
                 ? "Salvar cliente"
                 : "Salvar alteracoes"}
-          </button>
+          </Button>
         </div>
       </form>
     </FormModal>

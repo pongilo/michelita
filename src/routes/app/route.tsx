@@ -2,7 +2,22 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, ChevronDownIcon, HouseIcon, ListOrderedIcon, LogOutIcon, MenuIcon, PlusIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, ChevronDownIcon, ChevronsUpDown, GalleryVerticalEnd, HouseIcon, ListOrderedIcon, LogOutIcon, MenuIcon, PlusIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarGroupContent,
+} from "@/components/ui/sidebar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -42,6 +57,88 @@ function PrivateLayout() {
     await navigate({ to: "/login" });
   }
 
+
+  return (
+    <SidebarProvider>
+      <Sidebar variant="floating">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                    />
+                  }
+                >
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <GalleryVerticalEnd className="size-4" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 leading-none">
+                    <span className="font-medium">{organization.name}</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-(--anchor-width)"
+                  align="start"
+                >
+                  <DropdownMenuItem render={
+                    <Link to="/app/settings">
+                      <SettingsIcon className="size-4" />
+                      <span>Configurações</span>
+                    </Link>
+                  }/>
+                  <DropdownMenuItem render={
+                    <Link to="/app/account">
+                      <User2Icon className="size-4" />
+                      <span>{user.user_metadata.name}</span>
+                    </Link>
+                  }/>
+                  <DropdownMenuItem render={
+                    <button type="button" onClick={handleSignOut} className="w-full">
+                      <LogOutIcon className="size-4 shrink-0" />
+                      <span>Sair</span>
+                    </button>
+                  }/>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton render={
+                      <Link
+                        to={item.to}
+                        activeOptions={{ exact: true }}
+                        className="font-medium"
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    }>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <SidebarTrigger />
+        <Outlet />
+      </SidebarInset>
+    </SidebarProvider>
+  )
+
   return (
     <div className="drawer lg:drawer-open">
       <input id="app-drawer" type="checkbox" className="drawer-toggle" />
@@ -61,13 +158,6 @@ function PrivateLayout() {
         <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
 
         <aside className="min-h-full w-64 bg-base-100">
-          {/* Header */}
-          {/* <div className="flex items-center gap-2.5 px-5 py-5">
-            <div className="size-7 rounded-md bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {organization.name.charAt(0).toUpperCase()}
-            </div>
-            <span className="font-semibold text-sm truncate">{organization.name}</span>
-          </div> */}
 
           <div className="px-3 py-2">
             <div className="dropdown w-full">
@@ -104,14 +194,15 @@ function PrivateLayout() {
                     </Link>
                   </li>
                   <li>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={handleSignOut}
-                      className="opacity-60!"
+                      className="w-full justify-start opacity-60!"
                     >
                       <LogOutIcon className="size-4 shrink-0" />
                       <span>Sair</span>
-                    </button>
+                    </Button>
                   </li>
                 </ul>
               </div>

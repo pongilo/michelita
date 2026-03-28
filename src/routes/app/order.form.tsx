@@ -2,13 +2,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const transactionSchema = z.object({
   type: z.enum(["entry", "exit"]),
@@ -238,80 +249,102 @@ function OrderFormRoute() {
       <div className="bg-base-100">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <section className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <span className="label">Cliente (opcional)</span>
+            <Field>
+              <FieldLabel>Cliente (opcional)</FieldLabel>
               <div className="flex gap-2">
-                <select className="select select-bordered w-full" {...register("customerId")}>
-                  <option value="">Sem cliente vinculado</option>
-                  {customers.map((customer) => {
-                    const details = [customer.phone, customer.address].filter(Boolean).join(" · ");
-                    return (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name}{details ? ` — ${details}` : ""}
-                      </option>
-                    );
-                  })}
-                </select>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-square"
+                <Controller
+                  name="customerId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sem cliente vinculado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sem cliente vinculado</SelectItem>
+                        {customers.map((customer) => {
+                          const details = [customer.phone, customer.address].filter(Boolean).join(" · ");
+                          return (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.name}{details ? ` — ${details}` : ""}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
                   title="Cadastrar novo cliente"
                   onClick={() => setIsCustomerModalOpen(true)}
                 >
                   +
-                </button>
+                </Button>
               </div>
               {isLoadingCustomers ? (
                 <span className="text-xs opacity-70">Carregando clientes...</span>
               ) : null}
-            </div>
+            </Field>
 
-            <label className="space-y-1">
-              <span className="label">Data/hora do pedido</span>
-              <input type="datetime-local" className="input input-bordered w-full" {...register("orderedAt")} />
-              {errors.orderedAt ? (
-                <span className="text-error-content text-sm">{errors.orderedAt.message}</span>
-              ) : null}
-            </label>
+            <Field>
+              <FieldLabel>Data/hora do pedido</FieldLabel>
+              <Input type="datetime-local" {...register("orderedAt")} />
+              <FieldError>{errors.orderedAt?.message}</FieldError>
+            </Field>
           </section>
 
           {showOrderNote ? (
-            <label className="space-y-1 block">
+            <Field>
               <div className="flex items-center justify-between">
-                <span className="label">Observação do pedido</span>
-                <button
+                <FieldLabel>Observação do pedido</FieldLabel>
+                <Button
                   type="button"
-                  className="btn btn-xs btn-ghost text-error opacity-60"
+                  variant="ghost"
+                  size="xs"
+                  className="text-error opacity-60"
                   onClick={() => {
                     setValue("note", "");
                     setShowOrderNote(false);
                   }}
                 >
                   Remover
-                </button>
+                </Button>
               </div>
               <textarea
-                className="textarea textarea-bordered w-full"
+                className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
                 rows={3}
                 autoFocus
                 {...register("note")}
               />
-            </label>
+            </Field>
           ) : (
-            <button
+            <Button
               type="button"
-              className="btn btn-xs btn-ghost btn-block justify-start text-xs opacity-50"
+              variant="ghost"
+              size="xs"
+              className="w-full justify-start opacity-50"
               onClick={() => setShowOrderNote(true)}
             >
               + Adicionar observação do pedido
-            </button>
+            </Button>
           )}
 
           <div>
-            <label className="label cursor-pointer justify-start gap-3">
-              <input type="checkbox" className="checkbox" {...register("isPaid")} />
+            <label className="flex cursor-pointer items-center gap-3">
+              <Controller
+                name="isPaid"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
               <div>
-                <span className="label-text">Pedido pago</span>
+                <span className="text-sm font-medium">Pedido pago</span>
                 <p className="text-sm opacity-70">Marque quando o pedido ja estiver quitado.</p>
               </div>
             </label>
@@ -320,26 +353,23 @@ function OrderFormRoute() {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">Itens do pedido</h2>
-              <button type="button" className="btn btn-sm btn-outline" onClick={() => appendItem(emptyItem(orderisOrder && orderDeliveredAt ? orderDeliveredAt : watchedOrderedAt, orderisOrder))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem(orderisOrder && orderDeliveredAt ? orderDeliveredAt : watchedOrderedAt, orderisOrder))}>
                 Adicionar item
-              </button>
+              </Button>
             </div>
 
-            <label className="label cursor-pointer justify-start gap-3">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
+            <label className="flex cursor-pointer items-center gap-3">
+              <Checkbox
                 checked={orderisOrder}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setOrderisOrder(checked);
+                onCheckedChange={(checked) => {
+                  setOrderisOrder(!!checked);
                   if (checked) {
                     setOrderDeliveredAt(watchedOrderedAt);
                   } else {
                     setOrderDeliveredAt("");
                   }
                   itemFields.forEach((_, i) => {
-                    setValue(`items.${i}.isOrder`, checked);
+                    setValue(`items.${i}.isOrder`, !!checked);
                     if (!checked) {
                       setValue(`items.${i}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
                     }
@@ -347,16 +377,15 @@ function OrderFormRoute() {
                 }}
               />
               <div>
-                <span className="label-text font-medium">Encomenda (todos os itens)</span>
+                <span className="text-sm font-medium">Encomenda (todos os itens)</span>
               </div>
             </label>
 
             {orderisOrder ? (
-              <label className="space-y-1">
-                <span className="label">Data/hora de entrega (todos os itens)</span>
-                <input
+              <Field>
+                <FieldLabel>Data/hora de entrega (todos os itens)</FieldLabel>
+                <Input
                   type="datetime-local"
-                  className="input input-bordered w-full"
                   value={orderDeliveredAt}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -369,7 +398,7 @@ function OrderFormRoute() {
                   }}
                 />
                 <p className="text-xs opacity-50">Cada item pode ter sua data ajustada individualmente abaixo.</p>
-              </label>
+              </Field>
             ) : null}
 
             {itemFields.map((field, index) => {
@@ -384,130 +413,121 @@ function OrderFormRoute() {
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Item {index + 1}</span>
                       {itemFields.length > 1 ? (
-                        <button
+                        <Button
                           type="button"
-                          className="btn btn-xs btn-ghost text-error"
+                          variant="ghost"
+                          size="xs"
+                          className="text-error"
                           onClick={() => removeItem(index)}
                         >
                           Remover
-                        </button>
+                        </Button>
                       ) : null}
                     </div>
 
-                    <label className="label cursor-pointer justify-start gap-3">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm"
-                        {...register(`items.${index}.isOrder`, {
-                          onChange: (e) => {
-                            if (!e.target.checked) {
-                              setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
-                            }
-                          },
-                        })}
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <Controller
+                        name={`items.${index}.isOrder`}
+                        control={control}
+                        render={({ field: checkField }) => (
+                          <Checkbox
+                            checked={checkField.value}
+                            onCheckedChange={(checked) => {
+                              checkField.onChange(checked);
+                              if (!checked) {
+                                setValue(`items.${index}.deliveredAt`, watchedOrderedAt, { shouldValidate: true });
+                              }
+                            }}
+                          />
+                        )}
                       />
                       <div>
-                        <span className="label-text font-medium">Encomenda</span>
+                        <span className="text-sm font-medium">Encomenda</span>
                       </div>
                     </label>
 
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <label className="space-y-1">
-                        <span className="label">Descricao</span>
-                        <input
-                          type="text"
-                          className="input input-bordered w-full"
-                          {...register(`items.${index}.description`)}
-                        />
-                        {errors.items?.[index]?.description ? (
-                          <span className="text-error-content text-sm">
-                            {errors.items[index]?.description?.message}
-                          </span>
-                        ) : null}
-                      </label>
-
-                      <label className="space-y-1">
-                        <span className="label">Preço unitário</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="input input-bordered w-full"
-                          {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                        />
-                        {errors.items?.[index]?.unitPrice ? (
-                          <span className="text-error-content text-sm">
-                            {errors.items[index]?.unitPrice?.message}
-                          </span>
-                        ) : null}
-                      </label>
-
-                      <label className="space-y-1">
-                        <span className="label">Quantidade</span>
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          className="input input-bordered w-full"
-                          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                        />
-                        {errors.items?.[index]?.quantity ? (
-                          <span className="text-error-content text-sm">
-                            {errors.items[index]?.quantity?.message}
-                          </span>
-                        ) : null}
-                      </label>
-
-                      {isOrder ? (
-                        <label className="space-y-1">
-                          <span className="label">Data/hora de entrega</span>
-                          <input
-                            type="datetime-local"
-                            className="input input-bordered w-full"
-                            {...register(`items.${index}.deliveredAt`)}
+                    <FieldGroup>
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <Field>
+                          <FieldLabel>Descricao</FieldLabel>
+                          <Input
+                            type="text"
+                            {...register(`items.${index}.description`)}
                           />
-                          {errors.items?.[index]?.deliveredAt ? (
-                            <span className="text-error-content text-sm">
-                              {errors.items[index]?.deliveredAt?.message}
-                            </span>
-                          ) : null}
-                        </label>
-                      ) : null}
+                          <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
+                        </Field>
 
-                      <div className={`flex flex-col justify-end ${isOrder ? "md:col-span-2" : "md:col-span-3"}`}>
-                        {showNote[field.id] ? (
-                          <label className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="label">Observação</span>
-                              <button
-                                type="button"
-                                className="btn btn-xs btn-ghost text-error opacity-60"
-                                onClick={() => {
-                                  setValue(`items.${index}.note`, "");
-                                  setShowNote((prev) => ({ ...prev, [field.id]: false }));
-                                }}
-                              >
-                                Remover
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              className="input input-bordered w-full"
-                              autoFocus
-                              {...register(`items.${index}.note`)}
+                        <Field>
+                          <FieldLabel>Preço unitário</FieldLabel>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                          />
+                          <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
+                        </Field>
+
+                        <Field>
+                          <FieldLabel>Quantidade</FieldLabel>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="1"
+                            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                          />
+                          <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
+                        </Field>
+
+                        {isOrder ? (
+                          <Field>
+                            <FieldLabel>Data/hora de entrega</FieldLabel>
+                            <Input
+                              type="datetime-local"
+                              {...register(`items.${index}.deliveredAt`)}
                             />
-                          </label>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn btn-xs btn-ghost btn-block justify-start text-xs opacity-50"
-                            onClick={() => setShowNote((prev) => ({ ...prev, [field.id]: true }))}
-                          >
-                            + Adicionar observação
-                          </button>
-                        )}
+                            <FieldError>{errors.items?.[index]?.deliveredAt?.message}</FieldError>
+                          </Field>
+                        ) : null}
+
+                        <div className={`flex flex-col justify-end ${isOrder ? "md:col-span-2" : "md:col-span-3"}`}>
+                          {showNote[field.id] ? (
+                            <Field>
+                              <div className="flex items-center justify-between">
+                                <FieldLabel>Observação</FieldLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="xs"
+                                  className="text-error opacity-60"
+                                  onClick={() => {
+                                    setValue(`items.${index}.note`, "");
+                                    setShowNote((prev) => ({ ...prev, [field.id]: false }));
+                                  }}
+                                >
+                                  Remover
+                                </Button>
+                              </div>
+                              <Input
+                                type="text"
+                                autoFocus
+                                {...register(`items.${index}.note`)}
+                              />
+                            </Field>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="xs"
+                              className="w-full justify-start opacity-50"
+                              onClick={() => setShowNote((prev) => ({ ...prev, [field.id]: true }))}
+                            >
+                              + Adicionar observação
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </FieldGroup>
 
                     <div className="text-sm opacity-70">Subtotal do item: R$ {itemSubtotal.toFixed(2)}</div>
                   </div>
@@ -517,30 +537,30 @@ function OrderFormRoute() {
           </section>
 
           <section className="rounded-box bg-base-200 p-4 text-sm space-y-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1">
-                <span className="label">Frete / taxa adicional</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="input input-bordered input-sm w-full"
-                  placeholder="0,00"
-                  {...register("shippingFee", { valueAsNumber: true })}
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="label">Desconto</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="input input-bordered input-sm w-full"
-                  placeholder="0,00"
-                  {...register("discount", { valueAsNumber: true })}
-                />
-              </label>
-            </div>
+            <FieldGroup>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field>
+                  <FieldLabel>Frete / taxa adicional</FieldLabel>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                    {...register("shippingFee", { valueAsNumber: true })}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Desconto</FieldLabel>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                    {...register("discount", { valueAsNumber: true })}
+                  />
+                </Field>
+              </div>
+            </FieldGroup>
             <div className="divider my-0" />
             <div className="flex justify-between text-opacity-70">
               <span>Subtotal dos itens</span>
@@ -564,7 +584,6 @@ function OrderFormRoute() {
             </div>
           </section>
 
-          {/* Seção de transações */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -575,13 +594,14 @@ function OrderFormRoute() {
                   <p className="text-sm opacity-70">Vinculadas ao pedido.</p>
                 )}
               </div>
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-outline"
+                variant="outline"
+                size="sm"
                 onClick={() => appendTransaction(emptyTransaction())}
               >
                 Adicionar transação
-              </button>
+              </Button>
             </div>
 
             {transactionFields.map((field, index) => (
@@ -589,79 +609,98 @@ function OrderFormRoute() {
                 <div className="card-body gap-3 p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Transação {index + 1}</span>
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-xs btn-ghost text-error"
+                      variant="ghost"
+                      size="xs"
+                      className="text-error"
                       onClick={() => removeTransaction(index)}
                     >
                       Remover
-                    </button>
+                    </Button>
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="space-y-1">
-                      <span className="label">Tipo</span>
-                      <select className="select select-bordered w-full" {...register(`transactions.${index}.type`)}>
-                        <option value="entry">Entrada</option>
-                        <option value="exit">Saida</option>
-                      </select>
-                    </label>
+                  <FieldGroup>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Field>
+                        <FieldLabel>Tipo</FieldLabel>
+                        <Controller
+                          name={`transactions.${index}.type`}
+                          control={control}
+                          render={({ field: selectField }) => (
+                            <Select value={selectField.value} onValueChange={selectField.onChange}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="entry">Entrada</SelectItem>
+                                <SelectItem value="exit">Saida</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </Field>
 
-                    <label className="space-y-1">
-                      <span className="label">Valor</span>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        className="input input-bordered w-full"
-                        {...register(`transactions.${index}.amount`, { valueAsNumber: true })}
-                      />
-                      {errors.transactions?.[index]?.amount ? (
-                        <span className="text-error-content text-sm">{errors.transactions[index]?.amount?.message}</span>
-                      ) : null}
-                    </label>
+                      <Field>
+                        <FieldLabel>Valor</FieldLabel>
+                        <Input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          {...register(`transactions.${index}.amount`, { valueAsNumber: true })}
+                        />
+                        <FieldError>{errors.transactions?.[index]?.amount?.message}</FieldError>
+                      </Field>
 
-                    <label className="space-y-1">
-                      <span className="label">Metodo</span>
-                      <select className="select select-bordered w-full" {...register(`transactions.${index}.method`)}>
-                        <option value="pix">PIX</option>
-                        <option value="cash">Dinheiro</option>
-                        <option value="credit_card">Cartao de credito</option>
-                        <option value="debit_card">Cartao de debito</option>
-                      </select>
-                    </label>
+                      <Field>
+                        <FieldLabel>Metodo</FieldLabel>
+                        <Controller
+                          name={`transactions.${index}.method`}
+                          control={control}
+                          render={({ field: selectField }) => (
+                            <Select value={selectField.value} onValueChange={selectField.onChange}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pix">PIX</SelectItem>
+                                <SelectItem value="cash">Dinheiro</SelectItem>
+                                <SelectItem value="credit_card">Cartao de credito</SelectItem>
+                                <SelectItem value="debit_card">Cartao de debito</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </Field>
 
-                    <label className="space-y-1">
-                      <span className="label">Data/hora</span>
-                      <input
-                        type="datetime-local"
-                        className="input input-bordered w-full"
-                        {...register(`transactions.${index}.madeAt`)}
-                      />
-                      {errors.transactions?.[index]?.madeAt ? (
-                        <span className="text-error-content text-sm">{errors.transactions[index]?.madeAt?.message}</span>
-                      ) : null}
-                    </label>
+                      <Field>
+                        <FieldLabel>Data/hora</FieldLabel>
+                        <Input
+                          type="datetime-local"
+                          {...register(`transactions.${index}.madeAt`)}
+                        />
+                        <FieldError>{errors.transactions?.[index]?.madeAt?.message}</FieldError>
+                      </Field>
 
-                    <label className="space-y-1 md:col-span-2">
-                      <span className="label">Descricao (opcional)</span>
-                      <input
-                        type="text"
-                        className="input input-bordered w-full"
-                        placeholder="Descricao da transacao"
-                        {...register(`transactions.${index}.description`)}
-                      />
-                    </label>
-                  </div>
+                      <Field className="md:col-span-2">
+                        <FieldLabel>Descricao (opcional)</FieldLabel>
+                        <Input
+                          type="text"
+                          placeholder="Descricao da transacao"
+                          {...register(`transactions.${index}.description`)}
+                        />
+                      </Field>
+                    </div>
+                  </FieldGroup>
                 </div>
               </div>
             ))}
           </section>
 
           <div className="flex justify-end">
-            <button type="submit" disabled={isPending} className="btn btn-primary">
+            <Button type="submit" disabled={isPending}>
               {isPending ? "Salvando..." : "Registrar pedido"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

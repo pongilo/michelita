@@ -1,8 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormModal } from "@/components/form-modal";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const transactionFormSchema = z.object({
   type: z.enum(["entry", "exit"]),
@@ -78,6 +88,7 @@ export function TransactionFormModal({
   onDelete,
 }: TransactionFormModalProps) {
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -112,129 +123,177 @@ export function TransactionFormModal({
       onClose={onClose}
       maxWidthClassName="max-w-3xl"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-1">
-          <span className="label">Tipo</span>
-          <select className="select select-bordered w-full" {...register("type")}>
-            <option value="entry">Entrada</option>
-            <option value="exit">Saida</option>
-          </select>
-        </label>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <FieldGroup>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field>
+              <FieldLabel>Tipo</FieldLabel>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="entry">Entrada</SelectItem>
+                      <SelectItem value="exit">Saida</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
 
-        <label className="space-y-1">
-          <span className="label">Valor</span>
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            className="input input-bordered w-full"
-            {...register("amount", { valueAsNumber: true })}
-          />
-          {errors.amount ? <span className="text-error-content text-sm">{errors.amount.message}</span> : null}
-        </label>
+            <Field>
+              <FieldLabel>Valor</FieldLabel>
+              <Input
+                type="number"
+                min="0.01"
+                step="0.01"
+                {...register("amount", { valueAsNumber: true })}
+              />
+              <FieldError>{errors.amount?.message}</FieldError>
+            </Field>
 
-        <label className="space-y-1">
-          <span className="label">Metodo</span>
-          <select className="select select-bordered w-full" {...register("method")}>
-            <option value="pix">PIX</option>
-            <option value="cash">Dinheiro</option>
-            <option value="credit_card">Cartao de credito</option>
-            <option value="debit_card">Cartao de debito</option>
-          </select>
-        </label>
+            <Field>
+              <FieldLabel>Metodo</FieldLabel>
+              <Controller
+                name="method"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="credit_card">Cartao de credito</SelectItem>
+                      <SelectItem value="debit_card">Cartao de debito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
 
-        <label className="space-y-1">
-          <span className="label">Data/hora</span>
-          <input type="datetime-local" className="input input-bordered w-full" {...register("madeAt")} />
-          {errors.madeAt ? <span className="text-error-content text-sm">{errors.madeAt.message}</span> : null}
-        </label>
+            <Field>
+              <FieldLabel>Data/hora</FieldLabel>
+              <Input type="datetime-local" {...register("madeAt")} />
+              <FieldError>{errors.madeAt?.message}</FieldError>
+            </Field>
 
-        <label className="space-y-1 md:col-span-2">
-          <span className="label">Descricao (opcional)</span>
-          <input type="text" className="input input-bordered w-full" placeholder="Descricao" {...register("description")} />
-          {errors.description ? <span className="text-error-content text-sm">{errors.description.message}</span> : null}
-        </label>
+            <Field className="md:col-span-2">
+              <FieldLabel>Descricao (opcional)</FieldLabel>
+              <Input type="text" placeholder="Descricao" {...register("description")} />
+              <FieldError>{errors.description?.message}</FieldError>
+            </Field>
 
-        {fixedLinkedCustomer ? (
-          <div className="space-y-1 md:col-span-2">
-            <span className="label">Cliente vinculado</span>
-            <input type="hidden" {...register("linkedCustomerId")} />
-            <div className="input input-bordered flex w-full items-center bg-base-200/60">
-              {fixedLinkedCustomer.name}
-            </div>
+            {fixedLinkedCustomer ? (
+              <Field className="md:col-span-2">
+                <FieldLabel>Cliente vinculado</FieldLabel>
+                <input type="hidden" {...register("linkedCustomerId")} />
+                <div className="flex h-9 w-full items-center rounded-4xl border border-input bg-input/30 px-3 text-sm opacity-70">
+                  {fixedLinkedCustomer.name}
+                </div>
+              </Field>
+            ) : (
+              <Field className="md:col-span-2">
+                <FieldLabel>Cliente vinculado (opcional)</FieldLabel>
+                <Controller
+                  name="linkedCustomerId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sem cliente vinculado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sem cliente vinculado</SelectItem>
+                        {customers.map((customer) => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
+            )}
+
+            {fixedLinkedOrder ? (
+              <Field className="md:col-span-2">
+                <FieldLabel>Pedido vinculado</FieldLabel>
+                <input type="hidden" {...register("linkedOrderId")} value={fixedLinkedOrder.id} />
+                <div className="flex h-9 w-full items-center rounded-4xl border border-input bg-input/30 px-3 text-sm opacity-70">
+                  {fixedLinkedOrder.label}
+                </div>
+              </Field>
+            ) : orders && orders.length > 0 ? (
+              <Field className="md:col-span-2">
+                <FieldLabel>Pedido vinculado (opcional)</FieldLabel>
+                <Controller
+                  name="linkedOrderId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sem pedido vinculado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sem pedido vinculado</SelectItem>
+                        {orders.map((order) => (
+                          <SelectItem key={order.id} value={order.id}>
+                            {order.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
+            ) : null}
           </div>
-        ) : (
-          <label className="space-y-1 md:col-span-2">
-            <span className="label">Cliente vinculado (opcional)</span>
-            <select className="select select-bordered w-full" {...register("linkedCustomerId")}>
-              <option value="">Sem cliente vinculado</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {fixedLinkedOrder ? (
-          <div className="space-y-1 md:col-span-2">
-            <span className="label">Pedido vinculado</span>
-            <input type="hidden" {...register("linkedOrderId")} value={fixedLinkedOrder.id} />
-            <div className="input input-bordered flex w-full items-center bg-base-200/60">
-              {fixedLinkedOrder.label}
-            </div>
-          </div>
-        ) : orders && orders.length > 0 ? (
-          <label className="space-y-1 md:col-span-2">
-            <span className="label">Pedido vinculado (opcional)</span>
-            <select className="select select-bordered w-full" {...register("linkedOrderId")}>
-              <option value="">Sem pedido vinculado</option>
-              {orders.map((order) => (
-                <option key={order.id} value={order.id}>
-                  {order.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+        </FieldGroup>
 
         {errorMessage ? (
-          <div className="alert alert-error md:col-span-2">
+          <div className="alert alert-error">
             <span>{errorMessage}</span>
           </div>
         ) : null}
 
         {successMessage ? (
-          <div className="alert alert-success md:col-span-2">
+          <div className="alert alert-success">
             <span>{successMessage}</span>
           </div>
         ) : null}
 
-        <div className="md:col-span-2 flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <div>
             {mode === "edit" && onDelete ? (
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost text-error"
+                variant="ghost"
+                className="text-error"
                 disabled={isSubmitting || isDeleting}
                 onClick={onDelete}
               >
                 {isDeleting ? "Excluindo..." : "Excluir transação"}
-              </button>
+              </Button>
             ) : null}
           </div>
           <div className="flex gap-2">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting || isDeleting}>
+            </Button>
+            <Button type="submit" disabled={isSubmitting || isDeleting}>
               {isSubmitting
                 ? "Salvando..."
                 : mode === "create"
                   ? "Registrar transacao"
                   : "Salvar alteracoes"}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

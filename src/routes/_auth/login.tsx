@@ -4,6 +4,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_auth/login")({
   component: LoginPage,
@@ -45,41 +48,40 @@ function LoginPage() {
       <div className="card shadow-xs card-lg bg-base-100">
         <div className="card-body">
           <h1 className="card-title">Login</h1>
-
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <label className="space-y-1">
-              <span className="label">E-mail</span>
-              <input
-                id="email"
-                type="email"
-                {...register("email")}
-                className="input input-bordered w-full"
-              />
-              {errors.email ? (
-                <span className="text-error-content text-sm">{errors.email.message}</span>
-              ) : null}
-            </label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>E-mail</FieldLabel>
+                <Input 
+                  id="email"
+                  type="email"
+                  {...register("email")} 
+                />
+                {errors.email && (
+                  <FieldError>{errors.email.message}</FieldError>
+                )}
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Senha</span>
-              <input
-                id="password"
-                type="password"
-                {...register("password")}
-                className="input input-bordered w-full"
-              />
-              {errors.password ? (
-                <span className="text-error-content text-sm">{errors.password.message}</span>
-              ) : null}
-            </label>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary w-full"
-            >
-              {isSubmitting ? "Entrando..." : "Entrar"}
-            </button>
+              <Field>
+                <FieldLabel>Senha</FieldLabel>
+                <Input 
+                  id="password"
+                  type="password"
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <FieldError>{errors.password.message}</FieldError>
+                )}
+              </Field>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full"
+                size="lg"
+              >
+                {isSubmitting ? "Entrando..." : "Entrar"}
+              </Button>
+            </FieldGroup>
           </form>
         </div>
       </div>

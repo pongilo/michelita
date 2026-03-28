@@ -5,6 +5,7 @@ import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
+import { Button } from "@/components/ui/button";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -172,9 +173,9 @@ function OrdersPage() {
               <option value="pending">Pendentes</option>
             </select>
           </label>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => refetch()} disabled={isFetching}>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? "Atualizando..." : "Atualizar"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -221,23 +222,24 @@ function OrdersPage() {
                           </Link>
                         </li>
                         <li>
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start"
                             disabled={isUpdatingOrder || isDeletingOrder}
                             onClick={() => handleTogglePaid(order.id, order.isPaid)}
                           >
                             {order.isPaid ? "Marcar pendente" : "Marcar pago"}
-                          </button>
+                          </Button>
                         </li>
                         <li>
-                          <button
-                            type="button"
-                            className="text-error"
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-error"
                             disabled={isUpdatingOrder || isDeletingOrder}
                             onClick={() => handleDeleteOrder(order.id)}
                           >
                             Excluir pedido
-                          </button>
+                          </Button>
                         </li>
                       </ul>
                     </div>

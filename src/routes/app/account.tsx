@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { updateUser } from "@/lib/api/auth/update-user";
 import { updatePassword } from "@/lib/api/auth/update-password";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app/account")({
   component: AccountPage,
@@ -116,12 +117,12 @@ function AccountPage() {
           </label>
 
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary" disabled={isSubmittingProfile}>
+            <Button type="submit" disabled={isSubmittingProfile}>
               {isSubmittingProfile ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : null}
               Salvar alterações
-            </button>
+            </Button>
           </div>
         </form>
       </section>
@@ -166,12 +167,12 @@ function AccountPage() {
           </label>
 
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary" disabled={isSubmittingPassword}>
+            <Button type="submit" disabled={isSubmittingPassword}>
               {isSubmittingPassword ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : null}
               Alterar senha
-            </button>
+            </Button>
           </div>
         </form>
       </section>

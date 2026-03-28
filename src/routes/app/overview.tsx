@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PeriodFilter } from "@/components/ui/period-filter";
 import { ToggleGroup } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
 
 const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -340,9 +341,9 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
     <>
       {/* Row */}
       <div className="flex items-center bg-base-100 hover:bg-base-200/50 transition-colors">
-        <button
-          type="button"
-          className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3 text-left cursor-pointer"
+        <Button
+          variant="ghost"
+          className="flex flex-1 min-w-0 h-auto items-center gap-3 px-4 py-3 text-left rounded-none justify-start"
           onClick={() => setDrawerOpen(true)}
         >
           <div className="flex-1 min-w-0">
@@ -364,7 +365,7 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
               {order.isPaid ? "Pago" : "Pendente"}
             </span>
           </div>
-        </button>
+        </Button>
       </div>
 
       {/* Drawer */}
@@ -386,15 +387,17 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
                   {order.customer ? <> · {order.customer.name}</> : null}
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost btn-sm btn-circle shrink-0 ml-2"
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0 ml-2"
                 onClick={() => setDrawerOpen(false)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
 
             {/* Drawer body */}
@@ -513,23 +516,25 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
                 Ver pedido completo
               </Link>
               {item.isDelivered ? (
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => { handleUndoDelivery(); setDrawerOpen(false); }}
                   disabled={isPending}
                 >
                   Desfazer entrega
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
-                  className="btn btn-success btn-sm"
+                  size="sm"
+                  className="bg-success text-white hover:bg-success/80"
                   onClick={openConfirmModal}
                   disabled={isPending}
                 >
                   Confirmar entrega
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -553,27 +558,29 @@ function DeliveryItemRow({ item, organizationId }: DeliveryItemRowProps) {
             <span className="text-sm">Atualizar data de entrega para agora</span>
           </label>
           <div className="modal-action mt-4">
-            <button
+            <Button
               type="button"
-              className="btn btn-ghost btn-sm"
+              variant="ghost"
+              size="sm"
               onClick={() => dialogRef.current?.close()}
               disabled={isPending}
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="btn btn-success btn-sm"
+              size="sm"
+              className="bg-success text-white hover:bg-success/80"
               onClick={handleConfirmDelivery}
               disabled={isPending}
             >
               {isPending ? <span className="loading loading-spinner loading-xs" /> : null}
               Confirmar
-            </button>
+            </Button>
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button type="submit">fechar</button>
+          <Button type="submit">fechar</Button>
         </form>
       </dialog>
     </>

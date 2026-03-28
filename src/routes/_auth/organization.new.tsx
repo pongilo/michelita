@@ -5,6 +5,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
@@ -63,27 +66,22 @@ function CreateOrganizationPage() {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-4">
-            <label className="space-y-1">
-              <span className="label">Nome da organizacao</span>
-              <input
-                id="name"
-                type="text"
-                {...register("name")}
-                className="input input-bordered w-full"
-              />
-              {errors.name ? (
-                <span className="text-error-content text-sm">{errors.name.message}</span>
-              ) : null}
-            </label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Nome da organizacao</FieldLabel>
+                <Input id="name" type="text" {...register("name")} />
+                <FieldError>{errors.name?.message}</FieldError>
+              </Field>
 
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
-              {isSubmitting ? "Criando..." : "Criar organizacao"}
-            </button>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? "Criando..." : "Criar organizacao"}
+              </Button>
+            </FieldGroup>
           </form>
 
-          <button type="button" onClick={handleSignOut} className="btn btn-ghost mt-2 w-full">
+          <Button type="button" variant="ghost" onClick={handleSignOut} className="mt-2 w-full">
             Sair
-          </button>
+          </Button>
         </div>
       </div>
     </main>

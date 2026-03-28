@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 import { updateOrganization } from "@/lib/api/organization/update-organization";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
@@ -65,12 +66,12 @@ function SettingsPage() {
           </label>
 
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : null}
               Salvar alterações
-            </button>
+            </Button>
           </div>
         </form>
       </section>

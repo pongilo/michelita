@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 type FormModalProps = {
   isOpen: boolean;
@@ -24,17 +25,17 @@ export function FormModal({
       <div className={`modal-box w-11/12 ${maxWidthClassName}`}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             Fechar
-          </button>
+          </Button>
         </div>
 
         {children}
       </div>
 
-      <button type="button" className="modal-backdrop" aria-label="Fechar modal" onClick={onClose}>
+      <Button type="button" className="modal-backdrop" aria-label="Fechar modal" onClick={onClose}>
         Fechar
-      </button>
+      </Button>
     </div>
   );
 }

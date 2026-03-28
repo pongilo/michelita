@@ -50,6 +50,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PeriodFilter } from "@/components/ui/period-filter";
 import { ListContainer } from "@/components/ui/list-container";
+import { Button } from "@/components/ui/button";
 
 const methodLabel: Record<string, string> = {
   pix: "PIX",
@@ -212,13 +213,12 @@ function TransactionsPage() {
             <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
             <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
           </PeriodFilter>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
+          <Button
+            size="sm"
             onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
           >
             + Nova transação
-          </button>
+          </Button>
         </PageHeader.Controls>
       </PageHeader>
 
@@ -234,13 +234,12 @@ function TransactionsPage() {
             Registre entradas e saídas para acompanhar o financeiro da confeitaria.
           </EmptyState.Description>
           <EmptyState.Action>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
+            <Button
+              size="sm"
               onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
             >
               + Nova transação
-            </button>
+            </Button>
           </EmptyState.Action>
         </EmptyState>
       ) : null}
@@ -251,10 +250,10 @@ function TransactionsPage() {
           <div className="flex-1 min-w-0">
             <ListContainer>
               {transactions.map((transaction) => (
-                <button
+                <Button
                   key={transaction.id}
-                  type="button"
-                  className="flex items-center gap-4 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
+                  variant="ghost"
+                  className="h-auto w-full justify-start rounded-none px-4 py-3 text-left"
                   onClick={() => handleStartEdit(transaction)}
                 >
                   <div
@@ -291,7 +290,7 @@ function TransactionsPage() {
                   >
                     {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
                   </span>
-                </button>
+                </Button>
               ))}
             </ListContainer>
           </div>

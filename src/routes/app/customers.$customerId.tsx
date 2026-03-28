@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
@@ -218,20 +219,22 @@ function CustomerDetailsPage() {
         </div>
         {data && (
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-ghost text-error"
+              variant="ghost"
+              size="sm"
+              className="text-error"
               disabled={isDeletingCustomer}
               onClick={handleDeleteCustomer}
             >
               Excluir
-            </button>
-            <button type="button" className="btn btn-sm btn-outline" onClick={handleStartEdit}>
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={handleStartEdit}>
               Editar
-            </button>
-            <button type="button" className="btn btn-sm btn-primary" onClick={handleOpenTransactionModal}>
+            </Button>
+            <Button type="button" size="sm" onClick={handleOpenTransactionModal}>
               + Nova transação
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -342,13 +345,14 @@ function CustomerDetailsPage() {
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Transações</h2>
-              <button
+              <Button
                 type="button"
-                className="btn btn-xs btn-outline"
+                variant="outline"
+                size="xs"
                 onClick={() => { setLinkError(""); setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
               >
                 Vincular
-              </button>
+              </Button>
             </div>
             {data.recentTransactions.length === 0 ? (
               <div className="px-4 py-3 border border-dashed border-base-300 rounded-box text-sm opacity-50">
@@ -357,10 +361,10 @@ function CustomerDetailsPage() {
             ) : (
               <div className="flex flex-col divide-y divide-base-200 border border-base-300 rounded-box overflow-hidden">
                 {data.recentTransactions.map((transaction) => (
-                  <button
+                  <Button
                     key={transaction.id}
-                    type="button"
-                    className="flex items-center gap-3 px-4 py-3 bg-base-100 hover:bg-base-200/50 transition-colors text-left w-full"
+                    variant="ghost"
+                    className="h-auto w-full justify-start rounded-none px-4 py-3 text-left"
                     disabled={isSubmittingTransactionForm || isDeletingCustomer}
                     onClick={() => handleStartTransactionEdit(transaction.id)}
                   >
@@ -380,7 +384,7 @@ function CustomerDetailsPage() {
                     <span className={`text-sm font-semibold shrink-0 ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
                       {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -436,9 +440,9 @@ function CustomerDetailsPage() {
 
 
             <div className="modal-action">
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost"
+                variant="ghost"
                 onClick={() => {
                   setIsLinkModalOpen(false);
                   setSelectedTransactionId("");
@@ -446,15 +450,14 @@ function CustomerDetailsPage() {
                 }}
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="btn btn-primary"
                 disabled={!selectedTransactionId || isLinking}
                 onClick={handleLinkTransaction}
               >
                 {isLinking ? "Vinculando..." : "Vincular"}
-              </button>
+              </Button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setIsLinkModalOpen(false)} />

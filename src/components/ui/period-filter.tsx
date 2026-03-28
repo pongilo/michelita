@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 const DEFAULT_PERIOD_OPTIONS = [
   { value: "daily", label: "Diário" },
@@ -61,15 +62,16 @@ type RefreshProps = {
 
 function PeriodFilterRefresh({ isFetching = false, onClick }: RefreshProps) {
   return (
-    <button
+    <Button
       type="button"
-      className="btn btn-outline btn-sm"
+      variant="outline"
+      size="sm"
       onClick={onClick}
       disabled={isFetching}
     >
       {isFetching ? <span className="loading loading-spinner loading-xs" /> : null}
       {isFetching ? "Atualizando..." : "Atualizar"}
-    </button>
+    </Button>
   );
 }
 

@@ -4,6 +4,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_auth/register")({
   component: RegisterPage,
@@ -61,67 +64,35 @@ function RegisterPage() {
           <h1 className="card-title">Criar conta</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <label className="space-y-1">
-              <span className="label">Nome</span>
-              <input
-                id="name"
-                type="text"
-                {...register("name")}
-                className="input input-bordered w-full"
-              />
-              {errors.name ? (
-                <span className="text-error-content text-sm">{errors.name.message}</span>
-              ) : null}
-            </label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Nome</FieldLabel>
+                <Input id="name" type="text" {...register("name")} />
+                <FieldError>{errors.name?.message}</FieldError>
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">E-mail</span>
-              <input
-                id="email"
-                type="email"
-                {...register("email")}
-                className="input input-bordered w-full"
-              />
-              {errors.email ? (
-                <span className="text-error-content text-sm">{errors.email.message}</span>
-              ) : null}
-            </label>
+              <Field>
+                <FieldLabel>E-mail</FieldLabel>
+                <Input id="email" type="email" {...register("email")} />
+                <FieldError>{errors.email?.message}</FieldError>
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Senha</span>
-              <input
-                id="password"
-                type="password"
-                {...register("password")}
-                className="input input-bordered w-full"
-              />
-              {errors.password ? (
-                <span className="text-error-content text-sm">{errors.password.message}</span>
-              ) : null}
-            </label>
+              <Field>
+                <FieldLabel>Senha</FieldLabel>
+                <Input id="password" type="password" {...register("password")} />
+                <FieldError>{errors.password?.message}</FieldError>
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Confirmar senha</span>
-              <input
-                id="confirmPassword"
-                type="password"
-                {...register("confirmPassword")}
-                className="input input-bordered w-full"
-              />
-              {errors.confirmPassword ? (
-                <span className="text-error-content text-sm">
-                  {errors.confirmPassword.message}
-                </span>
-              ) : null}
-            </label>
+              <Field>
+                <FieldLabel>Confirmar senha</FieldLabel>
+                <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
+                <FieldError>{errors.confirmPassword?.message}</FieldError>
+              </Field>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary w-full"
-            >
-              {isSubmitting ? "Criando conta..." : "Criar conta"}
-            </button>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? "Criando conta..." : "Criar conta"}
+              </Button>
+            </FieldGroup>
           </form>
         </div>
       </div>
