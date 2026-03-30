@@ -41,6 +41,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
+  { to: "/app/order/form", icon: HouseIcon, label: "Novo pedido" },
   { to: "/app/overview", icon: HouseIcon, label: "Página inicial" },
   { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },

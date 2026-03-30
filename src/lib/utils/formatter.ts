@@ -11,3 +11,9 @@ export const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 export const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short",
 });
+
+export const dayLabelFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "short",
+});

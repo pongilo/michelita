@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 const dashboardPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
+// const deliverySchema = z.enum(["all", "pending", "delivered"]);
 
 const getDailyDashboardSchema = z.object({
   organizationId: z.uuid(),
@@ -71,7 +72,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     const { start, end } = getPeriodBounds(data.period, referenceDate);
     const rangeEnd = new Date(end.getTime() - 1);
 
-    const [ordersToday, transactionsToday, deliveriesToday] = await Promise.all([
+    const [ordersByPeriod, transactionsByPeriod, ordersItemByPeriod] = await Promise.all([
       prisma.order.findMany({
         where: {
           organizationId: data.organizationId,
@@ -95,14 +96,19 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
             select: {
               id: true,
               name: true,
+              phone: true,
+              address: true,
+              note: true,
             },
           },
           item: {
             select: {
               description: true,
               quantity: true,
+              unit_price: true,
               total: true,
               deliveredAt: true,
+              isDelivered: true,
               note: true,
             },
           },
@@ -132,39 +138,41 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
           },
         },
         orderBy: {
-          deliveredAt: "asc",
+          deliveredAt: "desc",
         },
-        take: 8,
         select: {
           id: true,
           description: true,
           quantity: true,
           deliveredAt: true,
+          note: true,
+          isDelivered: true,
           order: {
             select: {
               id: true,
-              customer: {
-                select: {
-                  name: true,
-                },
-              },
+              orderedAt: true,
+              customer: true,
+              isPaid: true,
             },
           },
         },
       }),
     ]);
 
-    const totalOrders = ordersToday.length;
-    const pendingOrders = ordersToday.filter((order) => !order.isPaid).length;
-    const totalItems = ordersToday.reduce((sum, order) => sum + order.item.length, 0);
-    const grossRevenue = ordersToday.reduce((sum, order) => {
+    const totalOrders = ordersByPeriod.length;
+    const pendingOrders = ordersByPeriod.filter((order) => !order.isPaid).length;
+    const totalItems = ordersItemByPeriod.reduce((acc, cur) => Number(cur.quantity) + acc , 0);
+    const grossRevenue = ordersByPeriod.reduce((sum, order) => {
       const itemTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
-      const orderTotal = itemTotal + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0);
+      const orderTotal = itemTotal - Number(order.discount ?? 0);
       return sum + orderTotal;
     }, 0);
+    // const shippingFee = ordersByPeriod.reduce((sum, order) => {
+    //   return sum + Number(order.shippingFee ?? 0);
+    // }, 0);
 
 
-    const { entry, exit } = transactionsToday.reduce(
+    const { entry, exit } = transactionsByPeriod.reduce(
       (acc, transaction) => {
         const amount = Number(transaction.amount);
         if (amount > 0) acc.entry += amount;
@@ -176,39 +184,32 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
 
     const averageTicket = totalOrders > 0 ? grossRevenue / totalOrders : 0;
 
-    const byMethod = transactionsToday.reduce(
-      (acc, transaction) => {
-        const value = Number(transaction.amount);
+    const itemsByDateMap = ordersItemByPeriod.reduce<
+      Record<string, typeof ordersItemByPeriod>
+    >((acc, item) => {
+      const date = item.deliveredAt
+        ? new Date(item.deliveredAt).toISOString().slice(0, 10)
+        : "sem-data";
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(item);
+      return acc;
+    }, {});
 
-        if (value < 0) {
-          return acc;
-        }
-
-        if (transaction.method === "PIX") {
-          acc.pix += value;
-        } else if (transaction.method === "CASH") {
-          acc.cash += value;
-        } else if (transaction.method === "CREDIT_CARD") {
-          acc.creditCard += value;
-        } else if (transaction.method === "DEBIT_CARD") {
-          acc.debitCard += value;
-        }
-
-        return acc;
-      },
-      {
-        pix: 0,
-        cash: 0,
-        creditCard: 0,
-        debitCard: 0,
-      }
-    );
+    const orderItemByDay: { date: string; items: typeof ordersItemByPeriod }[] = [];
+    const cursor = new Date(start);
+    while (cursor < end) {
+      const date = cursor.toISOString().slice(0, 10);
+      orderItemByDay.push({ date, items: itemsByDateMap[date] ?? [] });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    orderItemByDay.reverse();
 
     return {
       period: data.period,
       referenceDate: start.toISOString(),
       rangeStart: start.toISOString(),
       rangeEnd: rangeEnd.toISOString(),
+      itemsByDay: orderItemByDay,
       metrics: {
         totalOrders,
         pendingOrders,
@@ -219,39 +220,6 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         exit: Number(exit.toFixed(2)),
         balance: Number((entry - exit).toFixed(2)),
       },
-      byMethod: {
-        pix: Number(byMethod.pix.toFixed(2)),
-        cash: Number(byMethod.cash.toFixed(2)),
-        creditCard: Number(byMethod.creditCard.toFixed(2)),
-        debitCard: Number(byMethod.debitCard.toFixed(2)),
-      },
-      upcomingDeliveries: deliveriesToday
-        .map((item) => ({
-          id: item.id,
-          description: item.description,
-          quantity: item.quantity,
-          deliveredAt: item.deliveredAt,
-          orderId: item.order.id,
-          customerName: item.order.customer?.name ?? null,
-        })),
-      recentOrders: ordersToday.slice(0, 6).map((order) => ({
-        total: Number(
-          (order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0) + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0)).toFixed(2),
-        ),
-        id: order.id,
-        orderedAt: order.orderedAt,
-        isPaid: order.isPaid,
-        note: order.note,
-        customerName: order.customer?.name ?? null,
-        customerId: order.customer?.id ?? null,
-        items: order.item.map((item) => ({
-          description: item.description,
-          quantity: Number(item.quantity),
-          total: Number(item.total),
-          deliveredAt: item.deliveredAt?.toISOString() ?? null,
-          note: item.note ?? null,
-        })),
-      })),
     };
   });
 

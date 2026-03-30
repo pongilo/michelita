@@ -417,103 +417,89 @@ function OrderDetailsPage() {
           </section>
 
           {/* Cliente */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Cliente</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {order.customer ? (
-                <ItemGroup>
-                  <Item size="sm" variant="outline" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
-                    <ItemMedia className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold">
-                      {order.customer.name.slice(0, 1).toUpperCase()}
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>{order.customer.name}</ItemTitle>
-                    </ItemContent>
-                    <ItemActions>
-                      <span className="text-xs text-muted-foreground">Ver perfil →</span>
-                    </ItemActions>
-                  </Item>
-                  {order.customer.phone ? (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{order.customer.phone}</ItemTitle></ItemContent>
-                    </Item>
-                  ) : null}
-                  {order.customer.address ? (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{order.customer.address}</ItemTitle></ItemContent>
-                    </Item>
-                  ) : null}
-                  {order.customer.note ? (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{order.customer.note}</ItemTitle></ItemContent>
-                    </Item>
-                  ) : null}
-                </ItemGroup>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
-              )}
-            </CardContent>
-          </Card>
+          <h2>Cliente</h2>
+          {order.customer ? (
+            <ItemGroup>
+              <Item size="sm" variant="outline" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                <ItemMedia className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold">
+                  {order.customer.name.slice(0, 1).toUpperCase()}
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{order.customer.name}</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                  <span className="text-xs text-muted-foreground">Ver perfil →</span>
+                </ItemActions>
+              </Item>
+              {order.customer.phone ? (
+                <Item size="sm">
+                  <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
+                  <ItemContent><ItemTitle>{order.customer.phone}</ItemTitle></ItemContent>
+                </Item>
+              ) : null}
+              {order.customer.address ? (
+                <Item size="sm">
+                  <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
+                  <ItemContent><ItemTitle>{order.customer.address}</ItemTitle></ItemContent>
+                </Item>
+              ) : null}
+              {order.customer.note ? (
+                <Item size="sm">
+                  <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
+                  <ItemContent><ItemTitle>{order.customer.note}</ItemTitle></ItemContent>
+                </Item>
+              ) : null}
+            </ItemGroup>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
+          )}
 
           {/* Itens */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Itens</CardTitle>
-              {order.item.some((i) => !i.isDelivered) ? (
-                <CardAction>
-                  <Button type="button" variant="outline" size="xs" disabled={isUpdatingDelivery} onClick={handleMarkAllDelivered}>
-                    Marcar todos como entregues
-                  </Button>
-                </CardAction>
-              ) : null}
-            </CardHeader>
-            <CardContent className="pt-0">
-              {order.item.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
-              ) : (
-                <ItemGroup>
-                  {order.item.map((item) => (
-                    <Item key={item.id} size="sm" variant="outline">
-                      <ItemContent>
-                        <ItemTitle>
-                          <span className="font-bold text-primary">{item.quantity}x</span>{" "}{item.description}
-                        </ItemTitle>
-                        <ItemDescription>
-                          {datetimeFormatter.format(new Date(item.deliveredAt))}
-                          {item.note ? ` · ${item.note}` : ""}
-                        </ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                          <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
-                            {item.isDelivered ? "Entregue" : "A entregar"}
-                          </Badge>
-                          {item.isDelivered ? (
-                            <Button type="button" variant="ghost" size="xs" className="opacity-50" disabled={isUpdatingDelivery} onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}>
-                              Desmarcar
-                            </Button>
-                          ) : (
-                            <Button type="button" variant="ghost" size="xs" className="text-success" disabled={isUpdatingDelivery} onClick={() => openDeliveryDialog(item.id)}>
-                              Marcar entregue
-                            </Button>
-                          )}
-                        </div>
-                      </ItemActions>
-                    </Item>
-                  ))}
-                </ItemGroup>
-              )}
-            </CardContent>
-          </Card>
+          <h2>Itens</h2>
+          {order.item.some((i) => !i.isDelivered) ? (
+              <Button type="button" variant="outline" size="xs" disabled={isUpdatingDelivery} onClick={handleMarkAllDelivered}>
+                Marcar todos como entregues
+              </Button>
+          ) : null}
+          {order.item.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
+          ) : (
+            <ItemGroup>
+              {order.item.map((item) => (
+                <Item key={item.id} size="sm" variant="outline">
+                  <ItemContent>
+                    <ItemTitle>
+                      <span className="font-bold text-primary">{item.quantity}x</span>{" "}{item.description}
+                    </ItemTitle>
+                    <ItemDescription>
+                      {datetimeFormatter.format(new Date(item.deliveredAt))}
+                      {item.note ? ` · ${item.note}` : ""}
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                      <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+                        {item.isDelivered ? "Entregue" : "A entregar"}
+                      </Badge>
+                      {item.isDelivered ? (
+                        <Button type="button" variant="ghost" size="xs" className="opacity-50" disabled={isUpdatingDelivery} onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}>
+                          Desmarcar
+                        </Button>
+                      ) : (
+                        <Button type="button" variant="ghost" size="xs" className="text-success" disabled={isUpdatingDelivery} onClick={() => openDeliveryDialog(item.id)}>
+                          Marcar entregue
+                        </Button>
+                      )}
+                    </div>
+                  </ItemActions>
+                </Item>
+              ))}
+            </ItemGroup>
+          )}
 
           {/* Dialog de confirmação de entrega */}
           <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
@@ -542,57 +528,49 @@ function OrderDetailsPage() {
           </Dialog>
 
           {/* Transações */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Transações</CardTitle>
-              <CardAction>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="xs" onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
-                    Vincular
-                  </Button>
-                  <Button type="button" size="xs" onClick={() => setIsNewTransactionModalOpen(true)}>
-                    + Nova
-                  </Button>
-                </div>
-              </CardAction>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {order.transactions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma transação vinculada.</p>
-              ) : (
-                <ItemGroup>
-                  {order.transactions.map((transaction) => (
-                    <Item key={transaction.id} size="sm" variant="outline">
-                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                        {transaction.type === "entry" ? "↑" : "↓"}
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle>
-                          {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                        </ItemTitle>
-                        <ItemDescription>
-                          {methodLabel[transaction.method] ?? transaction.method}
-                          {" · "}
-                          {datetimeFormatter.format(new Date(transaction.madeAt))}
-                          {transaction.linkedCustomers.length > 0 && (
-                            <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
-                          )}
-                        </ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
-                          {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                        </span>
-                        <Button type="button" variant="ghost" size="xs" className="text-destructive" disabled={unlink.isPending} onClick={() => handleUnlinkTransaction(transaction.id)}>
-                          ×
-                        </Button>
-                      </ItemActions>
-                    </Item>
-                  ))}
-                </ItemGroup>
-              )}
-            </CardContent>
-          </Card>
+          <h2>Transações</h2>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="xs" onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
+              Vincular
+            </Button>
+            <Button type="button" size="xs" onClick={() => setIsNewTransactionModalOpen(true)}>
+              + Nova
+            </Button>
+          </div>
+          {order.transactions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma transação vinculada.</p>
+          ) : (
+            <ItemGroup>
+              {order.transactions.map((transaction) => (
+                <Item key={transaction.id} size="sm" variant="outline">
+                  <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
+                    {transaction.type === "entry" ? "↑" : "↓"}
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>
+                      {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                    </ItemTitle>
+                    <ItemDescription>
+                      {methodLabel[transaction.method] ?? transaction.method}
+                      {" · "}
+                      {datetimeFormatter.format(new Date(transaction.madeAt))}
+                      {transaction.linkedCustomers.length > 0 && (
+                        <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
+                      )}
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                    </span>
+                    <Button type="button" variant="ghost" size="xs" className="text-destructive" disabled={unlink.isPending} onClick={() => handleUnlinkTransaction(transaction.id)}>
+                      ×
+                    </Button>
+                  </ItemActions>
+                </Item>
+              ))}
+            </ItemGroup>
+          )}
         </div>
       ) : null}
 
