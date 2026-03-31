@@ -2,17 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
-import { timeFormatter, shortDateFormatter, formatDayLabel } from "@/lib/utils/formatter";
+import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
 import { useQueryState } from 'nuqs'
-import { Clock, CheckCircle2, Circle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 
 type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
 type DashboardPeriod = "daily" | "weekly" | "monthly";

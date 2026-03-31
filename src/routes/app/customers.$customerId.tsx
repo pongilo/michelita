@@ -381,8 +381,7 @@ function CustomerDetailsPage() {
                       key={transaction.id}
                       size="sm"
                       variant="outline"
-                      render={<button />}
-                      disabled={isSubmittingTransactionForm || isDeletingCustomer}
+                      render={<button disabled={isSubmittingTransactionForm || isDeletingCustomer} />}
                       onClick={() => handleStartTransactionEdit(transaction.id)}
                       className="cursor-pointer text-left w-full"
                     >
@@ -445,7 +444,7 @@ function CustomerDetailsPage() {
           ) : (
             <div className="space-y-1">
               <p className="text-sm font-medium">Selecione a transacao</p>
-              <Select value={selectedTransactionId} onValueChange={setSelectedTransactionId}>
+              <Select value={selectedTransactionId} onValueChange={(v) => v && setSelectedTransactionId(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
