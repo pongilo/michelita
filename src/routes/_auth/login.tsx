@@ -36,7 +36,7 @@ function LoginPage() {
   async function onSubmit({ email, password }: LoginFormValues) {
     await signIn({ email, password }, {
       onSuccess: async () => {
-        await navigate({ to: "/app/overview" });
+        await navigate({ to: "/app/deliveries" });
       },
       onError: (error) => {
         toast.error(error.message);

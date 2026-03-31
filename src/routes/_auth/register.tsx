@@ -49,7 +49,7 @@ function RegisterPage() {
             return;
           }
 
-          await navigate({ to: "/app/overview" });
+          await navigate({ to: "/app/deliveries" });
         },
         onError: (error) => {
           toast.error(error.message);

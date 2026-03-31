@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_auth")({
     const organization = await getOrganization({ ownerId: session.user.id });
 
     if (organization) {
-      throw redirect({ to: "/app/overview" });
+      throw redirect({ to: "/app/deliveries" });
     }
 
     if (location.pathname !== "/organization/new") {

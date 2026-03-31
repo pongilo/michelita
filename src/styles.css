@@ -10,9 +10,6 @@
 @import "@fontsource-variable/figtree";
 
 @custom-variant dark (&:is(.dark *));
-/* @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
-} */
 
 @theme {
   --font-display: 'Poetsen One', 'sans-serif';

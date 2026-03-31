@@ -11,6 +11,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, Dr
 import { useQueryState } from 'nuqs'
 import { Clock, CheckCircle2, Circle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from "@/components/ui/item";
 
 type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
 type DashboardPeriod = "daily" | "weekly" | "monthly";
@@ -49,14 +51,8 @@ function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMont
   }
 }
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-export const Route = createFileRoute("/app/overview")({
-  component: OverviewPage,
+export const Route = createFileRoute("/app/deliveries")({
+  component: DeliveriesPage,
 });
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
@@ -67,7 +63,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: "custom", label: "Escolher data" },
 ];
 
-function OverviewPage() {
+function DeliveriesPage() {
   const { organization } = Route.useRouteContext();
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
   const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
@@ -87,171 +83,129 @@ function OverviewPage() {
   const allItems = data?.itemsByDay.flatMap(day => day.items) ?? [];
   const totalItems = allItems.length;
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
-  const progressPercent = totalItems > 0 ? (deliveredCount / totalItems) * 100 : 0;
 
   const selectedItemContent = allItems.find(i => i.id === selectedItem) ?? null;
 
-  const headerSubtitle = period === "weekly"
-    ? "Esta semana"
-    : period === "monthly"
-    ? monthFormatter.format(new Date(`${referenceDate}T00:00:00`))
-    : formatDayLabel(new Date(`${referenceDate}T00:00:00`));
-
-  const sectionPeriodLabel = quickFilter === "today" ? "HOJE"
-    : quickFilter === "tomorrow" ? "AMANHÃ"
-    : quickFilter === "week" ? "ESTA SEMANA"
-    : quickFilter === "month" ? monthFormatter.format(new Date(`${referenceDate}T00:00:00`)).toUpperCase()
-    : shortDateFormatter.format(new Date(`${customDate}T00:00:00`));
-
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-8">
-      {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground capitalize">{headerSubtitle}</p>
-          <h1 className="text-4xl font-heading font-bold tracking-tight">Entregas</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-1 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-          aria-label="Atualizar"
-        >
-          <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
-        </button>
-      </div>
-
-      {/* Quick filter pills */}
-      <div className="flex gap-2 flex-wrap mb-5">
-        {QUICK_FILTERS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setQuickFilter(key)}
-            className={cn(
-              "px-4 h-9 rounded-full text-sm font-medium border transition-colors",
-              quickFilter === key
-                ? "bg-foreground text-background border-foreground"
-                : "bg-transparent text-foreground border-border hover:bg-muted"
+    <main className="mx-auto w-full max-w-6xl px-5 py-8">
+      <header className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-2xl font-heading">Entregas</h1>
+            {totalItems > 0 && (
+              <p className="text-sm text-muted-foreground">
+                ({deliveredCount} de {totalItems} entregues)
+              </p>
             )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Custom date input */}
-      {quickFilter === "custom" && (
-        <div className="mb-5">
-          <input
-            type="date"
-            value={customDate}
-            onChange={(e) => setCustomDate(e.target.value)}
-            className="h-9 px-3 rounded-xl text-sm border border-border bg-background"
-          />
-        </div>
-      )}
-
-      {/* Custom month input */}
-      {quickFilter === "month" && (
-        <div className="mb-5">
-          <input
-            type="month"
-            value={customMonth}
-            onChange={(e) => setCustomMonth(e.target.value)}
-            className="h-9 px-3 rounded-xl text-sm border border-border bg-background"
-          />
-        </div>
-      )}
-
-      {/* Progress bar */}
-      {totalItems > 0 && (
-        <div className="mb-6">
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
           </div>
+          <Button
+            onClick={() => refetch()}
+            aria-label="Atualizar"
+            size="icon-sm"
+            variant="ghost"
+          >
+            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+          </Button>
         </div>
-      )}
+        <div className="flex gap-2 flex-wrap mb-5">
+          {QUICK_FILTERS.map(({ key, label }) => (
+            <Button
+              key={key}
+              onClick={() => setQuickFilter(key)}
+              variant={quickFilter === key ? "default" : "outline"}
+            >
+              {label}
+            </Button>
+          ))}
+          {quickFilter === "custom" && (
+            <Input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+            />
+          )}
+          {quickFilter === "month" && (
+            <Input
+              type="month"
+              value={customMonth}
+              onChange={(e) => setCustomMonth(e.target.value)}
+            />
+          )}
+        </div>
+      </header>
 
-      {isLoading ? <LoadingState label="Carregando dados..." /> : null}
-      {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
-      {data ? (
-        <div className="space-y-8">
+      {isLoading && <LoadingState label="Carregando dados..." />}
+      {isError && <p className="text-destructive text-sm">{error.message}</p>}
+
+      {data && (
+        <div className="space-y-12">
           {data.itemsByDay.map((itemByDay, index) => {
-            if (itemByDay.items.length === 0) return null;
-            const dayLabel = period === "daily"
-              ? sectionPeriodLabel
-              : formatDayLabel(new Date(itemByDay.date)).toUpperCase();
-
             return (
-              <div key={index}>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-                  {itemByDay.items.length} {itemByDay.items.length === 1 ? "ITEM" : "ITENS"} PARA {dayLabel}
+              <div key={index} className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  {itemByDay.items.length} {itemByDay.items.length === 1 ? "item" : "itens"} para {formatDayLabel(new Date(itemByDay.date))}
                 </p>
-                <div className="space-y-3">
-                  {itemByDay.items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => setSelectedItem(item.id)}
-                    >
-                      <Card className="hover:ring-foreground/20 transition-shadow">
-                        <CardContent className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-heading font-semibold text-base leading-snug">
+                {itemByDay.items.length === 0 ? (
+                  <Item variant="outline" className="text-muted-foreground">
+                    Nenhuma entrega para este dia.
+                  </Item>
+                ) : (
+                  <ItemGroup>
+                    {itemByDay.items.map((item) => (
+                      <Item variant="outline" className="items-start" render={
+                        <Link to="." search={{ selectedItem: item.id }} resetScroll={false}>
+                          <ItemMedia>
+                            {timeFormatter.format(new Date(item.deliveredAt))}
+                          </ItemMedia>
+                          <ItemContent>
+                            <ItemTitle>
                               {item.quantity > 1 && (
                                 <span className="text-primary mr-1">{item.quantity}x</span>
                               )}
                               {item.description}
-                            </p>
-                            {item.order.customer && (
-                              <p className="text-sm text-muted-foreground mt-0.5">
-                                {item.order.customer.name}
-                              </p>
-                            )}
+                            </ItemTitle>
                             {item.note && (
-                              <p className="text-sm text-muted-foreground italic mt-0.5">
+                              <p className="text-sm text-muted-foreground italic">
                                 {item.note}
                               </p>
                             )}
-                            <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted-foreground">
-                              <Clock className="size-3.5 shrink-0" />
-                              <span>{timeFormatter.format(new Date(item.deliveredAt))}</span>
-                            </div>
-                          </div>
-                          <div className="shrink-0 mt-0.5">
-                            {item.isDelivered
-                              ? <CheckCircle2 className="size-6 text-green-500" />
-                              : <Circle className="size-6 text-muted-foreground/30" />
-                            }
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </button>
-                  ))}
-                </div>
+                            {item.order.customer && (
+                              <p className="text-sm text-muted-foreground">
+                                {item.order.customer.name}
+                              </p>
+                            )}
+                          </ItemContent>
+                          <ItemActions>
+                            {item.isDelivered ? (
+                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                                Entregue
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                                A entregar
+                              </Badge>
+                            )}
+                            {item.order.isPaid ? (
+                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                                Pago
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                                Pagamento pendente
+                              </Badge>
+                            )}
+                          </ItemActions>
+                        </Link>
+                      }/>
+                    ))}
+                  </ItemGroup>
+                )}
               </div>
             );
           })}
-
-          {totalItems === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-10">
-              Nenhuma entrega para este período.
-            </p>
-          )}
-
-          {totalItems > 0 && (
-            <p className="text-sm text-muted-foreground text-center pb-4">
-              {deliveredCount} de {totalItems} {totalItems === 1 ? "entregue" : "entregues"}
-            </p>
-          )}
         </div>
-      ) : null}
+      )}
 
       {/* Detail drawer */}
       <Drawer open={!!selectedItem} onOpenChange={() => setSelectedItem(null)} direction="right">

@@ -15,8 +15,8 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AppTransactionsRouteImport } from './routes/app/transactions'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
-import { Route as AppOverviewRouteImport } from './routes/app/overview'
 import { Route as AppOrdersRouteImport } from './routes/app/orders'
+import { Route as AppDeliveriesRouteImport } from './routes/app/deliveries'
 import { Route as AppCustomersRouteImport } from './routes/app/customers'
 import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
@@ -61,14 +61,14 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppOverviewRoute = AppOverviewRouteImport.update({
-  id: '/overview',
-  path: '/overview',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppOrdersRoute = AppOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppDeliveriesRoute = AppDeliveriesRouteImport.update({
+  id: '/deliveries',
+  path: '/deliveries',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCustomersRoute = AppCustomersRouteImport.update({
@@ -161,8 +161,8 @@ export interface FileRoutesByFullPath {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
-  '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
@@ -184,8 +184,8 @@ export interface FileRoutesByTo {
   '/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
-  '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
@@ -209,8 +209,8 @@ export interface FileRoutesById {
   '/_site/docinhos': typeof SiteDocinhosRoute
   '/app/account': typeof AppAccountRoute
   '/app/customers': typeof AppCustomersRouteWithChildren
+  '/app/deliveries': typeof AppDeliveriesRoute
   '/app/orders': typeof AppOrdersRoute
-  '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/_site/': typeof SiteIndexRoute
@@ -235,8 +235,8 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/account'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
-    | '/app/overview'
     | '/app/settings'
     | '/app/transactions'
     | '/organization/new'
@@ -258,8 +258,8 @@ export interface FileRouteTypes {
     | '/docinhos'
     | '/app/account'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
-    | '/app/overview'
     | '/app/settings'
     | '/app/transactions'
     | '/organization/new'
@@ -282,8 +282,8 @@ export interface FileRouteTypes {
     | '/_site/docinhos'
     | '/app/account'
     | '/app/customers'
+    | '/app/deliveries'
     | '/app/orders'
-    | '/app/overview'
     | '/app/settings'
     | '/app/transactions'
     | '/_site/'
@@ -343,18 +343,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/overview': {
-      id: '/app/overview'
-      path: '/overview'
-      fullPath: '/app/overview'
-      preLoaderRoute: typeof AppOverviewRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/orders': {
       id: '/app/orders'
       path: '/orders'
       fullPath: '/app/orders'
       preLoaderRoute: typeof AppOrdersRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/deliveries': {
+      id: '/app/deliveries'
+      path: '/deliveries'
+      fullPath: '/app/deliveries'
+      preLoaderRoute: typeof AppDeliveriesRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/customers': {
@@ -522,8 +522,8 @@ const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
 interface AppRouteRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppCustomersRoute: typeof AppCustomersRouteWithChildren
+  AppDeliveriesRoute: typeof AppDeliveriesRoute
   AppOrdersRoute: typeof AppOrdersRoute
-  AppOverviewRoute: typeof AppOverviewRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppOrderOrderIdRoute: typeof AppOrderOrderIdRoute
@@ -533,8 +533,8 @@ interface AppRouteRouteChildren {
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppCustomersRoute: AppCustomersRouteWithChildren,
+  AppDeliveriesRoute: AppDeliveriesRoute,
   AppOrdersRoute: AppOrdersRoute,
-  AppOverviewRoute: AppOverviewRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppOrderOrderIdRoute: AppOrderOrderIdRoute,
