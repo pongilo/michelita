@@ -25,7 +25,9 @@ export const createOrderSchema = z.object({
 export type CreateOrderProps = z.infer<typeof createOrderSchema>;
 
 function toDateOrThrow(value: string, fieldLabel: string) {
-  const date = new Date(value);
+  // datetime-local values have no timezone info — treat as UTC to match the display formatter (timeZone: "UTC")
+  const normalized = /Z|[+-]\d{2}:?\d{2}$/.test(value) ? value : value + "Z";
+  const date = new Date(normalized);
 
   if (Number.isNaN(date.getTime())) {
     throw new Error(`${fieldLabel} invalida.`);

@@ -2,22 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
-import { currencyFormatter, timeFormatter, dateFormatter, dayLabelFormatter } from "@/lib/utils/formatter";
-import { PageHeader } from "@/components/ui/page-header";
+import { timeFormatter, shortDateFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions, ItemMedia } from "@/components/ui/item";
-import { PeriodFilter } from "@/components/ui/period-filter";
-import { ToggleGroup } from "@/components/ui/toggle-group";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
 import { useQueryState } from 'nuqs'
+import { Clock, CheckCircle2, Circle, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
-
+type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
 type DashboardPeriod = "daily" | "weekly" | "monthly";
 
 function currentDateInputValue() {
@@ -26,54 +21,60 @@ function currentDateInputValue() {
   return local.toISOString().slice(0, 10);
 }
 
-function formatDayLabel(date: Date) {
-  const formatted = dayLabelFormatter.format(date);
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+function tomorrowDateInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  local.setDate(local.getDate() + 1);
+  return local.toISOString().slice(0, 10);
 }
 
-function toDateString(date: Date) {
-  return date.toISOString().slice(0, 10);
+function currentMonthInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 7); // "YYYY-MM"
 }
 
-function getPeriodBounds(period: DashboardPeriod, referenceDate: string): { startDate: string; endDate: string } {
-  const base = new Date(`${referenceDate}T00:00:00`);
-
-  if (period === "daily") {
-    const end = new Date(base);
-    end.setDate(end.getDate() + 1);
-    return { startDate: toDateString(base), endDate: toDateString(end) };
+function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMonth: string): { period: DashboardPeriod; referenceDate: string } {
+  switch (filter) {
+    case "today":
+      return { period: "daily", referenceDate: currentDateInputValue() };
+    case "tomorrow":
+      return { period: "daily", referenceDate: tomorrowDateInputValue() };
+    case "week":
+      return { period: "weekly", referenceDate: currentDateInputValue() };
+    case "month":
+      return { period: "monthly", referenceDate: `${customMonth}-01` };
+    case "custom":
+      return { period: "daily", referenceDate: customDate };
   }
-
-  if (period === "weekly") {
-    const start = new Date(base);
-    const diffToMonday = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - diffToMonday);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-    return { startDate: toDateString(start), endDate: toDateString(end) };
-  }
-
-  // monthly
-  const start = new Date(base);
-  start.setDate(1);
-  const end = new Date(start);
-  end.setMonth(end.getMonth() + 1);
-  return { startDate: toDateString(start), endDate: toDateString(end) };
 }
+
+const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 export const Route = createFileRoute("/app/overview")({
   component: OverviewPage,
 });
 
+const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: "today", label: "Hoje" },
+  { key: "tomorrow", label: "Amanhã" },
+  { key: "week", label: "Esta semana" },
+  { key: "month", label: "Este mês" },
+  { key: "custom", label: "Escolher data" },
+];
+
 function OverviewPage() {
   const { organization } = Route.useRouteContext();
-  const [period, setPeriod] = useState<DashboardPeriod>("daily");
-  const [referenceDate, setReferenceDate] = useState<string>(currentDateInputValue);
-  const [deliveryFilter, setDeliveryFilter] = useQueryState('delivery', {
-    defaultValue: 'all'
-  });
-  const [selectedItem, setSelectedItem] = useQueryState('selectedItem')
-  const [modal, setModal] = useQueryState('modal')
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
+  const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
+  const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
+  const [selectedItem, setSelectedItem] = useQueryState('selectedItem');
+
+  const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
 
   const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
     queryKey: ["dashboard", organization.id, "daily", period, referenceDate],
@@ -83,142 +84,176 @@ function OverviewPage() {
     refetchInterval: 60_000,
   });
 
-  console.log(data)
+  const allItems = data?.itemsByDay.flatMap(day => day.items) ?? [];
+  const totalItems = allItems.length;
+  const deliveredCount = allItems.filter(i => i.isDelivered).length;
+  const progressPercent = totalItems > 0 ? (deliveredCount / totalItems) * 100 : 0;
 
-  const { startDate, endDate } = getPeriodBounds(period, referenceDate);
+  const selectedItemContent = allItems.find(i => i.id === selectedItem) ?? null;
 
-  const selectedItemContent = data?.itemsByDay
-  .flatMap(day => day.items)
-  .find(i => i.id === selectedItem) ?? null
+  const headerSubtitle = period === "weekly"
+    ? "Esta semana"
+    : period === "monthly"
+    ? monthFormatter.format(new Date(`${referenceDate}T00:00:00`))
+    : formatDayLabel(new Date(`${referenceDate}T00:00:00`));
+
+  const sectionPeriodLabel = quickFilter === "today" ? "HOJE"
+    : quickFilter === "tomorrow" ? "AMANHÃ"
+    : quickFilter === "week" ? "ESTA SEMANA"
+    : quickFilter === "month" ? monthFormatter.format(new Date(`${referenceDate}T00:00:00`)).toUpperCase()
+    : shortDateFormatter.format(new Date(`${customDate}T00:00:00`));
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <PageHeader>
-        <PageHeader.Info>
-          <PageHeader.Title>Visão geral</PageHeader.Title>
-          <PageHeader.Subtitle>
-            {period === "daily"
-              ? formatDayLabel(new Date(`${referenceDate}T00:00:00`))
-              : `${dateRangeFormatter.format(new Date(`${startDate}T00:00:00`))} — ${dateRangeFormatter.format(new Date(new Date(`${endDate}T00:00:00`).getTime() - 1))}`}
-          </PageHeader.Subtitle>
-        </PageHeader.Info>
-        <PageHeader.Controls>
-          <PeriodFilter>
-            <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as DashboardPeriod)} />
-            <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
-            <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
-          </PeriodFilter>
-        </PageHeader.Controls>
-      </PageHeader>
+    <main className="mx-auto w-full max-w-2xl px-5 py-8">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground capitalize">{headerSubtitle}</p>
+          <h1 className="text-4xl font-heading font-bold tracking-tight">Entregas</h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-1 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+          aria-label="Atualizar"
+        >
+          <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+        </button>
+      </div>
+
+      {/* Quick filter pills */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        {QUICK_FILTERS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setQuickFilter(key)}
+            className={cn(
+              "px-4 h-9 rounded-full text-sm font-medium border transition-colors",
+              quickFilter === key
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-foreground border-border hover:bg-muted"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom date input */}
+      {quickFilter === "custom" && (
+        <div className="mb-5">
+          <input
+            type="date"
+            value={customDate}
+            onChange={(e) => setCustomDate(e.target.value)}
+            className="h-9 px-3 rounded-xl text-sm border border-border bg-background"
+          />
+        </div>
+      )}
+
+      {/* Custom month input */}
+      {quickFilter === "month" && (
+        <div className="mb-5">
+          <input
+            type="month"
+            value={customMonth}
+            onChange={(e) => setCustomMonth(e.target.value)}
+            className="h-9 px-3 rounded-xl text-sm border border-border bg-background"
+          />
+        </div>
+      )}
+
+      {/* Progress bar */}
+      {totalItems > 0 && (
+        <div className="mb-6">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {isLoading ? <LoadingState label="Carregando dados..." /> : null}
       {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
       {data ? (
-        <div className="space-y-6">
-          {/* Métricas financeiras */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Entradas</CardDescription>
-                <CardTitle className="text-xl text-success">{currencyFormatter.format(data.metrics.entry)}</CardTitle>
-              </CardContent>
-            </Card>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Saídas</CardDescription>
-                <CardTitle className="text-xl text-destructive">{currencyFormatter.format(data.metrics.exit)}</CardTitle>
-              </CardContent>
-            </Card>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Saldo</CardDescription>
-                <CardTitle className={`text-xl ${data.metrics.balance >= 0 ? "text-success" : "text-destructive"}`}>
-                  {currencyFormatter.format(data.metrics.balance)}
-                </CardTitle>
-              </CardContent>
-            </Card>
-          </section>
+        <div className="space-y-8">
+          {data.itemsByDay.map((itemByDay, index) => {
+            if (itemByDay.items.length === 0) return null;
+            const dayLabel = period === "daily"
+              ? sectionPeriodLabel
+              : formatDayLabel(new Date(itemByDay.date)).toUpperCase();
 
-          {/* Métricas de pedidos */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Total em pedidos</CardDescription>
-                <CardTitle className="text-xl">{currencyFormatter.format(data.metrics.grossRevenue)}</CardTitle>
-              </CardContent>
-            </Card>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Pedidos</CardDescription>
-                <CardTitle className="text-xl">{String(data.metrics.totalOrders)}</CardTitle>
-              </CardContent>
-            </Card>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Ticket médio</CardDescription>
-                <CardTitle className="text-xl">{currencyFormatter.format(data.metrics.averageTicket)}</CardTitle>
-              </CardContent>
-            </Card>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <CardDescription>Itens</CardDescription>
-                <CardTitle className="text-xl">
-                  {data.metrics.totalItems}
-                </CardTitle>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* Entregas */}
-          <section>
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className="font-semibold">Itens</h2>
-              <ToggleGroup value={deliveryFilter} onChange={setDeliveryFilter}>
-                <ToggleGroup.Item value="all">Todas</ToggleGroup.Item>
-                <ToggleGroup.Item value="pending">A entregar</ToggleGroup.Item>
-                <ToggleGroup.Item value="delivered">Entregues</ToggleGroup.Item>
-              </ToggleGroup>
-            </div>
-
-            {data.itemsByDay && data.itemsByDay.map((itemByDay, itemByDayIndex) => (
-              <div key={itemByDayIndex}>
-                <p className="text-xs font-semibold opacity-50 uppercase tracking-wide mt-6">{formatDayLabel(new Date(itemByDay.date))}</p>
-                {itemByDay.items.length === 0 ? (
-                  <p className="text-xs opacity-40 italic">Nenhuma entrega.</p>
-                ) : itemByDay.items.map((item) => (
-                  <Item key={item.id} className="cursor-pointer" render={
-                    <Link to="." search={(prev) => ({ ...prev, selectedItem: item.id })}>
-                      <ItemMedia>
-                        {timeFormatter.format(new Date(item.deliveredAt))}
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle>
-                          <span className="text-primary shrink-0">{item.quantity}x</span>
-                          {item.description} {item.note ? <> · {item.note}</> : null}
-                        </ItemTitle>
-                        <ItemDescription>
-                          {item.order.customer ? <>{item.order.customer.name} · {item.order.customer.address}</> : null}<br />
-                          Pedido feito em {dateFormatter.format(new Date(item.order.orderedAt))}
-                        </ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
-                          {item.isDelivered ? "Entregue" : "A entregar"}
-                        </Badge>
-                        <Badge className={item.order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
-                          {item.order.isPaid ? "Pago" : "Pendente"}
-                        </Badge>
-                      </ItemActions>
-                    </Link>
-                  }/>
-                ))}
+            return (
+              <div key={index}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                  {itemByDay.items.length} {itemByDay.items.length === 1 ? "ITEM" : "ITENS"} PARA {dayLabel}
+                </p>
+                <div className="space-y-3">
+                  {itemByDay.items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => setSelectedItem(item.id)}
+                    >
+                      <Card className="hover:ring-foreground/20 transition-shadow">
+                        <CardContent className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-heading font-semibold text-base leading-snug">
+                              {item.quantity > 1 && (
+                                <span className="text-primary mr-1">{item.quantity}x</span>
+                              )}
+                              {item.description}
+                            </p>
+                            {item.order.customer && (
+                              <p className="text-sm text-muted-foreground mt-0.5">
+                                {item.order.customer.name}
+                              </p>
+                            )}
+                            {item.note && (
+                              <p className="text-sm text-muted-foreground italic mt-0.5">
+                                {item.note}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted-foreground">
+                              <Clock className="size-3.5 shrink-0" />
+                              <span>{timeFormatter.format(new Date(item.deliveredAt))}</span>
+                            </div>
+                          </div>
+                          <div className="shrink-0 mt-0.5">
+                            {item.isDelivered
+                              ? <CheckCircle2 className="size-6 text-green-500" />
+                              : <Circle className="size-6 text-muted-foreground/30" />
+                            }
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </section>
+            );
+          })}
+
+          {totalItems === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-10">
+              Nenhuma entrega para este período.
+            </p>
+          )}
+
+          {totalItems > 0 && (
+            <p className="text-sm text-muted-foreground text-center pb-4">
+              {deliveredCount} de {totalItems} {totalItems === 1 ? "entregue" : "entregues"}
+            </p>
+          )}
         </div>
       ) : null}
 
+      {/* Detail drawer */}
       <Drawer open={!!selectedItem} onOpenChange={() => setSelectedItem(null)} direction="right">
         <DrawerContent>
           {selectedItemContent ? (
@@ -233,24 +268,34 @@ function OverviewPage() {
 
               <div className="flex-1 overflow-y-auto px-4 py-2">
                 <div className="space-y-5">
-                  {/* Status badges */}
                   <div className="flex gap-2">
-                    <Badge className={selectedItemContent.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={selectedItemContent.isDelivered ? "default" : "outline"}>
+                    <Badge
+                      className={selectedItemContent.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""}
+                      variant={selectedItemContent.isDelivered ? "default" : "outline"}
+                    >
                       {selectedItemContent.isDelivered ? "Entregue" : "A entregar"}
                     </Badge>
-                    <Badge className={selectedItemContent.order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                    <Badge className={selectedItemContent.order.isPaid
+                      ? "bg-blue-500/15 text-blue-700 border-blue-200"
+                      : "bg-amber-400/20 text-amber-700 border-amber-300"}
+                    >
                       {selectedItemContent.order.isPaid ? "Pago" : "Pagamento pendente"}
                     </Badge>
                   </div>
 
-                  {/* Cliente */}
                   {selectedItemContent.order.customer ? (
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Cliente</p>
                       <p className="font-medium">{selectedItemContent.order.customer.name}</p>
-                      {selectedItemContent.order.customer.phone && <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.phone}</p>}
-                      {selectedItemContent.order.customer.address && <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.address}</p>}
-                      {selectedItemContent.order.customer.note && <p className="text-sm text-muted-foreground italic mt-0.5">{selectedItemContent.order.customer.note}</p>}
+                      {selectedItemContent.order.customer.phone && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.phone}</p>
+                      )}
+                      {selectedItemContent.order.customer.address && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.address}</p>
+                      )}
+                      {selectedItemContent.order.customer.note && (
+                        <p className="text-sm text-muted-foreground italic mt-0.5">{selectedItemContent.order.customer.note}</p>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -261,7 +306,7 @@ function OverviewPage() {
                   <Link to="/app/order/$orderId" params={{ orderId: selectedItemContent.order.id }}>
                     Ver pedido completo
                   </Link>
-                }/>
+                } />
                 {selectedItemContent.isDelivered ? (
                   <Button type="button" variant="ghost" onClick={() => {}}>
                     Desfazer entrega
@@ -276,34 +321,6 @@ function OverviewPage() {
           ) : null}
         </DrawerContent>
       </Drawer>
-
-      {/* Confirm delivery dialog */}
-      {/* <Dialog open={modal === 'confirmDelivery'} onOpenChange={() => setModal('confirmDelivery')}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar entrega</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja marcar <span className="font-medium text-foreground">{item.description}</span> como entregue?
-            </DialogDescription>
-          </DialogHeader>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <Checkbox
-              checked={updateDate}
-              onCheckedChange={(checked) => setUpdateDate(!!checked)}
-            />
-            <span className="text-sm">Atualizar data de entrega para agora</span>
-          </label>
-          <DialogFooter>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setModal(null)} disabled={isPending}>
-              Cancelar
-            </Button>
-            <Button type="button" size="sm" className="bg-success text-white hover:bg-success/80" onClick={handleConfirmDelivery} disabled={isPending}>
-              {isPending ? <span className="animate-spin size-3 rounded-full border-2 border-current border-t-transparent" /> : null}
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog> */}
     </main>
   );
 }

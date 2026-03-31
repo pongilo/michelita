@@ -72,62 +72,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     const { start, end } = getPeriodBounds(data.period, referenceDate);
     const rangeEnd = new Date(end.getTime() - 1);
 
-    const [ordersByPeriod, transactionsByPeriod, ordersItemByPeriod] = await Promise.all([
-      prisma.order.findMany({
-        where: {
-          organizationId: data.organizationId,
-          orderedAt: {
-            gte: start,
-            lt: end,
-          },
-        },
-        orderBy: {
-          orderedAt: "desc",
-        },
-        select: {
-          id: true,
-          isPaid: true,
-          orderedAt: true,
-          note: true,
-          customerId: true,
-          shippingFee: true,
-          discount: true,
-          customer: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              address: true,
-              note: true,
-            },
-          },
-          item: {
-            select: {
-              description: true,
-              quantity: true,
-              unit_price: true,
-              total: true,
-              deliveredAt: true,
-              isDelivered: true,
-              note: true,
-            },
-          },
-        },
-      }),
-      prisma.transaction.findMany({
-        where: {
-          organizationId: data.organizationId,
-          madeAt: {
-            gte: start,
-            lt: end,
-          },
-        },
-        select: {
-          amount: true,
-          method: true,
-        },
-      }),
-      prisma.orderItem.findMany({
+    const ordersItemByPeriod = await prisma.orderItem.findMany({
         where: {
           deliveredAt: {
             gte: start,
@@ -156,33 +101,7 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
             },
           },
         },
-      }),
-    ]);
-
-    const totalOrders = ordersByPeriod.length;
-    const pendingOrders = ordersByPeriod.filter((order) => !order.isPaid).length;
-    const totalItems = ordersItemByPeriod.reduce((acc, cur) => Number(cur.quantity) + acc , 0);
-    const grossRevenue = ordersByPeriod.reduce((sum, order) => {
-      const itemTotal = order.item.reduce((itemSum, item) => itemSum + Number(item.total), 0);
-      const orderTotal = itemTotal - Number(order.discount ?? 0);
-      return sum + orderTotal;
-    }, 0);
-    // const shippingFee = ordersByPeriod.reduce((sum, order) => {
-    //   return sum + Number(order.shippingFee ?? 0);
-    // }, 0);
-
-
-    const { entry, exit } = transactionsByPeriod.reduce(
-      (acc, transaction) => {
-        const amount = Number(transaction.amount);
-        if (amount > 0) acc.entry += amount;
-        if (amount < 0) acc.exit -= amount;
-        return acc;
-      },
-      { entry: 0, exit: 0 },
-    );
-
-    const averageTicket = totalOrders > 0 ? grossRevenue / totalOrders : 0;
+      });
 
     const itemsByDateMap = ordersItemByPeriod.reduce<
       Record<string, typeof ordersItemByPeriod>
@@ -210,16 +129,6 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
       rangeStart: start.toISOString(),
       rangeEnd: rangeEnd.toISOString(),
       itemsByDay: orderItemByDay,
-      metrics: {
-        totalOrders,
-        pendingOrders,
-        totalItems,
-        grossRevenue: Number(grossRevenue.toFixed(2)),
-        averageTicket: Number(averageTicket.toFixed(2)),
-        entry: Number(entry.toFixed(2)),
-        exit: Number(exit.toFixed(2)),
-        balance: Number((entry - exit).toFixed(2)),
-      },
     };
   });
 

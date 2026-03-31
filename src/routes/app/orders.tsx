@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
-import { currencyFormatter, dateFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, dateFormatter, timeFormatter, shortDateFormatter } from "@/lib/utils/formatter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,18 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-});
-
 const PAYMENT_FILTER = [
   { value: "all", label: "Todos" },
   { value: "paid", label: "Pagos" },
   { value: "pending", label: "Pendentes" },
 ];
 
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" });
-const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
 function formatDelivery(deliveredAt: Date | string | null, orderedAt: Date | string) {
   if (!deliveredAt) return null;
@@ -147,7 +141,7 @@ function OrdersPage() {
         <div>
           <h1 className="text-2xl font-semibold">Pedidos</h1>
           <p className="text-sm opacity-70">
-            {periodLabel}: {dateRangeFormatter.format(start)} ate {dateRangeFormatter.format(rangeEnd)}
+            {periodLabel}: {shortDateFormatter.format(start)} ate {shortDateFormatter.format(rangeEnd)}
           </p>
         </div>
 

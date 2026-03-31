@@ -45,13 +45,8 @@ function localDatetimeNow() {
 
 function toLocalDatetimeInput(value: string | Date) {
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return localDatetimeNow();
-  }
-
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
+  if (Number.isNaN(date.getTime())) return localDatetimeNow();
+  return date.toISOString().slice(0, 16);
 }
 
 export const Route = createFileRoute("/app/customers/$customerId")({

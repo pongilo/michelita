@@ -18,7 +18,9 @@ const updateOrderItemDeliveryServerFn = createServerFn({ method: "POST" })
     };
 
     if (data.deliveredAt) {
-      const date = new Date(data.deliveredAt);
+      // datetime-local values have no timezone info — treat as UTC to match the display formatter (timeZone: "UTC")
+      const normalized = /Z|[+-]\d{2}:?\d{2}$/.test(data.deliveredAt) ? data.deliveredAt : data.deliveredAt + "Z";
+      const date = new Date(normalized);
       if (!Number.isNaN(date.getTime())) {
         updateData.deliveredAt = date;
       }

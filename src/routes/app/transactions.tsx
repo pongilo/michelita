@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import type { TransactionsPeriod } from "@/lib/api/transaction/get-transactions";
 
-const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+const dateRangeFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" });
 
 function currentDateInputValue() {
   const now = new Date();
@@ -75,8 +75,7 @@ function localDatetimeNow() {
 function toLocalDatetimeInput(value: string | Date) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return localDatetimeNow();
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
+  return date.toISOString().slice(0, 16);
 }
 
 export const Route = createFileRoute("/app/transactions")({
