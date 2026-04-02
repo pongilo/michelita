@@ -139,7 +139,7 @@ function OrdersPage() {
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Pedidos</h1>
+          <h1 className="text-2xl font-heading">Pedidos</h1>
           <p className="text-sm opacity-70">
             {periodLabel}: {shortDateFormatter.format(start)} ate {shortDateFormatter.format(rangeEnd)}
           </p>
