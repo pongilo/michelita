@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
 import { useQueryState } from 'nuqs'
-import { RefreshCw } from "lucide-react";
+import { MapPinIcon, PhoneIcon, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 
 type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
 type DashboardPeriod = "daily" | "weekly" | "monthly";
@@ -159,9 +159,7 @@ function DeliveriesPage() {
                           </ItemMedia>
                           <ItemContent>
                             <ItemTitle>
-                              {item.quantity > 1 && (
-                                <span className="text-primary mr-1">{item.quantity}x</span>
-                              )}
+                              <span className="text-primary font-bold">{item.quantity}x</span>
                               {item.description}
                             </ItemTitle>
                             {item.note && (
@@ -236,21 +234,28 @@ function DeliveriesPage() {
                     </Badge>
                   </div>
 
-                  {selectedItemContent.order.customer ? (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Cliente</p>
-                      <p className="font-medium">{selectedItemContent.order.customer.name}</p>
-                      {selectedItemContent.order.customer.phone && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.phone}</p>
-                      )}
-                      {selectedItemContent.order.customer.address && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{selectedItemContent.order.customer.address}</p>
-                      )}
-                      {selectedItemContent.order.customer.note && (
-                        <p className="text-sm text-muted-foreground italic mt-0.5">{selectedItemContent.order.customer.note}</p>
-                      )}
-                    </div>
-                  ) : null}
+                  {selectedItemContent.order.customer && (
+                    <Item variant="outline">
+                      <ItemContent>
+                        <ItemTitle>{selectedItemContent.order.customer.name}</ItemTitle>
+                        {selectedItemContent.order.customer.phone && (
+                          <ItemDescription className="flex gap-2 items-center">
+                            <PhoneIcon className="size-4 shrink-0" />
+                            {selectedItemContent.order.customer.phone}
+                          </ItemDescription>
+                        )}
+                        {selectedItemContent.order.customer.address && (
+                          <ItemDescription className="flex gap-2 items-center">
+                            <MapPinIcon className="size-4 shrink-0" /> 
+                            {selectedItemContent.order.customer.address}
+                          </ItemDescription>
+                        )}
+                        {selectedItemContent.order.customer.note && (
+                          <ItemDescription><span className="text-primary">Observação:</span> {selectedItemContent.order.customer.note}</ItemDescription>
+                        )}
+                      </ItemContent>
+                    </Item>
+                  )}
                 </div>
               </div>
 

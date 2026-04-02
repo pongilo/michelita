@@ -30,3 +30,18 @@ export function formatDayLabel(date: Date) {
   const formatted = dayLabelFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
+
+export const fullDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "UTC",
+});
+
+export function formatFullDate(date: Date) {
+  const formatted = fullDateFormatter.format(date);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}

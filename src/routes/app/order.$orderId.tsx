@@ -21,8 +21,9 @@ import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-order-item-delivery";
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
-import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { toast } from "sonner";
+import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
 
 const methodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -112,7 +113,7 @@ function OrderDetailsPage() {
   const { link, unlink } = useLinkOrderTransaction({ organizationId: organization.id, orderId });
   const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({ organizationId: organization.id });
   const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({ organizationId: organization.id });
-  const { mutate: updateItemDelivery, mutateAsync: updateItemDeliveryAsync, isPending: isUpdatingDelivery } = useUpdateOrderItemDelivery({ organizationId: organization.id });
+  const { mutate: updateItemDelivery, isPending: isUpdatingDelivery } = useUpdateOrderItemDelivery({ organizationId: organization.id });
 
   // ── Delivery dialog state ─────────────────────────────────────────────────
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
@@ -133,12 +134,6 @@ function OrderDetailsPage() {
       { orderItemId: pendingDeliveryItemId, isDelivered: true, deliveredAt: updateDeliveryDate ? now : undefined },
       { onSuccess: () => { setIsDeliveryDialogOpen(false); setPendingDeliveryItemId(null); } },
     );
-  }
-
-  async function handleMarkAllDelivered() {
-    if (!order) return;
-    const undelivered = order.item.filter((i) => !i.isDelivered);
-    await Promise.all(undelivered.map((i) => updateItemDeliveryAsync({ orderItemId: i.id, isDelivered: true })));
   }
 
   // ── Modal state ──────────────────────────────────────────────────────────
@@ -416,89 +411,83 @@ function OrderDetailsPage() {
           </section>
 
           {/* Cliente */}
-          <h2>Cliente</h2>
-          {order.customer ? (
-            <ItemGroup>
-              <Item size="sm" variant="outline" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
-                <ItemMedia className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold">
-                  {order.customer.name.slice(0, 1).toUpperCase()}
-                </ItemMedia>
+          <div className="space-y-2">
+            <h2 className="font-heading text-base font-medium">Cliente</h2>
+            {order.customer ? (
+              <Item variant="outline">
                 <ItemContent>
                   <ItemTitle>{order.customer.name}</ItemTitle>
+                  {order.customer.phone && (
+                    <ItemDescription className="flex gap-2 items-center">
+                      <PhoneIcon className="size-4 shrink-0" />
+                      {order.customer.phone}
+                    </ItemDescription>
+                  )}
+                  {order.customer.address && (
+                    <ItemDescription className="flex gap-2 items-center">
+                      <MapPinIcon className="size-4 shrink-0" /> 
+                      {order.customer.address}
+                    </ItemDescription>
+                  )}
+                  {order.customer.note && (
+                    <ItemDescription><span className="text-primary">Observação:</span> {order.customer.note}</ItemDescription>
+                  )}
                 </ItemContent>
                 <ItemActions>
-                  <span className="text-xs text-muted-foreground">Ver perfil →</span>
+                  <Button type="button" variant="ghost" size="icon-lg" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                    <ChevronRightIcon />
+                  </Button>
                 </ItemActions>
               </Item>
-              {order.customer.phone ? (
-                <Item size="sm">
-                  <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
-                  <ItemContent><ItemTitle>{order.customer.phone}</ItemTitle></ItemContent>
-                </Item>
-              ) : null}
-              {order.customer.address ? (
-                <Item size="sm">
-                  <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
-                  <ItemContent><ItemTitle>{order.customer.address}</ItemTitle></ItemContent>
-                </Item>
-              ) : null}
-              {order.customer.note ? (
-                <Item size="sm">
-                  <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
-                  <ItemContent><ItemTitle>{order.customer.note}</ItemTitle></ItemContent>
-                </Item>
-              ) : null}
-            </ItemGroup>
-          ) : (
-            <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
+            )}
+          </div>
 
           {/* Itens */}
-          <h2>Itens</h2>
-          {order.item.some((i) => !i.isDelivered) ? (
-              <Button type="button" variant="outline" size="xs" disabled={isUpdatingDelivery} onClick={handleMarkAllDelivered}>
-                Marcar todos como entregues
-              </Button>
-          ) : null}
-          {order.item.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
-          ) : (
-            <ItemGroup>
-              {order.item.map((item) => (
-                <Item key={item.id} size="sm" variant="outline">
-                  <ItemContent>
-                    <ItemTitle>
-                      <span className="font-bold text-primary">{item.quantity}x</span>{" "}{item.description}
-                    </ItemTitle>
-                    <ItemDescription>
-                      {datetimeFormatter.format(new Date(item.deliveredAt))}
-                      {item.note ? ` · ${item.note}` : ""}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                      <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
-                        {item.isDelivered ? "Entregue" : "A entregar"}
-                      </Badge>
-                      {item.isDelivered ? (
-                        <Button type="button" variant="ghost" size="xs" className="opacity-50" disabled={isUpdatingDelivery} onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}>
-                          Desmarcar
-                        </Button>
-                      ) : (
-                        <Button type="button" variant="ghost" size="xs" className="text-success" disabled={isUpdatingDelivery} onClick={() => openDeliveryDialog(item.id)}>
-                          Marcar entregue
-                        </Button>
-                      )}
-                    </div>
-                  </ItemActions>
-                </Item>
-              ))}
-            </ItemGroup>
-          )}
+          <div className="space-y-2">
+            <h2 className="font-heading text-base font-medium">Itens</h2>
+            {order.item.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
+            ) : (
+              <ItemGroup>
+                {order.item.map((item) => (
+                  <Item key={item.id} size="sm" variant="outline">
+                    <ItemContent>
+                      <ItemTitle>
+                        <span className="text-primary font-bold">{item.quantity}x</span>
+                        {item.description}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {formatFullDate(new Date(item.deliveredAt))}
+                        {item.note ? ` · ${item.note}` : ""}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                        <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+                          {item.isDelivered ? "Entregue" : "A entregar"}
+                        </Badge>
+                        {item.isDelivered ? (
+                          <Button type="button" variant="ghost" size="xs" className="opacity-50" disabled={isUpdatingDelivery} onClick={() => updateItemDelivery({ orderItemId: item.id, isDelivered: false })}>
+                            Desmarcar
+                          </Button>
+                        ) : (
+                          <Button type="button" variant="ghost" size="xs" className="text-success" disabled={isUpdatingDelivery} onClick={() => openDeliveryDialog(item.id)}>
+                            Marcar entregue
+                          </Button>
+                        )}
+                      </div>
+                    </ItemActions>
+                  </Item>
+                ))}
+              </ItemGroup>
+            )}
+          </div>
 
           {/* Dialog de confirmação de entrega */}
           <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
