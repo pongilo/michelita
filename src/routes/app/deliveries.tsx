@@ -6,12 +6,10 @@ import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
-import { useQueryState } from 'nuqs'
-import { MapPinIcon, PhoneIcon, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 
 type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
 type DashboardPeriod = "daily" | "weekly" | "monthly";
@@ -32,7 +30,7 @@ function tomorrowDateInputValue() {
 function currentMonthInputValue() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 7); // "YYYY-MM"
+  return local.toISOString().slice(0, 7);
 }
 
 function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMonth: string): { period: DashboardPeriod; referenceDate: string } {
@@ -67,7 +65,6 @@ function DeliveriesPage() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
   const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
   const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
-  const [selectedItem, setSelectedItem] = useQueryState('selectedItem');
 
   const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
 
@@ -82,8 +79,6 @@ function DeliveriesPage() {
   const allItems = data?.itemsByDay.flatMap(day => day.items) ?? [];
   const totalItems = allItems.length;
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
-
-  const selectedItemContent = allItems.find(i => i.id === selectedItem) ?? null;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
@@ -133,7 +128,6 @@ function DeliveriesPage() {
         </div>
       </header>
 
-
       {isLoading && <LoadingState label="Carregando dados..." />}
       {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
@@ -152,49 +146,54 @@ function DeliveriesPage() {
                 ) : (
                   <ItemGroup>
                     {itemByDay.items.map((item) => (
-                      <Item variant="outline" className="items-start" render={
-                        <Link to="." search={{ selectedItem: item.id }} resetScroll={false}>
-                          <ItemMedia>
-                            {timeFormatter.format(new Date(item.deliveredAt))}
-                          </ItemMedia>
-                          <ItemContent>
-                            <ItemTitle>
-                              <span className="text-primary font-bold">{item.quantity}x</span>
-                              {item.description}
-                            </ItemTitle>
-                            {item.note && (
-                              <p className="text-sm text-muted-foreground italic">
-                                {item.note}
-                              </p>
-                            )}
-                            {item.order.customer && (
-                              <p className="text-sm text-muted-foreground">
-                                {item.order.customer.name}
-                              </p>
-                            )}
-                          </ItemContent>
-                          <ItemActions>
-                            {item.isDelivered ? (
-                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                                Entregue
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
-                                A entregar
-                              </Badge>
-                            )}
-                            {item.order.isPaid ? (
-                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                                Pago
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
-                                Pagamento pendente
-                              </Badge>
-                            )}
-                          </ItemActions>
-                        </Link>
-                      }/>
+                      <Item
+                        key={item.id}
+                        variant="outline"
+                        className="items-start"
+                        render={
+                          <Link to="/app/order/$orderId" params={{ orderId: item.order.id }} />
+                        }
+                      >
+                        <ItemMedia>
+                          {timeFormatter.format(new Date(item.deliveredAt))}
+                        </ItemMedia>
+                        <ItemContent>
+                          <ItemTitle>
+                            <span className="text-primary font-bold">{item.quantity}x</span>
+                            {item.description}
+                          </ItemTitle>
+                          {item.note && (
+                            <p className="text-sm text-muted-foreground italic">
+                              {item.note}
+                            </p>
+                          )}
+                          {item.order.customer && (
+                            <p className="text-sm text-muted-foreground">
+                              {item.order.customer.name}
+                            </p>
+                          )}
+                        </ItemContent>
+                        <ItemActions>
+                          {item.isDelivered ? (
+                            <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                              Entregue
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                              A entregar
+                            </Badge>
+                          )}
+                          {item.order.isPaid ? (
+                            <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                              Pago
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                              Pagamento pendente
+                            </Badge>
+                          )}
+                        </ItemActions>
+                      </Item>
                     ))}
                   </ItemGroup>
                 )}
@@ -203,82 +202,6 @@ function DeliveriesPage() {
           })}
         </div>
       )}
-
-      {/* Detail drawer */}
-      <Drawer open={!!selectedItem} onOpenChange={() => setSelectedItem(null)} direction="right">
-        <DrawerContent>
-          {selectedItemContent ? (
-            <>
-              <DrawerHeader>
-                <DrawerTitle className="truncate">{selectedItemContent.description}</DrawerTitle>
-                <DrawerDescription>
-                  {timeFormatter.format(new Date(selectedItemContent.deliveredAt))}
-                  {selectedItemContent.order.customer ? <> · {selectedItemContent.order.customer.name}</> : null}
-                </DrawerDescription>
-              </DrawerHeader>
-
-              <div className="flex-1 overflow-y-auto px-4 py-2">
-                <div className="space-y-5">
-                  <div className="flex gap-2">
-                    <Badge
-                      className={selectedItemContent.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""}
-                      variant={selectedItemContent.isDelivered ? "default" : "outline"}
-                    >
-                      {selectedItemContent.isDelivered ? "Entregue" : "A entregar"}
-                    </Badge>
-                    <Badge className={selectedItemContent.order.isPaid
-                      ? "bg-blue-500/15 text-blue-700 border-blue-200"
-                      : "bg-amber-400/20 text-amber-700 border-amber-300"}
-                    >
-                      {selectedItemContent.order.isPaid ? "Pago" : "Pagamento pendente"}
-                    </Badge>
-                  </div>
-
-                  {selectedItemContent.order.customer && (
-                    <Item variant="outline">
-                      <ItemContent>
-                        <ItemTitle>{selectedItemContent.order.customer.name}</ItemTitle>
-                        {selectedItemContent.order.customer.phone && (
-                          <ItemDescription className="flex gap-2 items-center">
-                            <PhoneIcon className="size-4 shrink-0" />
-                            {selectedItemContent.order.customer.phone}
-                          </ItemDescription>
-                        )}
-                        {selectedItemContent.order.customer.address && (
-                          <ItemDescription className="flex gap-2 items-center">
-                            <MapPinIcon className="size-4 shrink-0" /> 
-                            {selectedItemContent.order.customer.address}
-                          </ItemDescription>
-                        )}
-                        {selectedItemContent.order.customer.note && (
-                          <ItemDescription><span className="text-primary">Observação:</span> {selectedItemContent.order.customer.note}</ItemDescription>
-                        )}
-                      </ItemContent>
-                    </Item>
-                  )}
-                </div>
-              </div>
-
-              <DrawerFooter>
-                <Button type="button" variant="ghost" render={
-                  <Link to="/app/order/$orderId" params={{ orderId: selectedItemContent.order.id }}>
-                    Ver pedido completo
-                  </Link>
-                } />
-                {selectedItemContent.isDelivered ? (
-                  <Button type="button" variant="ghost" onClick={() => {}}>
-                    Desfazer entrega
-                  </Button>
-                ) : (
-                  <Button type="button" variant="ghost">
-                    Confirmar entrega
-                  </Button>
-                )}
-              </DrawerFooter>
-            </>
-          ) : null}
-        </DrawerContent>
-      </Drawer>
     </main>
   );
 }

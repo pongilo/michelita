@@ -1,17 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { toast } from "sonner";
-import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
-import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, dateFormatter, timeFormatter, shortDateFormatter } from "@/lib/utils/formatter";
+import { OrderAction } from "@/components/order-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DEFAULT_PERIOD_OPTIONS } from "@/components/ui/period-filter";
 import { Input } from "@/components/ui/input";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const PAYMENT_FILTER = [
   { value: "all", label: "Todos" },
@@ -103,38 +100,6 @@ function OrdersPage() {
     referenceDate,
     isPaid: isPaidFilter,
   });
-  const { mutateAsync: updateOrder, isPending: isUpdatingOrder } = useUpdateOrder({
-    organizationId: organization.id,
-  });
-  const { mutateAsync: deleteOrder, isPending: isDeletingOrder } = useDeleteOrder({
-    organizationId: organization.id,
-  });
-  async function handleTogglePaid(orderId: string, currentPaid: boolean) {
-    try {
-      await updateOrder({
-        id: orderId,
-        organizationId: organization.id,
-        isPaid: !currentPaid,
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível atualizar o pagamento.");
-    }
-  }
-
-  async function handleDeleteOrder(orderId: string) {
-    const confirmed = window.confirm("Deseja realmente excluir este pedido? Esta ação não pode ser desfeita.");
-    if (!confirmed) return;
-
-    try {
-      await deleteOrder({
-        id: orderId,
-        organizationId: organization.id,
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível excluir o pedido.");
-    }
-  }
-
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -206,29 +171,16 @@ function OrdersPage() {
                 <Badge className={order.isPaid ? "bg-blue-500/15 text-blue-700 border-blue-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
                   {order.isPaid ? "Pago" : "Pendente"}
                 </Badge>
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
-                    Ações
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}>
-                      Ver pedido
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={isUpdatingOrder || isDeletingOrder}
-                      onClick={() => handleTogglePaid(order.id, order.isPaid)}
-                    >
-                      {order.isPaid ? "Marcar pendente" : "Marcar pago"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={isUpdatingOrder || isDeletingOrder}
-                      onClick={() => handleDeleteOrder(order.id)}
-                    >
-                      Excluir pedido
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <OrderAction orderId={order.id} organizationId={organization.id}>
+                  <OrderAction.Trigger />
+                  <OrderAction.Content>
+                    {order.isPaid ? (
+                      <OrderAction.UnmarkAsPaid />
+                    ) : (
+                      <OrderAction.MarkAsPaid />
+                    )}
+                  </OrderAction.Content>
+                </OrderAction>
               </ItemActions>
 
               <ul className="basis-full space-y-2 border-t border-border pt-3">
