@@ -151,7 +151,7 @@ function OrderDetailsPage() {
 
   if (order) {
     return (
-      <main className="mx-auto w-full max-w-4xl px-5 py-8">
+      <main className="mx-auto w-full max-w-4xl p-5">
 
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

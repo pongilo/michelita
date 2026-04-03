@@ -190,7 +190,7 @@ function OrderFormRoute() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-8">
+    <main className="mx-auto w-full max-w-5xl p-5">
       <h1 className="text-2xl font-heading mb-4">Novo pedido</h1>
       <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
         <FieldGroup>

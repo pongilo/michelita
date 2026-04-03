@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DEFAULT_PERIOD_OPTIONS } from "@/components/ui/period-filter";
 import { Input } from "@/components/ui/input";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { RefreshCwIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const PAYMENT_FILTER = [
   { value: "all", label: "Todos" },
@@ -91,7 +93,6 @@ function OrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState<"all" | "paid" | "pending">("all");
   const { start, end } = getOrdersPeriodBounds(period, parseOrdersReferenceDate(referenceDate));
   const rangeEnd = new Date(end.getTime() - 1);
-  const periodLabel = period === "daily" ? "Diario" : period === "weekly" ? "Semanal" : "Mensal";
 
   const isPaidFilter = paymentFilter === "all" ? undefined : paymentFilter === "paid";
   const { data: orders = [], isLoading, isError, error, isFetching, refetch } = useGetOrders({
@@ -100,17 +101,27 @@ function OrdersPage() {
     referenceDate,
     isPaid: isPaidFilter,
   });
-  return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-heading">Pedidos</h1>
-          <p className="text-sm opacity-70">
-            {periodLabel}: {shortDateFormatter.format(start)} ate {shortDateFormatter.format(rangeEnd)}
-          </p>
-        </div>
 
-        <div className="flex gap-2">
+  return (
+    <main className="mx-auto w-full max-w-6xl p-5">
+      <header className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-2xl font-heading">Pedidos</h1>
+            <p className="text-sm text-muted-foreground">
+              ({shortDateFormatter.format(start)} até {shortDateFormatter.format(rangeEnd)})
+            </p>
+          </div>
+          <Button
+            onClick={() => refetch()}
+            aria-label="Atualizar"
+            size="icon-sm"
+            variant="ghost"
+          >
+            <RefreshCwIcon className={cn("size-4", isFetching && "animate-spin")} />
+          </Button>
+        </div>
+        <div className="flex gap-2 flex-wrap mb-5">
           <Select value={period} onValueChange={(v) => v && setPeriod(v)}>
             <SelectTrigger>
               <SelectValue>{DEFAULT_PERIOD_OPTIONS.find((o) => o.value === period)?.label}</SelectValue>
@@ -125,9 +136,9 @@ function OrdersPage() {
           </Select>
           <Input
             type="date"
-            className="input input-bordered input-sm"
             value={referenceDate}
             onChange={(e) => setReferenceDate(e.target.value)}
+            className="w-36"
           />
           <Select value={paymentFilter} onValueChange={(v) => v && setPaymentFilter(v)}>
             <SelectTrigger>
@@ -141,11 +152,8 @@ function OrdersPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? "Atualizando..." : "Atualizar"}
-          </Button>
         </div>
-      </div>
+      </header>
 
 
       {isLoading ? <p>Carregando pedidos...</p> : null}

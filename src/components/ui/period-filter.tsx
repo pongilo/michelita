@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { RefreshCwIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const DEFAULT_PERIOD_OPTIONS = [
   { value: "daily", label: "Diário" },
@@ -53,6 +55,7 @@ function PeriodFilterDateInput({ value, onChange }: DateInputProps) {
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      className="w-36"
     />
   );
 }
@@ -66,12 +69,11 @@ function PeriodFilterRefresh({ isFetching = false, onClick }: RefreshProps) {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       onClick={onClick}
       disabled={isFetching}
     >
-      {isFetching ? <span className="animate-spin size-3 rounded-full border-2 border-current border-t-transparent" /> : null}
-      {isFetching ? "Atualizando..." : "Atualizar"}
+      <RefreshCwIcon className={cn("size-4", isFetching && "animate-spin")} />
     </Button>
   );
 }

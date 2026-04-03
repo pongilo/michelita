@@ -81,7 +81,7 @@ function DeliveriesPage() {
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
+    <main className="mx-auto w-full max-w-6xl p-5">
       <header className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">

@@ -44,13 +44,13 @@ import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-tr
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
-import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PeriodFilter } from "@/components/ui/period-filter";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { PlusIcon } from "lucide-react";
 
 const methodLabel: Record<string, string> = {
   pix: "PIX",
@@ -199,27 +199,27 @@ function TransactionsPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <PageHeader>
-        <PageHeader.Info>
-          <PageHeader.Title>Transações</PageHeader.Title>
-          <PageHeader.Subtitle>
-            {dateRangeFormatter.format(start)} — {dateRangeFormatter.format(rangeEnd)}
-          </PageHeader.Subtitle>
-        </PageHeader.Info>
-        <PageHeader.Controls>
-          <PeriodFilter>
-            <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as TransactionsPeriod)} />
-            <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
-            <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
-          </PeriodFilter>
+      <header className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-2xl font-heading">Transações</h1>
+            <p className="text-sm text-muted-foreground">
+              ({dateRangeFormatter.format(start)} até {dateRangeFormatter.format(rangeEnd)})
+            </p>
+          </div>
           <Button
-            size="sm"
+            size="icon-sm"
             onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
           >
-            + Nova transação
+            <PlusIcon />
           </Button>
-        </PageHeader.Controls>
-      </PageHeader>
+        </div>
+        <div className="flex gap-2 flex-wrap mb-5">
+          <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as TransactionsPeriod)} />
+          <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
+          <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
+        </div>
+      </header>
 
       {isLoading ? <LoadingState label="Carregando transações..." /> : null}
 
@@ -237,7 +237,7 @@ function TransactionsPage() {
               size="sm"
               onClick={() => { setEditingTransactionId(null); setIsFormModalOpen(true); }}
             >
-              + Nova transação
+              Nova transação
             </Button>
           </EmptyState.Action>
         </EmptyState>

@@ -4,13 +4,12 @@ import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
-import { PageHeader } from "@/components/ui/page-header";
-import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { PlusIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/customers")({
   component: CustomersPage,
@@ -59,57 +58,74 @@ function CustomersPage() {
     }
   }
 
-  return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <PageHeader>
-        <PageHeader.Info>
-          <PageHeader.Title>Clientes</PageHeader.Title>
-          {!isLoading && !isError && (
-            <PageHeader.Subtitle>
-              {customers.length} {customers.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
-            </PageHeader.Subtitle>
-          )}
-        </PageHeader.Info>
-        <PageHeader.Controls>
-          <SearchInput value={search} onChange={setSearch} placeholder="Nome, telefone ou endereço" />
+  if (isLoading) {
+    return (
+      <main className="mx-auto w-full max-w-4xl px-5 py-8">
+        <div className="flex items-center gap-2 text-sm opacity-60">
+          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
+          Carregando clientes...
+        </div>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <p className="text-destructive">Erro ao carregar clientes: {error.message}</p>
+      </div>
+    );
+  }
+
+  if (customers.length === 0) {
+    return (
+      <EmptyState>
+        <EmptyState.Icon>👥</EmptyState.Icon>
+        <EmptyState.Title>Nenhum cliente ainda</EmptyState.Title>
+        <EmptyState.Description>
+          Cadastre seus primeiros clientes para vincular pedidos e transações.
+        </EmptyState.Description>
+        <EmptyState.Action>
           <Button
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
           >
-            + Novo cliente
+            Novo cliente
           </Button>
-        </PageHeader.Controls>
-      </PageHeader>
+        </EmptyState.Action>
+      </EmptyState>
+    )
+  }
 
-      {isLoading ? <LoadingState label="Carregando clientes..." /> : null}
+  return (
+    <main className="mx-auto w-full max-w-6xl p-5">
+      <header className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-2xl font-heading">Clientes</h1>
+            <p className="text-sm text-muted-foreground">
+              ({customers.length} {customers.length === 1 ? "cliente cadastrado" : "clientes cadastrados"})
+            </p>
+          </div>
+          <Button
+            size="icon-sm"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <PlusIcon />
+          </Button>
+        </div>
+        <div className="flex gap-2 flex-wrap mb-5">
+          <SearchInput value={search} onChange={setSearch} placeholder="Nome, telefone ou endereço" />
+        </div>
+      </header>
 
-      {isError ? <p className="text-error text-sm">{error.message}</p> : null}
-
-      {!isLoading && !isError && customers.length === 0 ? (
-        <EmptyState>
-          <EmptyState.Icon>👥</EmptyState.Icon>
-          <EmptyState.Title>Nenhum cliente ainda</EmptyState.Title>
-          <EmptyState.Description>
-            Cadastre seus primeiros clientes para vincular pedidos e transações.
-          </EmptyState.Description>
-          <EmptyState.Action>
-            <Button
-              size="sm"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              + Novo cliente
-            </Button>
-          </EmptyState.Action>
-        </EmptyState>
-      ) : null}
-
-      {!isLoading && !isError && customers.length > 0 && filteredCustomers.length === 0 ? (
+      {filteredCustomers.length === 0 && (
         <EmptyState compact>
           <EmptyState.Icon>🔍</EmptyState.Icon>
           <EmptyState.Title>Nenhum cliente encontrado</EmptyState.Title>
           <EmptyState.Description>Nenhum resultado para "{search}"</EmptyState.Description>
         </EmptyState>
-      ) : null}
+      )}
 
       {!isLoading && !isError && filteredCustomers.length > 0 ? (
         <ItemGroup>
