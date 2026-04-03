@@ -4,13 +4,11 @@ import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
 import { currencyFormatter, dateFormatter, timeFormatter, shortDateFormatter } from "@/lib/utils/formatter";
 import { OrderAction } from "@/components/order-action";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DEFAULT_PERIOD_OPTIONS } from "@/components/ui/period-filter";
 import { Input } from "@/components/ui/input";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { RefreshCwIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const PAYMENT_FILTER = [
   { value: "all", label: "Todos" },
@@ -95,7 +93,7 @@ function OrdersPage() {
   const rangeEnd = new Date(end.getTime() - 1);
 
   const isPaidFilter = paymentFilter === "all" ? undefined : paymentFilter === "paid";
-  const { data: orders = [], isLoading, isError, error, isFetching, refetch } = useGetOrders({
+  const { data: orders = [], isLoading, isError, error } = useGetOrders({
     organizationId: organization.id,
     period,
     referenceDate,
@@ -112,14 +110,6 @@ function OrdersPage() {
               ({shortDateFormatter.format(start)} até {shortDateFormatter.format(rangeEnd)})
             </p>
           </div>
-          <Button
-            onClick={() => refetch()}
-            aria-label="Atualizar"
-            size="icon-sm"
-            variant="ghost"
-          >
-            <RefreshCwIcon className={cn("size-4", isFetching && "animate-spin")} />
-          </Button>
         </div>
         <div className="flex gap-2 flex-wrap mb-5">
           <Select value={period} onValueChange={(v) => v && setPeriod(v)}>
@@ -156,7 +146,7 @@ function OrdersPage() {
       </header>
 
 
-      {isLoading ? <p>Carregando pedidos...</p> : null}
+      {isLoading && <LoadingState label="Carregando pedidos..." />}
       {isError ? <p className="text-error">{error.message}</p> : null}
 
       {!isLoading && !isError && orders.length === 0 ? (

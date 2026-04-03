@@ -17,6 +17,7 @@ import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate }
 import { toast } from "sonner";
 import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const methodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -131,10 +132,7 @@ function OrderDetailsPage() {
   if (isLoading) {
     return (
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
-          Carregando pedido...
-        </div>
+        {isLoading && <LoadingState label="Carregando pedido..." />}
       </main>
     );
   }

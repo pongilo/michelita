@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useUpdateOrderInfo } from "@/hooks/tanstack/order/use-update-order-info";
+import { LoadingState } from "./ui/loading-state";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -158,7 +159,7 @@ export function OrderEditInfoModal({ open, onOpenChange, orderId, organizationId
             <FieldGroup>
               <Field>
                 <FieldLabel>Cliente (opcional)</FieldLabel>
-                {isLoadingCustomers && <span className="text-xs opacity-70">Carregando clientes...</span>}
+                {isLoadingCustomers && <LoadingState label="Carregando clientes..." />}
                 <div className="flex gap-2 items-center">
                   <Controller
                     name="customerId"

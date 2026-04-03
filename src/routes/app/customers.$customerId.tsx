@@ -18,6 +18,7 @@ import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transac
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 function currentDateInputValue() {
   const now = new Date();
@@ -239,12 +240,8 @@ function CustomerDetailsPage() {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
-          Carregando cliente...
-        </div>
-      ) : null}
+      {isLoading && <LoadingState label="Carregando clientes..." />}
+
       {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
       {data ? (

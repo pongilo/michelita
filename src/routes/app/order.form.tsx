@@ -25,6 +25,7 @@ import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/ap
 import { currencyFormatter } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
 import { Trash2Icon } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 function localDatetimeNow() {
   const now = new Date();
@@ -196,9 +197,7 @@ function OrderFormRoute() {
         <FieldGroup>
           <Field>
             <FieldLabel>Cliente (opcional)</FieldLabel>
-            {isLoadingCustomers && (
-              <span className="text-xs opacity-70">Carregando clientes...</span>
-            )}
+            {isLoadingCustomers && <LoadingState label="Carregando clientes..." />}
             <div className="flex flex-row gap-2 items-center">
               <Controller
                 name="customerId"

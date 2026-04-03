@@ -6,8 +6,6 @@ import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 
@@ -68,7 +66,7 @@ function DeliveriesPage() {
 
   const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
 
-  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["dashboard", organization.id, "daily", period, referenceDate],
     queryFn: async () =>
       getDailyDashboard({ organizationId: organization.id, period, referenceDate }),
@@ -92,14 +90,6 @@ function DeliveriesPage() {
               </p>
             )}
           </div>
-          <Button
-            onClick={() => refetch()}
-            aria-label="Atualizar"
-            size="icon-sm"
-            variant="ghost"
-          >
-            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
-          </Button>
         </div>
         <div className="flex gap-2 flex-wrap mb-5">
           {QUICK_FILTERS.map(({ key, label }) => (
@@ -128,7 +118,7 @@ function DeliveriesPage() {
         </div>
       </header>
 
-      {isLoading && <LoadingState label="Carregando dados..." />}
+      {isLoading && <LoadingState label="Carregando entregas..." />}
       {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
       {data && (
@@ -137,7 +127,7 @@ function DeliveriesPage() {
             return (
               <div key={index} className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  {itemByDay.items.length} {itemByDay.items.length === 1 ? "item" : "itens"} para {formatDayLabel(new Date(itemByDay.date))}
+                  {formatDayLabel(new Date(itemByDay.date))} - {itemByDay.items.length} {itemByDay.items.length === 1 ? "item" : "itens"}
                 </p>
                 {itemByDay.items.length === 0 ? (
                   <Item variant="outline" className="text-muted-foreground">

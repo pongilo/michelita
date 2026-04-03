@@ -59,13 +59,6 @@ const methodLabel: Record<string, string> = {
   debit_card: "Cartão de débito",
 };
 
-const methodIcon: Record<string, string> = {
-  pix: "⚡",
-  cash: "💵",
-  credit_card: "💳",
-  debit_card: "💳",
-};
-
 function localDatetimeNow() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -89,7 +82,7 @@ function TransactionsPage() {
   const { start, end } = getTransactionsPeriodBounds(period, referenceDate);
   const rangeEnd = new Date(end.getTime() - 1);
 
-  const { data: transactions = [], isLoading, isError, error, isFetching, refetch } = useGetTransactions({
+  const { data: transactions = [], isLoading, isError, error } = useGetTransactions({
     organizationId: organization.id,
     period,
     referenceDate,
@@ -217,11 +210,10 @@ function TransactionsPage() {
         <div className="flex gap-2 flex-wrap mb-5">
           <PeriodFilter.Select value={period} onChange={(v) => setPeriod(v as TransactionsPeriod)} />
           <PeriodFilter.DateInput value={referenceDate} onChange={setReferenceDate} />
-          <PeriodFilter.Refresh isFetching={isFetching} onClick={() => refetch()} />
         </div>
       </header>
 
-      {isLoading ? <LoadingState label="Carregando transações..." /> : null}
+      {isLoading && <LoadingState label="Carregando transações..." />}
 
       {isError ? <p className="text-error text-sm">{error.message}</p> : null}
 
@@ -268,7 +260,7 @@ function TransactionsPage() {
                       {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
                     </ItemTitle>
                     <ItemDescription>
-                      {methodIcon[transaction.method]} {methodLabel[transaction.method] ?? transaction.method}
+                      {methodLabel[transaction.method] ?? transaction.method}
                       {" · "}
                       {datetimeFormatter.format(new Date(transaction.madeAt))}
                       {transaction.linkedCustomers.length > 0 && (
@@ -323,15 +315,12 @@ function TransactionsPage() {
               <CardContent className="pt-0">
                 <ItemGroup>
                   {[
-                    { key: "pix", label: "PIX", icon: "⚡", value: byMethod.pix },
-                    { key: "cash", label: "Dinheiro", icon: "💵", value: byMethod.cash },
-                    { key: "credit_card", label: "Cartão de crédito", icon: "💳", value: byMethod.credit_card },
-                    { key: "debit_card", label: "Cartão de débito", icon: "💳", value: byMethod.debit_card },
-                  ].map(({ key, label, icon, value }) => (
-                    <Item key={key} size="sm">
-                      <ItemMedia className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                        {icon}
-                      </ItemMedia>
+                    { key: "pix", label: "PIX", value: byMethod.pix },
+                    { key: "cash", label: "Dinheiro", value: byMethod.cash },
+                    { key: "credit_card", label: "Cartão de crédito", value: byMethod.credit_card },
+                    { key: "debit_card", label: "Cartão de débito", value: byMethod.debit_card },
+                  ].map(({ key, label, value }) => (
+                    <Item key={key} size="xs">
                       <ItemContent>
                         <ItemTitle>{label}</ItemTitle>
                       </ItemContent>

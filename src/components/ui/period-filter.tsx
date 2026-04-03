@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,8 +7,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { RefreshCwIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export const DEFAULT_PERIOD_OPTIONS = [
   { value: "daily", label: "Diário" },
@@ -60,26 +57,7 @@ function PeriodFilterDateInput({ value, onChange }: DateInputProps) {
   );
 }
 
-type RefreshProps = {
-  isFetching?: boolean;
-  onClick: () => void;
-};
-
-function PeriodFilterRefresh({ isFetching = false, onClick }: RefreshProps) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      onClick={onClick}
-      disabled={isFetching}
-    >
-      <RefreshCwIcon className={cn("size-4", isFetching && "animate-spin")} />
-    </Button>
-  );
-}
-
 export const PeriodFilter = Object.assign(PeriodFilterRoot, {
   Select: PeriodFilterSelect,
   DateInput: PeriodFilterDateInput,
-  Refresh: PeriodFilterRefresh,
 });

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { PlusIcon } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export const Route = createFileRoute("/app/customers")({
   component: CustomersPage,
@@ -61,10 +62,7 @@ function CustomersPage() {
   if (isLoading) {
     return (
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
-        <div className="flex items-center gap-2 text-sm opacity-60">
-          <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
-          Carregando clientes...
-        </div>
+        {isLoading && <LoadingState label="Carregando clientes..." />}
       </main>
     );
   }

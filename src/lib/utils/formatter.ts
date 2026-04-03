@@ -17,7 +17,7 @@ export const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
 export const dayLabelFormatter = new Intl.DateTimeFormat("pt-BR", {
   weekday: "long",
   day: "2-digit",
-  month: "short",
+  month: "long",
   timeZone: "UTC",
 });
 
