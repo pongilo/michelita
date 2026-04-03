@@ -16,6 +16,7 @@ import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transac
 import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { toast } from "sonner";
 import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const methodLabel: Record<string, string> = {
   PIX: "PIX",
@@ -157,7 +158,7 @@ function OrderDetailsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold">
+              <h1 className="text-2xl font-heading">
                 Pedido #{order.id.slice(0, 8)}
               </h1>
               <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
@@ -178,6 +179,13 @@ function OrderDetailsPage() {
                 <OrderAction.MarkAsPaid />
               )}
               <OrderAction.MarkAllDelivered />
+              <OrderAction.Separator />
+              <DropdownMenuItem onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
+                Vincular transação
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsNewTransactionModalOpen(true)}>
+                Nova transação
+              </DropdownMenuItem>
               <OrderAction.Separator />
               <OrderAction.DeleteOrder onSuccess={() => navigate({ to: "/app/orders" })} />
             </OrderAction.Content>
@@ -293,14 +301,6 @@ function OrderDetailsPage() {
 
           {/* Transações */}
           <h2>Transações</h2>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="xs" onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
-              Vincular
-            </Button>
-            <Button type="button" size="xs" onClick={() => setIsNewTransactionModalOpen(true)}>
-              + Nova
-            </Button>
-          </div>
           {order.transactions.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma transação vinculada.</p>
           ) : (

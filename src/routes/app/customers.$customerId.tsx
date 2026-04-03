@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-tr
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
 import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+import { EllipsisVerticalIcon } from "lucide-react";
 
 function currentDateInputValue() {
   const now = new Date();
@@ -208,33 +210,32 @@ function CustomerDetailsPage() {
 
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {data && (
-            <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 text-base font-bold">
-              {data.customer.name.slice(0, 1).toUpperCase()}
-            </div>
-          )}
-          <h1 className="text-2xl font-semibold">{data?.customer.name ?? "Cliente"}</h1>
-        </div>
+        <h1 className="text-2xl font-heading">{data?.customer.name ?? "Cliente"}</h1>
         {data && (
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-destructive"
-              disabled={isDeletingCustomer}
-              onClick={handleDeleteCustomer}
-            >
-              Excluir
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={handleStartEdit}>
-              Editar
-            </Button>
-            <Button type="button" size="sm" onClick={handleOpenTransactionModal}>
-              + Nova transação
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" })}>
+              <EllipsisVerticalIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleOpenTransactionModal}>
+                Nova transação
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
+                Vincular transação
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleStartEdit}>
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                disabled={isDeletingCustomer}
+                onClick={handleDeleteCustomer}
+              >
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
@@ -254,24 +255,24 @@ function CustomerDetailsPage() {
             <Card size="sm">
               <CardContent>
                 <ItemGroup>
-                  {data.customer.phone ? (
+                  {data.customer.phone && (
                     <Item size="sm">
                       <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
                       <ItemContent><ItemTitle>{data.customer.phone}</ItemTitle></ItemContent>
                     </Item>
-                  ) : null}
-                  {data.customer.address ? (
+                  )}
+                  {data.customer.address && (
                     <Item size="sm">
                       <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
                       <ItemContent><ItemTitle>{data.customer.address}</ItemTitle></ItemContent>
                     </Item>
-                  ) : null}
-                  {data.customer.note ? (
+                  )}
+                  {data.customer.note && (
                     <Item size="sm">
                       <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
                       <ItemContent><ItemTitle>{data.customer.note}</ItemTitle></ItemContent>
                     </Item>
-                  ) : null}
+                  )}
                 </ItemGroup>
               </CardContent>
             </Card>
@@ -316,100 +317,81 @@ function CustomerDetailsPage() {
           </section>
 
           {/* Pedidos */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Pedidos</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {data.recentOrders.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
-              ) : (
-                <ItemGroup>
-                  {data.recentOrders.map((order) => (
-                    <Item
-                      key={order.id}
-                      size="sm"
-                      variant="outline"
-                      render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}
-                    >
-                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-                        {order.isPaid ? "✓" : "!"}
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle>
-                          #{order.id.slice(0, 8)}
-                          {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
-                        </ItemTitle>
-                        <ItemDescription>
-                          {datetimeFormatter.format(new Date(order.orderedAt))}
-                          {" · "}
-                          {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
-                        </ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <span className="text-sm font-semibold">{currencyFormatter.format(order.itemTotal)}</span>
-                      </ItemActions>
-                    </Item>
-                  ))}
-                </ItemGroup>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-2">
+            <h2 className="font-heading text-base font-medium">Pedidos</h2>
+            {data.recentOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
+            ) : (
+              <ItemGroup>
+                {data.recentOrders.map((order) => (
+                  <Item
+                    key={order.id}
+                    size="sm"
+                    variant="outline"
+                    render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}
+                  >
+                    <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                      {order.isPaid ? "✓" : "!"}
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        #{order.id.slice(0, 8)}
+                        {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {datetimeFormatter.format(new Date(order.orderedAt))}
+                        {" · "}
+                        {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <span className="text-sm font-semibold">{currencyFormatter.format(order.itemTotal)}</span>
+                    </ItemActions>
+                  </Item>
+                ))}
+              </ItemGroup>
+            )}
+          </div>
 
           {/* Transações */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Transações</CardTitle>
-              <CardAction>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}
-                >
-                  Vincular
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {data.recentTransactions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem transações vinculadas a este cliente.</p>
-              ) : (
-                <ItemGroup>
-                  {data.recentTransactions.map((transaction) => (
-                    <Item
-                      key={transaction.id}
-                      size="sm"
-                      variant="outline"
-                      render={<button disabled={isSubmittingTransactionForm || isDeletingCustomer} />}
-                      onClick={() => handleStartTransactionEdit(transaction.id)}
-                      className="cursor-pointer text-left w-full"
-                    >
-                      <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-destructive"}`}>
-                        {transaction.type === "entry" ? "↑" : "↓"}
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle>
-                          {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                        </ItemTitle>
-                        <ItemDescription>
-                          {transactionMethodLabel[transaction.method] ?? transaction.method}
-                          {" · "}
-                          {datetimeFormatter.format(new Date(transaction.madeAt))}
-                        </ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-destructive"}`}>
-                          {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                        </span>
-                      </ItemActions>
-                    </Item>
-                  ))}
-                </ItemGroup>
-              )}
-            </CardContent>
-          </Card>
-
+          <div className="space-y-2">
+            <h2 className="font-heading text-base font-medium">Transações</h2>
+            {data.recentTransactions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem transações vinculadas a este cliente.</p>
+            ) : (
+              <ItemGroup>
+                {data.recentTransactions.map((transaction) => (
+                  <Item
+                    key={transaction.id}
+                    size="sm"
+                    variant="outline"
+                    render={<button disabled={isSubmittingTransactionForm || isDeletingCustomer} />}
+                    onClick={() => handleStartTransactionEdit(transaction.id)}
+                    className="cursor-pointer text-left w-full"
+                  >
+                    <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-destructive"}`}>
+                      {transaction.type === "entry" ? "↑" : "↓"}
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {transactionMethodLabel[transaction.method] ?? transaction.method}
+                        {" · "}
+                        {datetimeFormatter.format(new Date(transaction.madeAt))}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-destructive"}`}>
+                        {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                      </span>
+                    </ItemActions>
+                  </Item>
+                ))}
+              </ItemGroup>
+            )}
+          </div>
         </div>
       ) : null}
 
