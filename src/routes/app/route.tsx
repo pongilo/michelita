@@ -43,8 +43,8 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
-  { to: "/app/deliveries", icon: ListCheckIcon, label: "Entregas" },
   { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
+  { to: "/app/deliveries", icon: ListCheckIcon, label: "Entregas" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
 ] as const;

@@ -117,6 +117,9 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
             phone: true,
           },
         },
+        orderTransaction: {
+          select: { id: true }
+        },
         item: {
           orderBy: {
             deliveredAt: "asc",
@@ -139,6 +142,7 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
       const shippingFee = Number(order.shippingFee ?? 0);
       const discount = Number(order.discount ?? 0);
       const total = itemTotal + shippingFee - discount;
+      const transactionTotal = order.orderTransaction ? Number(order.orderTransaction.length) : null;
 
       return {
         id: order.id,
@@ -148,6 +152,7 @@ const getOrdersServerFn = createServerFn({ method: "POST" })
         orderedAt: order.orderedAt,
         note: order.note,
         customer: order.customer,
+        transactionTotal,
         item: order.item.map((item) => ({
           id: item.id,
           description: item.description,

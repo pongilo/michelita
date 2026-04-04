@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
-import { currencyFormatter, dateFormatter, timeFormatter, shortDateFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, timeFormatter, shortDateFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { OrderAction } from "@/components/order-action";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DEFAULT_PERIOD_OPTIONS } from "@/components/ui/period-filter";
 import { Input } from "@/components/ui/input";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -16,6 +16,33 @@ const PAYMENT_FILTER = [
   { value: "pending", label: "Pendentes" },
 ];
 
+type QuickFilter = "today" | "week" | "month" | "custom";
+
+const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: "today", label: "Hoje" },
+  { key: "week", label: "Esta semana" },
+  { key: "month", label: "Este mês" },
+  { key: "custom", label: "Escolher data" },
+];
+
+function currentMonthInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 7);
+}
+
+function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMonth: string): { period: OrdersPeriod; referenceDate: string } {
+  switch (filter) {
+    case "today":
+      return { period: "daily", referenceDate: currentDateInputValue() };
+    case "week":
+      return { period: "weekly", referenceDate: currentDateInputValue() };
+    case "month":
+      return { period: "monthly", referenceDate: `${customMonth}-01` };
+    case "custom":
+      return { period: "daily", referenceDate: customDate };
+  }
+}
 
 function formatDelivery(deliveredAt: Date | string | null, orderedAt: Date | string) {
   if (!deliveredAt) return null;
@@ -86,9 +113,12 @@ export const Route = createFileRoute("/app/orders")({
 
 function OrdersPage() {
   const { organization } = Route.useRouteContext();
-  const [period, setPeriod] = useState<OrdersPeriod>("daily");
-  const [referenceDate, setReferenceDate] = useState<string>(currentDateInputValue);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
+  const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
+  const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
   const [paymentFilter, setPaymentFilter] = useState<"all" | "paid" | "pending">("all");
+
+  const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
   const { start, end } = getOrdersPeriodBounds(period, parseOrdersReferenceDate(referenceDate));
   const rangeEnd = new Date(end.getTime() - 1);
 
@@ -112,27 +142,33 @@ function OrdersPage() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap mb-5">
-          <Select value={period} onValueChange={(v) => v && setPeriod(v)}>
-            <SelectTrigger>
-              <SelectValue>{DEFAULT_PERIOD_OPTIONS.find((o) => o.value === period)?.label}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {DEFAULT_PERIOD_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="date"
-            value={referenceDate}
-            onChange={(e) => setReferenceDate(e.target.value)}
-            className="w-36"
-          />
+          {QUICK_FILTERS.map(({ key, label }) => (
+            <Button
+              key={key}
+              onClick={() => setQuickFilter(key)}
+              variant={quickFilter === key ? "default" : "outline"}
+            >
+              {label}
+            </Button>
+          ))}
+          {quickFilter === "custom" && (
+            <Input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              className="w-36"
+            />
+          )}
+          {quickFilter === "month" && (
+            <Input
+              type="month"
+              value={customMonth}
+              onChange={(e) => setCustomMonth(e.target.value)}
+            />
+          )}
           <Select value={paymentFilter} onValueChange={(v) => v && setPaymentFilter(v)}>
             <SelectTrigger>
-              <SelectValue>{PAYMENT_FILTER.find((o) => o.value === period)?.label}</SelectValue>
+              <SelectValue>{PAYMENT_FILTER.find((o) => o.value === paymentFilter)?.label}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PAYMENT_FILTER.map((opt) => (
@@ -160,9 +196,10 @@ function OrdersPage() {
               <ItemContent>
                 <Link to="/app/order/$orderId" params={{ orderId: order.id }}>
                   <ItemTitle>
-                    {order.customer?.name ?? <span className="opacity-40">Sem cliente</span>}
+                    {order.customer?.name ?? "Sem cliente"}
                   </ItemTitle>
-                  <ItemDescription>{dateFormatter.format(new Date(order.orderedAt))}</ItemDescription>
+                  <ItemDescription>{formatFullDate(new Date(order.orderedAt))}</ItemDescription>
+                  <ItemDescription>{order.transactionTotal} {order.transactionTotal === 1 ? "transação" : "transações"}</ItemDescription>
                 </Link>
               </ItemContent>
               <ItemActions>
