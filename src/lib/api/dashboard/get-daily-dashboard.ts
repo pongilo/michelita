@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 const dashboardPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
-// const deliverySchema = z.enum(["all", "pending", "delivered"]);
 
 const getDailyDashboardSchema = z.object({
   organizationId: z.uuid(),
