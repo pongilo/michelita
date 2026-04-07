@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-const customerFormSchema = z.object({
+export const customerFormSchema = z.object({
   name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do cliente."),
   phone: z.string().trim().optional(),
   address: z.string().trim().optional(),
