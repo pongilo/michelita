@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app")({
+  shouldReload: false,
   beforeLoad: async ({ location }) => {
     const { user } = await getUser();
 
@@ -136,7 +137,7 @@ function PrivateLayout() {
         <div className="flex justify-between items-center p-5">
           <SidebarTrigger />
           {pathname !== "/app/order/form" && (
-            <Button size="sm" render={<Link to="/app/order/form" />}>
+            <Button size="sm" nativeButton={false} render={<Link to="/app/order/form" />}>
               Novo pedido
             </Button>
           )}

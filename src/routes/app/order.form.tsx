@@ -194,7 +194,7 @@ function OrderFormRoute() {
                 <ItemDescription>Nenhum cliente selecionado para este pedido</ItemDescription>
               </ItemContent>
               <ItemActions>
-                <Button type="button" variant="outline" size="sm" render={<Link to="." search={{ modal: "customer" }} />}>
+                <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "customer" }} />}>
                   Selecionar
                 </Button>
               </ItemActions>

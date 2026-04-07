@@ -43,7 +43,7 @@ import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-tr
 import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
 import { useUpdateTransaction } from "@/hooks/tanstack/transaction/use-update-transaction";
-import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, dateFormatter as datetimeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PeriodFilter } from "@/components/ui/period-filter";
@@ -109,6 +109,16 @@ function TransactionsPage() {
   );
   const isEditing = !!editingTransaction;
   const isSubmittingForm = isCreatingTransaction || isUpdatingTransaction;
+
+  const transactionsByDay = useMemo(() => {
+    const groups = new Map<string, typeof transactions>();
+    for (const t of transactions) {
+      const day = new Date(t.madeAt).toISOString().slice(0, 10);
+      if (!groups.has(day)) groups.set(day, []);
+      groups.get(day)!.push(t);
+    }
+    return Array.from(groups.entries()).map(([day, items]) => ({ day, items }));
+  }, [transactions]);
 
   const summary = useMemo(() => {
     const entries = transactions.filter((t) => t.type === "entry").reduce((s, t) => s + t.amount, 0);
@@ -238,47 +248,54 @@ function TransactionsPage() {
       {!isLoading && !isError && transactions.length > 0 ? (
         <div className="flex flex-col-reverse gap-6 lg:flex-row lg:items-start">
           {/* Histórico */}
-          <div className="flex-1 min-w-0">
-            <ItemGroup>
-              {transactions.map((transaction) => (
-                <Item
-                  key={transaction.id}
-                  variant="outline"
-                  render={<button />}
-                  onClick={() => handleStartEdit(transaction)}
-                  className="cursor-pointer text-left"
-                >
-                  <ItemMedia
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-base ${
-                      transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"
-                    }`}
-                  >
-                    {transaction.type === "entry" ? "↑" : "↓"}
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemTitle>
-                      {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                    </ItemTitle>
-                    <ItemDescription>
-                      {methodLabel[transaction.method] ?? transaction.method}
-                      {" · "}
-                      {datetimeFormatter.format(new Date(transaction.madeAt))}
-                      {transaction.linkedCustomers.length > 0 && (
-                        <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
-                      )}
-                      {transaction.linkedOrders.length > 0 && (
-                        <> · {transaction.linkedOrders.map((o) => `#${o.id.slice(0, 8)}`).join(", ")}</>
-                      )}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <span className={`font-semibold tabular-nums ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
-                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                    </span>
-                  </ItemActions>
-                </Item>
-              ))}
-            </ItemGroup>
+          <div className="flex-1 min-w-0 space-y-8">
+            {transactionsByDay.map(({ day, items }) => (
+              <div key={day} className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  {formatDayLabel(new Date(day))} · {items.length} {items.length === 1 ? "transação" : "transações"}
+                </p>
+                <ItemGroup>
+                  {items.map((transaction) => (
+                    <Item
+                      key={transaction.id}
+                      variant="outline"
+                      render={<button />}
+                      onClick={() => handleStartEdit(transaction)}
+                      className="cursor-pointer text-left"
+                    >
+                      <ItemMedia
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-base ${
+                          transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"
+                        }`}
+                      >
+                        {transaction.type === "entry" ? "↑" : "↓"}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>
+                          {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
+                        </ItemTitle>
+                        <ItemDescription>
+                          {methodLabel[transaction.method] ?? transaction.method}
+                          {" · "}
+                          {datetimeFormatter.format(new Date(transaction.madeAt))}
+                          {transaction.linkedCustomers.length > 0 && (
+                            <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
+                          )}
+                          {transaction.linkedOrders.length > 0 && (
+                            <> · {transaction.linkedOrders.map((o) => `#${o.id.slice(0, 8)}`).join(", ")}</>
+                          )}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <span className={`font-semibold tabular-nums ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
+                          {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
+                        </span>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              </div>
+            ))}
           </div>
 
           {/* Sidebar: resumo + por método */}

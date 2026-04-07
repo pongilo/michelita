@@ -239,7 +239,7 @@ function OrderDetailsPage() {
                   )}
                 </ItemContent>
                 <ItemActions>
-                  <Button type="button" variant="ghost" size="icon-lg" render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                  <Button type="button" variant="ghost" size="icon-lg" nativeButton={false} render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
                     <ChevronRightIcon />
                   </Button>
                 </ItemActions>

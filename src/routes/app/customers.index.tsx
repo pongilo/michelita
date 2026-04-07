@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -12,12 +12,11 @@ import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, It
 import { PlusIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 
-export const Route = createFileRoute("/app/customers")({
+export const Route = createFileRoute("/app/customers/")({
   component: CustomersPage,
 });
 
 function CustomersPage() {
-  const location = useLocation();
   const { organization } = Route.useRouteContext();
   const { data: customers = [], isLoading, isError, error } = useGetCustomers({
     organizationId: organization.id,
@@ -34,13 +33,6 @@ function CustomersPage() {
   });
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const isCustomerProfileRoute =
-    location.pathname.startsWith("/app/customers/") && location.pathname !== "/app/customers";
-
-  if (isCustomerProfileRoute) {
-    return <Outlet />;
-  }
 
   async function onSubmit(values: CustomerFormValues) {
     try {
