@@ -40,7 +40,7 @@ function currentDateInputValue() {
 
 // ── Route ────────────────────────────────────────────────────────────────────
 
-export const Route = createFileRoute("/app/order/$orderId")({
+export const Route = createFileRoute("/app/orders/$orderId")({
   component: OrderDetailsPage,
 });
 

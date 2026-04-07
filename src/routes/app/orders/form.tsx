@@ -49,7 +49,7 @@ function emptyTransaction(): CreateOrderInput["transactions"][number] {
   };
 }
 
-export const Route = createFileRoute("/app/order/form")({
+export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
 });
 

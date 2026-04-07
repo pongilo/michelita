@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, ChevronsUpDown, ListCheckIcon, ListOrderedIcon, LogOutIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, ChevronsUpDown, ListCheckIcon, LogOutIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +18,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/app")({
   shouldReload: false,
@@ -44,8 +45,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
-  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
-  { to: "/app/deliveries", icon: ListCheckIcon, label: "Entregas" },
+  { to: "/app/orders", icon: ListCheckIcon, label: "Pedidos" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
 ] as const;
@@ -136,8 +136,8 @@ function PrivateLayout() {
       <SidebarInset>
         <div className="flex justify-between items-center p-5">
           <SidebarTrigger />
-          {pathname !== "/app/order/form" && (
-            <Button size="sm" nativeButton={false} render={<Link to="/app/order/form" />}>
+          {pathname !== "/app/orders/form" && (
+            <Button size="sm" nativeButton={false} render={<Link to="/app/orders/form" />}>
               Novo pedido
             </Button>
           )}

@@ -38,7 +38,7 @@ function getTransactionsPeriodBounds(period: TransactionsPeriod, referenceDate: 
 import { toast } from "sonner";
 import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
-import { useGetOrders } from "@/hooks/tanstack/order/use-get-orders";
+
 import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
 import { useDeleteTransaction } from "@/hooks/tanstack/transaction/use-delete-transaction";
 import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
@@ -71,7 +71,7 @@ function toLocalDatetimeInput(value: string | Date) {
   return date.toISOString().slice(0, 16);
 }
 
-export const Route = createFileRoute("/app/transactions")({
+export const Route = createFileRoute("/app/transactions/")({
   component: TransactionsPage,
 });
 
@@ -88,7 +88,7 @@ function TransactionsPage() {
     referenceDate,
   });
   const { data: customers = [] } = useGetCustomers({ organizationId: organization.id });
-  const { data: orders = [] } = useGetOrders({ organizationId: organization.id, period, referenceDate });
+
 
   const { mutateAsync: createTransaction, isPending: isCreatingTransaction } = useCreateTransaction({
     organizationId: organization.id,
@@ -360,10 +360,6 @@ function TransactionsPage() {
         mode={isEditing ? "edit" : "create"}
         isSubmitting={isSubmittingForm}
         customers={customers.map((c) => ({ id: c.id, name: c.name }))}
-        orders={orders.map((o) => ({
-          id: o.id,
-          label: `#${o.id.slice(0, 8)}${o.customer ? ` – ${o.customer.name}` : ""} (${datetimeFormatter.format(new Date(o.orderedAt))})`,
-        }))}
         errorMessage=""
         successMessage=""
         initialValues={

@@ -254,7 +254,7 @@ function OrderActionViewOrder() {
   const navigate = useNavigate();
 
   return (
-    <DropdownMenuItem onClick={() => navigate({ to: "/app/order/$orderId", params: { orderId } })}>
+    <DropdownMenuItem onClick={() => navigate({ to: "/app/orders/$orderId", params: { orderId } })}>
       Ver pedido
     </DropdownMenuItem>
   );

@@ -46,8 +46,8 @@ function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMont
   }
 }
 
-export const Route = createFileRoute("/app/deliveries")({
-  component: DeliveriesPage,
+export const Route = createFileRoute("/app/orders/")({
+  component: OrdersPage,
 });
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
@@ -58,7 +58,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: "custom", label: "Escolher data" },
 ];
 
-function DeliveriesPage() {
+function OrdersPage() {
   const { organization } = Route.useRouteContext();
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
   const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
@@ -83,7 +83,7 @@ function DeliveriesPage() {
       <header className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-heading">Entregas</h1>
+            <h1 className="text-2xl font-heading">Pedidos</h1>
             {totalItems > 0 && (
               <p className="text-sm text-muted-foreground">
                 ({deliveredCount} de {totalItems} entregues)
@@ -141,7 +141,7 @@ function DeliveriesPage() {
                         variant="outline"
                         className="items-start"
                         render={
-                          <Link to="/app/order/$orderId" params={{ orderId: item.order.id }} />
+                          <Link to="/app/orders/$orderId" params={{ orderId: item.order.id }} />
                         }
                       >
                         <ItemMedia>

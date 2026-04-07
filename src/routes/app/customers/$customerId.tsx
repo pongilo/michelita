@@ -325,7 +325,7 @@ function CustomerDetailsPage() {
                     key={order.id}
                     size="sm"
                     variant="outline"
-                    render={<Link to="/app/order/$orderId" params={{ orderId: order.id }} />}
+                    render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}
                   >
                     <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
                       {order.isPaid ? "✓" : "!"}
