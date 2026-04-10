@@ -15,14 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
+import { Item, ItemContent } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
 import { currencyFormatter } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
-import { Trash2Icon } from "lucide-react";
+import { EditIcon, Trash2Icon } from "lucide-react";
 import { CustomerListModal } from "@/components/customer-list-modal";
+import { OrderNoteModal } from "@/components/order-note-modal";
+import { Switch } from "@/components/ui/switch";
 
 function localDatetimeNow() {
   const now = new Date();
@@ -37,7 +38,7 @@ function emptyItem(): CreateOrderInput["items"][number] {
     quantity: 1,
     deliveredAt: localDatetimeNow(),
     note: "",
-    isDelivered: true,
+    isDelivered: false,
   };
 }
 
@@ -100,6 +101,7 @@ function OrderFormRoute() {
   const transactions = watch("transactions");
   const shippingFee = watch("shippingFee");
   const discount = watch("discount");
+  const watchedNote = watch('note')
 
   const subtotal = items.reduce(
     (acc, item) => acc + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0),
@@ -136,6 +138,7 @@ function OrderFormRoute() {
         toast.success(`Pedido criado com sucesso. ID: ${data.id}`);
         const newOrderedAt = localDatetimeNow();
         reset({
+          organizationId: organization.id,
           customerId: "",
           orderedAt: newOrderedAt,
           isPaid: false,
@@ -167,68 +170,76 @@ function OrderFormRoute() {
   return (
     <FormProvider {...methods}>
       <CustomerListModal organizationId={organization.id} />
+      <OrderNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
-        <h1 className="text-2xl font-heading mb-4">Novo pedido</h1>
         <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
-          {selectedCustomer ? (
-            <Item variant="outline">
-              <ItemContent>
-                <ItemTitle>{selectedCustomer.name}</ItemTitle>
-                {selectedCustomer.phone && (
-                  <ItemDescription>{selectedCustomer.phone}</ItemDescription>
-                )}
-                {selectedCustomer.address && (
-                  <ItemDescription>{selectedCustomer.address}</ItemDescription>
-                )}
-              </ItemContent>
-              <ItemActions>
-                <Button size="icon-sm" variant="ghost" onClick={() => setValue("customerId", "", { shouldValidate: true })} title="Remover cliente vinculado">
-                  <Trash2Icon className="text-destructive" />
-                </Button>
-              </ItemActions>
-            </Item>
-          ) : (
-            <Item variant="outline">
-              <ItemContent>
-                <ItemTitle>Cliente (opcional)</ItemTitle>
-                <ItemDescription>Nenhum cliente selecionado para este pedido</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "customer" }} />}>
-                  Selecionar
-                </Button>
-              </ItemActions>
-            </Item>
-          )}
-          <FieldError>{errors.customerId?.message}</FieldError>
-          
-          <FieldGroup>    
-            <Field>
-              <FieldLabel>Data do pedido</FieldLabel>
-              <Input type="datetime-local" {...register("orderedAt")} />
-              <FieldError>{errors.orderedAt?.message}</FieldError>
-            </Field>
-            <Field>
-              <FieldLabel>Observação do pedido</FieldLabel>
-              <Textarea rows={3} {...register("note")} />
-              <FieldError>{errors.note?.message}</FieldError>
-            </Field>
-            <Field orientation="horizontal">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-heading">Novo pedido</h1>
+            <Field orientation="horizontal" className="w-auto">
               <Controller
                 name="isPaid"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
-                    id="isPaid"
+                  <Switch id="isPaid" 
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={field.onChange} 
                   />
                 )}
               />
-              <Label htmlFor="isPaid">Marcar como pago</Label>
-              <FieldError>{errors.isPaid?.message}</FieldError>
+              <Label htmlFor="isPaid">Pago</Label>
+            </Field>
+          </div>
+          <div className="flex justify-between items-center">
+            <p className="text-base text-muted-foreground">{watchedNote || 'Nenhuma observação no pedido'}</p>
+            <Button type="button" variant={watchedNote ? "ghost" : "outline"} size={watchedNote ? "icon-sm" : "sm"} nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
+              {watchedNote ? <EditIcon /> : 'Adicionar'}
+            </Button>
+          </div>
+
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Quando o pedido será entregue?</FieldLabel>
+              <Input
+                type="datetime-local"
+                defaultValue={localDatetimeNow()}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  items.forEach((_, index) => {
+                    setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
+                  });
+                }}
+              />
+              <FieldError>{errors.orderedAt?.message}</FieldError>
             </Field>
           </FieldGroup>
+
+          <Separator />
+
+          {selectedCustomer ? (
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <p className="font-heading text-base font-medium">{selectedCustomer.name}</p>
+                {selectedCustomer.phone && (
+                  <p className="text-base text-muted-foreground">{selectedCustomer.phone}</p>
+                )}
+                {selectedCustomer.address && (
+                  <p className="text-base text-muted-foreground">{selectedCustomer.address}</p>
+                )}
+              </div>
+              <Button size="icon" variant="ghost" onClick={() => setValue("customerId", "", { shouldValidate: true })} title="Remover cliente vinculado">
+                <Trash2Icon className="text-destructive" />
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="font-heading text-base font-medium">Cliente (opcional)</p>
+              <p className="text-base text-muted-foreground">Nenhum cliente selecionado para este pedido</p>
+              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "customer" }} />}>
+                Selecionar
+              </Button>
+            </div>
+          )}
+          <FieldError>{errors.customerId?.message}</FieldError>
 
           <Separator />
           
@@ -336,7 +347,7 @@ function OrderFormRoute() {
             {transactionFields.length === 0 && (
               <>
                 <p className="font-heading text-base font-medium">Pagamentos</p>
-                <p className="text-base opacity-70">Nenhuma transação registrada para este pedido.</p>
+                <p className="text-base text-muted-foreground">Nenhuma transação registrada para este pedido.</p>
               </>
             )}
             {transactionFields.map((field, index) => (

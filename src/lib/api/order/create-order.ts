@@ -118,6 +118,15 @@ const createOrderServerFn = createServerFn({ method: "POST" })
               transactionId: createdTransaction.id,
             },
           });
+
+          if (data.customerId) {
+            await tx.customerTransaction.create({
+              data: {
+                customerId: data.customerId,
+                transactionId: createdTransaction.id,
+              },
+            });
+          }
         }
       }
 
