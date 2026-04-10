@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getDailyDashboard } from "@/lib/api/dashboard/get-daily-dashboard";
+import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -66,16 +65,14 @@ function OrdersPage() {
 
   const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["dashboard", organization.id, "daily", period, referenceDate],
-    queryFn: async () =>
-      getDailyDashboard({ organizationId: organization.id, period, referenceDate }),
-    enabled: !!organization.id,
-    refetchInterval: 60_000,
+  const { data, isLoading, isError, error } = useListOrders({
+    organizationId: organization.id,
+    period,
+    referenceDate,
   });
 
-  const allItems = data?.itemsByDay.flatMap(day => day.items) ?? [];
-  const totalItems = allItems.length;
+  const allItems = data?.itemsByDay.flatMap(day => day.groups.flatMap(g => g.items)) ?? [];
+  const totalItems = data?.itemsByDay.reduce((sum, day) => sum + day.itemCount, 0) ?? 0;
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
 
   return (
@@ -127,64 +124,71 @@ function OrdersPage() {
             return (
               <div key={index} className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  {formatDayLabel(new Date(itemByDay.date))} - {itemByDay.items.length} {itemByDay.items.length === 1 ? "item" : "itens"}
+                  {formatDayLabel(new Date(itemByDay.date))} - {itemByDay.itemCount} {itemByDay.itemCount === 1 ? "item" : "itens"}
                 </p>
-                {itemByDay.items.length === 0 ? (
+                {itemByDay.groups.length === 0 ? (
                   <Item variant="outline" className="text-muted-foreground">
                     Nenhuma entrega para este dia.
                   </Item>
                 ) : (
                   <ItemGroup>
-                    {itemByDay.items.map((item) => (
-                      <Item
-                        key={item.id}
-                        variant="outline"
-                        className="items-start"
-                        render={
-                          <Link to="/app/orders/$orderId" params={{ orderId: item.order.id }} />
-                        }
-                      >
-                        <ItemMedia>
-                          {timeFormatter.format(new Date(item.deliveredAt))}
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>
-                            <span className="text-primary font-bold">{item.quantity}x</span>
-                            {item.description}
-                          </ItemTitle>
-                          {item.note && (
-                            <p className="text-sm text-muted-foreground italic">
-                              {item.note}
-                            </p>
-                          )}
-                          {item.order.customer && (
-                            <p className="text-sm text-muted-foreground">
-                              {item.order.customer.name}
-                            </p>
-                          )}
-                        </ItemContent>
-                        <ItemActions>
-                          {item.isDelivered ? (
-                            <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                              Entregue
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
-                              A entregar
-                            </Badge>
-                          )}
-                          {item.order.isPaid ? (
-                            <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                              Pago
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
-                              Pagamento pendente
-                            </Badge>
-                          )}
-                        </ItemActions>
-                      </Item>
-                    ))}
+                    {itemByDay.groups.map((group) => {
+                      const allDelivered = group.items.every(i => i.isDelivered);
+                      return (
+                        <Item
+                          key={group.key}
+                          variant="outline"
+                          className="items-start"
+                          render={
+                            <Link to="/app/orders/$orderId" params={{ orderId: group.order.id }} />
+                          }
+                        >
+                          <ItemMedia>
+                            {timeFormatter.format(new Date(group.deliveredAt))}
+                          </ItemMedia>
+                          <ItemContent>
+                            {group.items.map((item) => (
+                              <div key={item.id}>
+                                <ItemTitle>
+                                  <span className="text-primary font-bold">{item.quantity}x</span>
+                                  {item.description}
+                                </ItemTitle>
+                                {item.note && (
+                                  <p className="text-sm text-muted-foreground italic">
+                                    {item.note}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                            {group.order.customer && (
+                              <p className="text-sm text-muted-foreground">
+                                {group.order.customer.name}
+                              </p>
+                            )}
+                          </ItemContent>
+                          <ItemActions>
+                            {allDelivered ? (
+                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                                Entregue
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                                A entregar
+                              </Badge>
+                            )}
+                            {group.order.isPaid ? (
+                              <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                                Pago
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
+                                Pagamento pendente
+                              </Badge>
+                            )}
+                          </ItemActions>
+                        </Item>
+                      );
+                    })}
                   </ItemGroup>
                 )}
               </div>

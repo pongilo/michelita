@@ -2,18 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
-const dashboardPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
+const ordersPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
 
-const getDailyDashboardSchema = z.object({
+const listOrdersSchema = z.object({
   organizationId: z.uuid(),
-  period: dashboardPeriodSchema.default("daily"),
+  period: ordersPeriodSchema.default("daily"),
   referenceDate: z.string().optional(),
 });
 
-export type GetDailyDashboardProps = z.infer<typeof getDailyDashboardSchema>;
-type DashboardPeriod = z.infer<typeof dashboardPeriodSchema>;
+export type ListOrdersProps = z.infer<typeof listOrdersSchema>;
+type OrdersPeriod = z.infer<typeof ordersPeriodSchema>;
 
-function getPeriodBounds(period: DashboardPeriod, baseDate = new Date()) {
+function getPeriodBounds(period: OrdersPeriod, baseDate = new Date()) {
   const start = new Date(baseDate);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
@@ -64,8 +64,8 @@ function parseReferenceDate(value: string | undefined) {
   return parsed;
 }
 
-const getDailyDashboardServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => getDailyDashboardSchema.parse(input))
+const listOrdersServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => listOrdersSchema.parse(input))
   .handler(async ({ data }) => {
     const referenceDate = parseReferenceDate(data.referenceDate);
     const { start, end } = getPeriodBounds(data.period, referenceDate);
@@ -102,22 +102,55 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
         },
       });
 
-    const itemsByDateMap = ordersItemByPeriod.reduce<
-      Record<string, typeof ordersItemByPeriod>
-    >((acc, item) => {
-      const date = item.deliveredAt
-        ? new Date(item.deliveredAt).toISOString().slice(0, 10)
-        : "sem-data";
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(item);
-      return acc;
-    }, {});
+    type RawItem = typeof ordersItemByPeriod[0];
+    type OrderGroup = {
+      key: string;
+      deliveredAt: string;
+      order: RawItem["order"];
+      items: Array<Pick<RawItem, "id" | "description" | "quantity" | "note" | "isDelivered">>;
+    };
 
-    const orderItemByDay: { date: string; items: typeof ordersItemByPeriod }[] = [];
+    function groupItemsByOrder(items: RawItem[]): OrderGroup[] {
+      const groupMap = new Map<string, OrderGroup>();
+      for (const item of items) {
+        const key = `${item.order.id}_${item.deliveredAt?.toISOString() ?? "sem-data"}`;
+        if (!groupMap.has(key)) {
+          groupMap.set(key, {
+            key,
+            deliveredAt: item.deliveredAt?.toISOString() ?? "",
+            order: item.order,
+            items: [],
+          });
+        }
+        groupMap.get(key)!.items.push({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          note: item.note,
+          isDelivered: item.isDelivered,
+        });
+      }
+      return Array.from(groupMap.values());
+    }
+
+    const itemsByDateMap = ordersItemByPeriod.reduce<Record<string, RawItem[]>>(
+      (acc, item) => {
+        const date = item.deliveredAt
+          ? new Date(item.deliveredAt).toISOString().slice(0, 10)
+          : "sem-data";
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(item);
+        return acc;
+      },
+      {}
+    );
+
+    const orderItemByDay: { date: string; itemCount: number; groups: OrderGroup[] }[] = [];
     const cursor = new Date(start);
     while (cursor < end) {
       const date = cursor.toISOString().slice(0, 10);
-      orderItemByDay.push({ date, items: itemsByDateMap[date] ?? [] });
+      const items = itemsByDateMap[date] ?? [];
+      orderItemByDay.push({ date, itemCount: items.length, groups: groupItemsByOrder(items) });
       cursor.setDate(cursor.getDate() + 1);
     }
     orderItemByDay.reverse();
@@ -131,8 +164,8 @@ const getDailyDashboardServerFn = createServerFn({ method: "POST" })
     };
   });
 
-export async function getDailyDashboard(data: GetDailyDashboardProps) {
-  return getDailyDashboardServerFn({
+export async function listOrders(data: ListOrdersProps) {
+  return listOrdersServerFn({
     data,
   });
 }
