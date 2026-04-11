@@ -26,17 +26,6 @@ function localDatetimeNow() {
   return local.toISOString().slice(0, 16);
 }
 
-function emptyItem(): CreateOrderInput["items"][number] {
-  return {
-    description: "",
-    unitPrice: 0,
-    quantity: 1,
-    deliveredAt: localDatetimeNow(),
-    note: "",
-    isDelivered: false,
-  };
-}
-
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
 });
@@ -46,6 +35,17 @@ function OrderFormRoute() {
   const [deliveryDate, setDeliveryDate] = useState(() => {
     return localDatetimeNow()
   })
+
+  function emptyItem(): CreateOrderInput["items"][number] {
+    return {
+      description: "",
+      unitPrice: 0,
+      quantity: 1,
+      deliveredAt: deliveryDate,
+      note: "",
+      isDelivered: false,
+    };
+  }
 
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization.id,
@@ -62,7 +62,7 @@ function OrderFormRoute() {
       note: "",
       shippingFee: 0,
       discount: 0,
-      items: [emptyItem()],
+      items: [],
     },
   });
 
@@ -136,7 +136,7 @@ function OrderFormRoute() {
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
         <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center mb-4 gap-3">
             <h1 className="text-2xl font-heading">Novo pedido</h1>
             <Field orientation="horizontal" className="w-auto">
               <Controller
@@ -152,15 +152,23 @@ function OrderFormRoute() {
               <Label htmlFor="isPaid">Pago</Label>
             </Field>
           </div>
-          <div className="flex justify-between items-center">
-            <p className="text-base text-muted-foreground">{watchedNote || 'Nenhuma observação no pedido'}</p>
-            <Button type="button" variant={watchedNote ? "ghost" : "outline"} size={watchedNote ? "icon-sm" : "sm"} nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
-              {watchedNote ? <EditIcon /> : 'Adicionar'}
+          {watchedNote ? (
+            <div className="flex items-center">
+              <p className="text-base text-muted-foreground">Observação: {watchedNote}</p>
+              <Button type="button" variant="ghost" size="icon-sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
+                <EditIcon />
+              </Button>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
+              Adicionar observação
             </Button>
-          </div>
+          )}
+
+          <Separator />
 
           <Field className="max-w-60">
-            <FieldLabel>Quando o pedido será entregue?</FieldLabel>
+            <FieldLabel className="font-heading text-base font-medium">Quando o pedido será entregue?</FieldLabel>
             <Input
               type="datetime-local"
               defaultValue={deliveryDate}
@@ -200,114 +208,121 @@ function OrderFormRoute() {
           <Separator />
 
           <div className="space-y-4">
-            {itemFields.map((field, index) => (
-              <div key={field.id} className="space-y-2">
-                <div className="flex justify-between items-center h-8">
-                  <div className="flex gap-3">
-                    <p className="font-heading text-base font-medium">
-                      Item {index + 1}{" "}
-                      <span className="text-xs font-normal opacity-60">
-                        {currencyFormatter.format((Number(items[index]?.unitPrice) || 0) * (Number(items[index]?.quantity) || 0))}
-                      </span>
-                    </p>
-                    <Field orientation="horizontal" className="w-auto">
-                      <Controller
-                        name={`items.${index}.isDelivered`}
-                        control={control}
-                        render={({ field }) => (
-                          <Switch 
-                            id={`isDelivered-${index}`}
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        )}
-                      />
-                      <Label htmlFor={`isDelivered-${index}`}>Entregue</Label>
-                    </Field>
-                  </div>
-                  {itemFields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-destructive"
-                      onClick={() => removeItem(index)}
-                    >
-                      <Trash2Icon />
-                    </Button>
-                  )}
-                </div>
-                <Item size="xs" variant="outline">
-                  <ItemContent>
-                    <FieldGroup className="grid gap-3 md:grid-cols-3">
-                      <Field className="md:col-span-2">
-                        <FieldLabel>Nome do item</FieldLabel>
-                        <Input
-                          type="text"
-                          {...register(`items.${index}.description`)}
-                        />
-                        <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
-                      </Field>
-
-                      <div className="flex gap-3">
-                        <Field>
-                          <FieldLabel>Valor (R$)</FieldLabel>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                          />
-                          <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
-                        </Field>
-                        <Field>
-                          <FieldLabel>Qtd</FieldLabel>
-                          <Input
-                            type="number"
-                            min="1"
-                            step="1"
-                            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                          />
-                          <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
-                        </Field>
-                      </div>
-
-                      <div className="md:col-span-3 space-y-2">
-                        {deliveryDate === watch(`items.${index}.deliveredAt`) ? (
-                          <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
-                            Agendar entrega
-                          </Button>
-                        ) : (
-                          <div className="flex gap-1 items-center">
-                            <span>Entregar:</span>
-                            <span>{deliveryDate !== watch(`items.${index}.deliveredAt`) && watch(`items.${index}.deliveredAt`)}</span>
-                            <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
-                              Editar
-                            </Button>
-                          </div>
-                        )}
-                        {!watch(`items.${index}.note`) ? (
-                          <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
-                            Adicionar observação
-                          </Button>
-                        ) : (
-                          <div className="flex gap-1 items-center">
-                            <span>Observação:</span>
-                            <span>{watch(`items.${index}.note`)}</span>
-                            <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
-                              Editar
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-
-                    </FieldGroup>
-                  </ItemContent>
-                </Item>
+            <p className="font-heading text-base font-medium">Produtos</p>
+            {itemFields.length === 0 ? (
+              <div>
+                <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Nenhum item adicionado para este pedido'}</p>
               </div>
-            ))}
+            ) : (
+              <div className="space-y-4">
+                {itemFields.map((field, index) => (
+                  <div key={field.id} className="space-y-2">
+                    <div className="flex justify-between items-center gap-2">
+                      <p>
+                        Item {index + 1}{" "}
+                        <span className="text-xs font-normal opacity-60">
+                          {currencyFormatter.format((Number(items[index]?.unitPrice) || 0) * (Number(items[index]?.quantity) || 0))}
+                        </span>
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive"
+                        onClick={() => removeItem(index)}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    </div>
+                    <Item size="sm" variant="muted">
+                      <ItemContent>
+                        <FieldGroup className="grid gap-3 md:grid-cols-3">
+                          <Field className="md:col-span-2">
+                            <FieldLabel>Descrição</FieldLabel>
+                            <Input
+                              type="text"
+                              {...register(`items.${index}.description`)}
+                              className="bg-white"
+                            />
+                            <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
+                          </Field>
+  
+                          <div className="flex gap-3">
+                            <Field>
+                              <FieldLabel>Valor (R$)</FieldLabel>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                                className="bg-white"
+                              />
+                              <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
+                            </Field>
+                            <Field>
+                              <FieldLabel>Qtd</FieldLabel>
+                              <Input
+                                type="number"
+                                min="1"
+                                step="1"
+                                {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                                className="bg-white"
+                              />
+                              <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
+                            </Field>
+                          </div>
+  
+                          <div className="md:col-span-3 space-y-2">
+                            <Field orientation="horizontal" className="w-auto">
+                              <Controller
+                                name={`items.${index}.isDelivered`}
+                                control={control}
+                                render={({ field }) => (
+                                  <Switch 
+                                    id={`isDelivered-${index}`}
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                )}
+                              />
+                              <Label htmlFor={`isDelivered-${index}`}>Entregue</Label>
+                            </Field>
+                            {deliveryDate === watch(`items.${index}.deliveredAt`) ? (
+                              <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
+                                Agendar entrega
+                              </Button>
+                            ) : (
+                              <div className="flex gap-1 items-center">
+                                <span>Entregar:</span>
+                                <span>{deliveryDate !== watch(`items.${index}.deliveredAt`) && watch(`items.${index}.deliveredAt`)}</span>
+                                <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
+                                  Editar
+                                </Button>
+                              </div>
+                            )}
+                            {!watch(`items.${index}.note`) ? (
+                              <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
+                                Adicionar observação
+                              </Button>
+                            ) : (
+                              <div className="flex gap-1 items-center">
+                                <span>Observação:</span>
+                                <span>{watch(`items.${index}.note`)}</span>
+                                <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
+                                  Editar
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </FieldGroup>
+                      </ItemContent>
+                    </Item>
+                  </div>
+                ))}
+              </div>
+            )}
             <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem())}>
-              Adicionar item
+              Adicionar
             </Button>
           </div>
 
