@@ -16,6 +16,9 @@ import { EditIcon, Trash2Icon } from "lucide-react";
 import { CustomerListModal } from "@/components/customer-list-modal";
 import { OrderNoteModal } from "@/components/order-note-modal";
 import { Switch } from "@/components/ui/switch";
+import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
+import { useState } from "react";
+import { OrderItemNoteModal } from "@/components/order-item-note-modal";
 
 function localDatetimeNow() {
   const now = new Date();
@@ -40,6 +43,9 @@ export const Route = createFileRoute("/app/orders/form")({
 
 function OrderFormRoute() {
   const { organization } = Route.useRouteContext();
+  const [deliveryDate, setDeliveryDate] = useState(() => {
+    return localDatetimeNow()
+  })
 
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization.id,
@@ -125,7 +131,9 @@ function OrderFormRoute() {
   return (
     <FormProvider {...methods}>
       <CustomerListModal organizationId={organization.id} />
+      <OrderScheduleItemModal />
       <OrderNoteModal />
+      <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
         <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
           <div className="flex justify-between items-center mb-4">
@@ -155,9 +163,10 @@ function OrderFormRoute() {
             <FieldLabel>Quando o pedido será entregue?</FieldLabel>
             <Input
               type="datetime-local"
-              defaultValue={localDatetimeNow()}
+              defaultValue={deliveryDate}
               onChange={(e) => {
                 const newDate = e.target.value;
+                setDeliveryDate(newDate)
                 items.forEach((_, index) => {
                   setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
                 });
@@ -263,22 +272,35 @@ function OrderFormRoute() {
                         </Field>
                       </div>
 
-                      <Field>
-                        <FieldLabel>Data da entrega</FieldLabel>
-                        <Input
-                          type="datetime-local"
-                          {...register(`items.${index}.deliveredAt`)}
-                        />
-                        <FieldError>{errors.items?.[index]?.deliveredAt?.message}</FieldError>
-                      </Field>
+                      <div className="md:col-span-3 space-y-2">
+                        {deliveryDate === watch(`items.${index}.deliveredAt`) ? (
+                          <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
+                            Agendar entrega
+                          </Button>
+                        ) : (
+                          <div className="flex gap-1 items-center">
+                            <span>Entregar:</span>
+                            <span>{deliveryDate !== watch(`items.${index}.deliveredAt`) && watch(`items.${index}.deliveredAt`)}</span>
+                            <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
+                              Editar
+                            </Button>
+                          </div>
+                        )}
+                        {!watch(`items.${index}.note`) ? (
+                          <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
+                            Adicionar observação
+                          </Button>
+                        ) : (
+                          <div className="flex gap-1 items-center">
+                            <span>Observação:</span>
+                            <span>{watch(`items.${index}.note`)}</span>
+                            <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
+                              Editar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
 
-                      <Field className="md:col-span-2">
-                        <FieldLabel>Observação</FieldLabel>
-                        <Input
-                          type="text"
-                          {...register(`items.${index}.note`)}
-                        />
-                      </Field>
                     </FieldGroup>
                   </ItemContent>
                 </Item>
