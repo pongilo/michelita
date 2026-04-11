@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFormContext } from "react-hook-form";
 import { useQueryState } from "nuqs";
 import type { CreateOrderInput } from "@/lib/api/order/create-order";
-import { useIsMobile } from "@/hooks/use-mobile";
+// import { useIsMobile } from "@/hooks/use-mobile";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { customerFormSchema, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -13,12 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+// import {
+//   Drawer,
+//   DrawerContent,
+//   DrawerHeader,
+//   DrawerTitle,
+// } from "@/components/ui/drawer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -32,7 +32,7 @@ type CustomerListModalProps = {
 };
 
 export function CustomerListModal({ organizationId }: CustomerListModalProps) {
-  const isMobile = useIsMobile();
+  // const isMobile = useIsMobile();
   const [modal, setModal] = useQueryState("modal");
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
   const [tab, setTab] = useState<"list" | "create">("list");
@@ -174,22 +174,22 @@ export function CustomerListModal({ organizationId }: CustomerListModalProps) {
     </Tabs>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Clientes</DrawerTitle>
-          </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-6">{content}</div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
+  // if (isMobile) {
+  //   return (
+  //     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+  //       <DrawerContent>
+  //         <DrawerHeader>
+  //           <DrawerTitle>Clientes</DrawerTitle>
+  //         </DrawerHeader>
+  //         <div className="overflow-y-auto px-4 pb-6">{content}</div>
+  //       </DrawerContent>
+  //     </Drawer>
+  //   );
+  // }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-lg sm:h-[80vh] max-w-screen h-screen flex flex-col">
         <DialogHeader>
           <DialogTitle>Clientes</DialogTitle>
         </DialogHeader>
