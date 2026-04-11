@@ -1,25 +1,17 @@
 import { useFormContext } from "react-hook-form";
 import { useQueryState } from "nuqs";
 import type { CreateOrderInput } from "@/lib/api/order/create-order";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export function OrderNoteModal() {
-  const isMobile = useIsMobile();
   const [modal, setModal] = useQueryState("modal");
   const { register, setValue, watch, formState: { errors } } = useFormContext<CreateOrderInput>();
 
@@ -31,48 +23,31 @@ export function OrderNoteModal() {
     setModal(null);
   }
 
-  const content = (
-    <div className="space-y-4">
-      <Field>
-        <FieldLabel>Observação do pedido</FieldLabel>
-        <Textarea rows={5} placeholder="Escreva uma observação..." {...register("note")} />
-        <FieldError>{errors.note?.message}</FieldError>
-      </Field>
-      <div className="flex justify-between">
-        <div>
-          {watchedNote && (
-            <Button type="button" variant="ghost" onClick={() => {setValue('note', ''); onClose()}}>
-              Limpar
-            </Button>
-          )}
-        </div>
-        <Button type="button" onClick={onClose}>
-          Confirmar
-        </Button>
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Observação do pedido</DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-6">{content}</div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Observação do pedido</DialogTitle>
         </DialogHeader>
-        {content}
+        <div className="space-y-4">
+          <Field>
+            <FieldLabel>Observação do pedido</FieldLabel>
+            <Textarea rows={5} placeholder="Escreva uma observação..." {...register("note")} />
+            <FieldError>{errors.note?.message}</FieldError>
+          </Field>
+          <div className="flex justify-between">
+            <div>
+              {watchedNote && (
+                <Button type="button" variant="ghost" onClick={() => {setValue('note', ''); onClose()}}>
+                  Limpar
+                </Button>
+              )}
+            </div>
+            <Button type="button" onClick={onClose}>
+              Confirmar
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -196,22 +196,20 @@ function OrderFormRoute() {
             </Button>
           </div>
 
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Quando o pedido será entregue?</FieldLabel>
-              <Input
-                type="datetime-local"
-                defaultValue={localDatetimeNow()}
-                onChange={(e) => {
-                  const newDate = e.target.value;
-                  items.forEach((_, index) => {
-                    setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
-                  });
-                }}
-              />
-              <FieldError>{errors.orderedAt?.message}</FieldError>
-            </Field>
-          </FieldGroup>
+          <Field className="max-w-60">
+            <FieldLabel>Quando o pedido será entregue?</FieldLabel>
+            <Input
+              type="datetime-local"
+              defaultValue={localDatetimeNow()}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                items.forEach((_, index) => {
+                  setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
+                });
+              }}
+            />
+            <FieldError>{errors.orderedAt?.message}</FieldError>
+          </Field>
 
           <Separator />
 
@@ -315,7 +313,7 @@ function OrderFormRoute() {
                         <Label htmlFor={`isDelivered-${index}`}>Marcar como entregue</Label>
                       </Field>
 
-                      <Field>
+                      <Field className="max-w-50">
                         <FieldLabel>Data da entrega</FieldLabel>
                         <Input
                           type="datetime-local"

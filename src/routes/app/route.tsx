@@ -46,8 +46,8 @@ export const Route = createFileRoute("/app")({
 
 const navItems = [
   { to: "/app/orders", icon: ListCheckIcon, label: "Pedidos" },
-  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
+  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
 ] as const;
 
 function PrivateLayout() {
