@@ -14,6 +14,7 @@ import { currencyFormatter } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
 import { EditIcon, Trash2Icon } from "lucide-react";
 import { CustomerListModal } from "@/components/customer-list-modal";
+import { ProductListModal } from "@/components/product-list-modal";
 import { OrderNoteModal } from "@/components/order-note-modal";
 import { Switch } from "@/components/ui/switch";
 import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
@@ -69,7 +70,7 @@ function OrderFormRoute() {
   const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = methods;
 
   const {
-    fields: itemFields,
+    fields,
     append: appendItem,
     remove: removeItem,
   } = useFieldArray({
@@ -77,7 +78,7 @@ function OrderFormRoute() {
     name: "items",
   });
 
-  const items = watch("items");
+  const items = watch("items", fields);
   const shippingFee = watch("shippingFee");
   const discount = watch("discount");
   const watchedNote = watch('note');
@@ -131,6 +132,7 @@ function OrderFormRoute() {
   return (
     <FormProvider {...methods}>
       <CustomerListModal organizationId={organization.id} />
+      <ProductListModal organizationId={organization.id} deliveryDate={deliveryDate} />
       <OrderScheduleItemModal />
       <OrderNoteModal />
       <OrderItemNoteModal />
@@ -209,14 +211,14 @@ function OrderFormRoute() {
 
           <div className="space-y-4">
             <p className="font-heading text-base font-medium">Produtos</p>
-            {itemFields.length === 0 ? (
+            {items.length === 0 ? (
               <div>
                 <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Nenhum item adicionado para este pedido'}</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {itemFields.map((field, index) => (
-                  <div key={field.id} className="space-y-2">
+                {items.map((_, index) => (
+                  <div key={fields[index]?.id ?? index} className="space-y-2">
                     <div className="flex justify-between items-center gap-2">
                       <p>
                         Item {index + 1}{" "}
@@ -321,9 +323,14 @@ function OrderFormRoute() {
                 ))}
               </div>
             )}
-            <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem())}>
-              Adicionar
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} />}>
+                Catalogo de produtos
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem())}>
+                Adicionar
+              </Button>
+            </div>
           </div>
 
           <Separator />

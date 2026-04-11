@@ -26,6 +26,7 @@ model Organization {
   customer    Customer[]
   order       Order[]
   transaction Transaction[]
+  product     Product[]
 
   @@map("organization")
   @@schema("public")
@@ -105,6 +106,19 @@ model OrderItem {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_item")
+  @@schema("public")
+}
+
+model Product {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  price          Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("product")
   @@schema("public")
 }
 
