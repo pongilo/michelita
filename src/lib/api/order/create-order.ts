@@ -11,12 +11,6 @@ export const orderItemSchema = z.object({
   note: z.string().trim().optional(),
 });
 
-export const transactionSchema = z.object({
-  amount: z.number().min(0.01, "O valor deve ser maior que zero."),
-  method: z.enum(["PIX", "CASH", "CREDIT_CARD", "DEBIT_CARD"]),
-  madeAt: z.string().trim().min(1, "Data/hora da transação e obrigatória."),
-});
-
 export const createOrderSchema = z.object({
   organizationId: z.uuid(),
   customerId: z.union([z.uuid(), z.literal("")]).optional(),
@@ -26,7 +20,6 @@ export const createOrderSchema = z.object({
   shippingFee: z.number().min(0).optional(),
   discount: z.number().min(0).optional(),
   items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item."),
-  transactions: z.array(transactionSchema),
 });
 
 export type CreateOrderInput = z.input<typeof createOrderSchema>;
@@ -72,65 +65,31 @@ const createOrderServerFn = createServerFn({ method: "POST" })
       }
     }
 
-    const order = await prisma.$transaction(async (tx) => {
-      const createdOrder = await tx.order.create({
-        data: {
-          organizationId: data.organizationId,
-          customerId: data.customerId ?? null,
-          orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
-          isPaid: data.isPaid,
-          note: toOptionalString(data.note),
-          shippingFee: data.shippingFee ?? null,
-          discount: data.discount ?? null,
-          item: {
-            create: data.items.map((item) => ({
-              description: item.description,
-              unit_price: item.unitPrice,
-              quantity: item.quantity,
-              total: Number((item.unitPrice * item.quantity).toFixed(2)),
-              deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
-              isDelivered: item.isDelivered,
-              note: toOptionalString(item.note),
-            })),
-          },
+
+    const order = await prisma.order.create({
+      data: {
+        organizationId: data.organizationId,
+        customerId: data.customerId ?? null,
+        orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
+        isPaid: data.isPaid,
+        note: toOptionalString(data.note),
+        shippingFee: data.shippingFee ?? null,
+        discount: data.discount ?? null,
+        item: {
+          create: data.items.map((item) => ({
+            description: item.description,
+            unit_price: item.unitPrice,
+            quantity: item.quantity,
+            total: Number((item.unitPrice * item.quantity).toFixed(2)),
+            deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
+            isDelivered: item.isDelivered,
+            note: toOptionalString(item.note),
+          })),
         },
-        select: {
-          id: true,
-        },
-      });
-
-      if (data.transactions.length > 0) {
-        for (const transaction of data.transactions) {
-          const createdTransaction = await tx.transaction.create({
-            data: {
-              organizationId: data.organizationId,
-              description: "Transação para pedido",
-              amount: transaction.amount,
-              method: transaction.method,
-              madeAt: toDateOrThrow(transaction.madeAt, "Data da transação"),
-            },
-            select: { id: true },
-          });
-
-          await tx.orderTransaction.create({
-            data: {
-              orderId: createdOrder.id,
-              transactionId: createdTransaction.id,
-            },
-          });
-
-          if (data.customerId) {
-            await tx.customerTransaction.create({
-              data: {
-                customerId: data.customerId,
-                transactionId: createdTransaction.id,
-              },
-            });
-          }
-        }
-      }
-
-      return createdOrder;
+      },
+      select: {
+        id: true,
+      },
     });
 
     return order;
