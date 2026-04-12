@@ -133,27 +133,12 @@ function OrderFormRoute() {
     <FormProvider {...methods}>
       <CustomerListModal organizationId={organization.id} />
       <ProductListModal organizationId={organization.id} deliveryDate={deliveryDate} />
-      <OrderScheduleItemModal />
+      <OrderScheduleItemModal deliveryDate={deliveryDate} />
       <OrderNoteModal />
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
         <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
-          <div className="flex items-center mb-4 gap-3">
-            <h1 className="text-2xl font-heading">Novo pedido</h1>
-            <Field orientation="horizontal" className="w-auto">
-              <Controller
-                name="isPaid"
-                control={control}
-                render={({ field }) => (
-                  <Switch id="isPaid"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-              <Label htmlFor="isPaid">Pago</Label>
-            </Field>
-          </div>
+          <h1 className="text-2xl font-heading mb-4">Novo pedido</h1>
           {watchedNote ? (
             <div className="flex items-center">
               <p className="text-base text-muted-foreground">Observação: {watchedNote}</p>
@@ -169,21 +154,34 @@ function OrderFormRoute() {
 
           <Separator />
 
-          <Field className="max-w-60">
-            <FieldLabel className="font-heading text-base font-medium">Quando o pedido será entregue?</FieldLabel>
-            <Input
-              type="datetime-local"
-              defaultValue={deliveryDate}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                setDeliveryDate(newDate)
-                items.forEach((_, index) => {
-                  setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
-                });
-              }}
-            />
-            <FieldError>{errors.orderedAt?.message}</FieldError>
-          </Field>
+          <FieldGroup>
+            <Field className="max-w-60">
+              <FieldLabel className="font-heading text-base font-medium">Quando o pedido será entregue?</FieldLabel>
+              <Input
+                type="datetime-local"
+                defaultValue={deliveryDate}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  setDeliveryDate(newDate)
+                  items.forEach((_, index) => {
+                    setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
+                  });
+                }}
+              />
+              <FieldError>{errors.orderedAt?.message}</FieldError>
+            </Field>
+            <Field orientation="horizontal" className="w-auto">
+              <Switch 
+                id="isDelivered"
+                onCheckedChange={(value) => {
+                  items.forEach((_, index) => {
+                    setValue(`items.${index}.isDelivered`, value, { shouldValidate: true });
+                  });
+                }}
+              />
+              <Label htmlFor="isDelivered">Marcar como entregue</Label>
+            </Field>
+          </FieldGroup>
 
           <Separator />
 
@@ -275,20 +273,6 @@ function OrderFormRoute() {
                           </div>
   
                           <div className="md:col-span-3 space-y-2">
-                            <Field orientation="horizontal" className="w-auto">
-                              <Controller
-                                name={`items.${index}.isDelivered`}
-                                control={control}
-                                render={({ field }) => (
-                                  <Switch 
-                                    id={`isDelivered-${index}`}
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                )}
-                              />
-                              <Label htmlFor={`isDelivered-${index}`}>Entregue</Label>
-                            </Field>
                             {deliveryDate === watch(`items.${index}.deliveredAt`) ? (
                               <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
                                 Agendar entrega
@@ -356,22 +340,32 @@ function OrderFormRoute() {
                 {...register("discount", { valueAsNumber: true })}
               />
             </Field>
+            <Field orientation="horizontal" className="col-span-2 mt-4">
+              <Controller
+                name="isPaid"
+                control={control}
+                render={({ field }) => (
+                  <Switch id="isPaid"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <Label htmlFor="isPaid">Marcar como pago</Label>
+            </Field>
           </FieldGroup>
 
-          <Separator />
-
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <dt className="opacity-70">Subtotal dos itens</dt>
-            <dd className="text-right font-medium">{currencyFormatter.format(subtotal)}</dd>
-            <dt className="opacity-70">Total do pedido</dt>
-            <dd className="text-right font-medium">{currencyFormatter.format(total)}</dd>
-          </dl>
-
-          <Separator />
-
-          <Button type="submit" disabled={isCreatingOrder} className="w-full" variant="default" size="lg">
-            {isCreatingOrder ? "Salvando..." : "Salvar pedido"}
-          </Button>
+          <div className="flex items-center">
+            <div className="flex-1 space-y-1">
+              <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
+              <p className="text-sm font-heading text-muted-foreground">Itens: {currencyFormatter.format(subtotal)}</p>
+            </div>
+            <div className="flex-none">
+              <Button type="submit" disabled={isCreatingOrder} className="w-40" variant="default" size="lg">
+                {isCreatingOrder ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
         </form>
       </main>
     </FormProvider>

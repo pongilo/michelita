@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Edit01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { PlusIcon } from "lucide-react";
+import { EditIcon, PlusIcon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
@@ -180,7 +178,7 @@ function ProductsPage() {
                   onClick={() => handleStartEdit(product.id)}
                   disabled={isDeletingProduct}
                 >
-                  <HugeiconsIcon icon={Edit01Icon} size={16} strokeWidth={2} />
+                  <EditIcon />
                 </Button>
                 <Button
                   size="icon-sm"
@@ -188,7 +186,7 @@ function ProductsPage() {
                   onClick={() => handleDelete(product.id, product.name)}
                   disabled={isDeletingProduct}
                 >
-                  <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={2} />
+                  <EditIcon />
                 </Button>
               </ItemActions>
             </Item>
