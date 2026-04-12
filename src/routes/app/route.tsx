@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { getUser } from "@/lib/api/auth/get-user";
 import { getOrganization } from "@/lib/api/organization/get-organization";
-import { ArrowRightLeftIcon, ChevronsUpDown, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { ChevronsUpDown, LayoutDashboardIcon, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -45,8 +45,9 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
+  { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
   { to: "/app/orders", icon: ListCheckIcon, label: "Pedidos" },
-  { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
+  // { to: "/app/transactions", icon: ArrowRightLeftIcon, label: "Transações" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/products", icon: PackageIcon, label: "Produtos" },
 ] as const;

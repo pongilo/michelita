@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { EditIcon, PlusIcon } from "lucide-react";
+import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
@@ -186,7 +186,7 @@ function ProductsPage() {
                   onClick={() => handleDelete(product.id, product.name)}
                   disabled={isDeletingProduct}
                 >
-                  <EditIcon />
+                  <Trash2Icon />
                 </Button>
               </ItemActions>
             </Item>
