@@ -77,9 +77,14 @@ export function OrderEditItemModal({ deliveryDate }: { deliveryDate: string }) {
                     <MinusIcon />
                   </Button>
                 )}
-                <span className="w-6 text-center text-sm font-medium tabular-nums">
-                  {watchedItem.quantity}
-                </span>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="0"
+                  {...register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                  className="text-center"
+                />
                 <Button
                   type="button"
                   variant="outline"

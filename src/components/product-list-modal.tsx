@@ -84,7 +84,11 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
                     <Item size="xs">
                       <ItemContent>
                         <ItemTitle>{product.name}</ItemTitle>
-                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                        {inCart ? (
+                          <ItemDescription>{itemsWatched[itemIndex].quantity} x {currencyFormatter.format(product.price)} = {currencyFormatter.format(itemsWatched[itemIndex].quantity * product.price)}</ItemDescription>
+                        ) : (
+                          <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                        )}
                       </ItemContent>
                       <ItemActions className="flex items-center gap-1">
                         {inCart && (

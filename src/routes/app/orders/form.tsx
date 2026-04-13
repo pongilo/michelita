@@ -131,8 +131,8 @@ function OrderFormRoute() {
                 {items.map((item, index) => (
                   <Item size="sm" variant="outline" key={index}>
                     <ItemContent>
-                      <ItemTitle>{item.quantity}x {item.description}</ItemTitle>
-                      <ItemDescription>{currencyFormatter.format((Number(item.unitPrice || 0)))}</ItemDescription>
+                      <ItemTitle>{item.description}</ItemTitle>
+                      <ItemDescription>{item.quantity} x {currencyFormatter.format((item.unitPrice || 0))} = {currencyFormatter.format(item.quantity * (item.unitPrice || 0))}</ItemDescription>
                       {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
                       {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
                     </ItemContent>
@@ -262,7 +262,7 @@ function OrderFormRoute() {
             </Field>
           </FieldGroup>
 
-          <div className="flex items-center">
+          <div className="flex items-center sticky bottom-0 bg-background py-2">
             <div className="flex-1 space-y-1">
               <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
               <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
