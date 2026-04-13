@@ -4,14 +4,15 @@ import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import { currencyFormatter, dateFormatter as datetimeFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/app/customers/$customerId")({
   component: CustomerDetailsPage,
@@ -156,34 +157,30 @@ function CustomerDetailsPage() {
             {data.recentOrders.length === 0 ? (
               <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
             ) : (
-              <ItemGroup>
+              <div className="space-y-2">
                 {data.recentOrders.map((order) => (
-                  <Item
-                    key={order.id}
-                    size="sm"
-                    variant="outline"
-                    render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}
-                  >
-                    <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${order.isPaid ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-                      {order.isPaid ? "✓" : "!"}
-                    </ItemMedia>
+                  <Item key={order.id} variant="outline" className="items-start" render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}>
                     <ItemContent>
-                      <ItemTitle>
-                        #{order.id.slice(0, 8)}
-                        {order.note ? <span className="opacity-50 font-normal"> · {order.note}</span> : null}
-                      </ItemTitle>
-                      <ItemDescription>
-                        {datetimeFormatter.format(new Date(order.orderedAt))}
-                        {" · "}
-                        {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
-                      </ItemDescription>
+                      <div className="flex justify-between items-center">
+                        <ItemTitle>{formatFullDate(new Date(order.orderedAt))}</ItemTitle>
+                        <div className="flex gap-1 items-center">
+                          {currencyFormatter.format(order.itemTotal)}
+                          <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                            {order.isPaid ? "Pago" : "Pendente"}
+                          </Badge>
+                        </div>
+                      </div>
+                      {order.note && <ItemDescription>{order.note}</ItemDescription>}
+                      <ItemSeparator />
+                      {order.items.map((item) => (
+                        <ItemDescription key={item.id}>
+                          <span className="text-foreground">{item.quantity}x</span> {[item.description, item.note].filter(i => !!i).join(' • ')}
+                        </ItemDescription>
+                      ))}
                     </ItemContent>
-                    <ItemActions>
-                      <span className="text-sm font-semibold">{currencyFormatter.format(order.itemTotal)}</span>
-                    </ItemActions>
                   </Item>
                 ))}
-              </ItemGroup>
+              </div>
             )}
           </div>
         </div>

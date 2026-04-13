@@ -50,6 +50,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
               quantity: true,
               total: true,
               deliveredAt: true,
+              note: true,
             },
           },
         },
@@ -65,6 +66,14 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
         note: order.note,
         itemCount: order.item.length,
         itemTotal: Number(itemTotal.toFixed(2)),
+        items: order.item.map((item) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          total: Number(item.total),
+          deliveredAt: item.deliveredAt,
+          note: item.note
+        })),
       };
     });
 
