@@ -7,7 +7,7 @@ import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
 import { currencyFormatter } from "@/lib/utils/formatter";
@@ -20,6 +20,7 @@ import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
 import { useState } from "react";
 import { OrderItemNoteModal } from "@/components/order-item-note-modal";
 import { OrderEditItemModal } from "@/components/order-edit-item-modal";
+import { EditIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
@@ -126,20 +127,29 @@ function OrderFormRoute() {
                 <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Adicione os itens do pedido'}</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <ItemGroup>
                 {items.map((item, index) => (
-                  <div key={index} className="space-y-2">
-                    <Item size="sm" variant="muted" render={<Link to="." search={{ modal: "editItem", itemIndex: index }} resetScroll={false} />}>
-                      <ItemContent>
-                        <ItemTitle>{item.quantity}x {item.description}</ItemTitle>
-                        <ItemDescription>{currencyFormatter.format((Number(item.unitPrice || 0)))}</ItemDescription>
-                        {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
-                        {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
-                      </ItemContent>
-                    </Item>
-                  </div>
+                  <Item size="sm" variant="outline" key={index}>
+                    <ItemContent>
+                      <ItemTitle>{item.quantity}x {item.description}</ItemTitle>
+                      <ItemDescription>{currencyFormatter.format((Number(item.unitPrice || 0)))}</ItemDescription>
+                      {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
+                      {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
+                    </ItemContent>
+                    <ItemActions>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        nativeButton={false} 
+                        render={<Link to="." search={{ modal: "editItem", itemIndex: index }} resetScroll={false} />}
+                      >
+                        <EditIcon />
+                      </Button>
+                    </ItemActions>
+                  </Item>
                 ))}
-              </div>
+              </ItemGroup>
             )}
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} resetScroll={false} />}>
