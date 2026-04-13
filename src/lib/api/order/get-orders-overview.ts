@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
-const overviewPeriodSchema = z.enum(["weekly", "monthly"]);
+const overviewPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
 
 const getOrdersOverviewSchema = z.object({
   organizationId: z.uuid(),
@@ -17,6 +17,11 @@ function getPeriodBounds(period: OverviewPeriod, baseDate = new Date()) {
   const start = new Date(baseDate);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
+
+  if (period === "daily") {
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
 
   if (period === "weekly") {
     const diffToMonday = (start.getDay() + 6) % 7;
@@ -45,6 +50,10 @@ const getOrdersOverviewServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const referenceDate = parseReferenceDate(data.referenceDate);
     const { start, end } = getPeriodBounds(data.period, referenceDate);
+
+    const rangeEndDate = new Date(end);
+    rangeEndDate.setDate(rangeEndDate.getDate() - 1);
+    rangeEndDate.setHours(0, 0, 0, 0);
 
     const ordersInPeriod = await prisma.order.findMany({
       where: {
@@ -91,7 +100,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "POST" })
     return {
       period: data.period,
       rangeStart: start.toISOString(),
-      rangeEnd: new Date(end.getTime() - 1).toISOString(),
+      rangeEnd: rangeEndDate.toISOString(),
       stats: {
         totalRevenue,
         orderCount,

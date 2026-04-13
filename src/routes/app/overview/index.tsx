@@ -5,10 +5,12 @@ import { currencyFormatter, shortDateFormatter } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@/components/ui/item";
 
-type Period = "weekly" | "monthly";
+type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
+type OverviewPeriod = "daily" | "weekly" | "monthly";
 
 function currentDateInputValue() {
   const now = new Date();
@@ -16,19 +18,54 @@ function currentDateInputValue() {
   return local.toISOString().slice(0, 10);
 }
 
+function tomorrowDateInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  local.setDate(local.getDate() + 1);
+  return local.toISOString().slice(0, 10);
+}
+
+function currentMonthInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 7);
+}
+
+function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMonth: string, customWeek: string): { period: OverviewPeriod; referenceDate: string } {
+  switch (filter) {
+    case "today":
+      return { period: "daily", referenceDate: currentDateInputValue() };
+    case "tomorrow":
+      return { period: "daily", referenceDate: tomorrowDateInputValue() };
+    case "week":
+      return { period: "weekly", referenceDate: customWeek };
+    case "month":
+      return { period: "monthly", referenceDate: `${customMonth}-01` };
+    case "custom":
+      return { period: "daily", referenceDate: customDate };
+  }
+}
+
 export const Route = createFileRoute("/app/overview/")({
   component: OverviewPage,
 });
 
-const PERIOD_OPTIONS: { key: Period; label: string }[] = [
-  { key: "weekly", label: "Esta semana" },
-  { key: "monthly", label: "Este mês" },
+const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: "today", label: "Hoje" },
+  { key: "tomorrow", label: "Amanhã" },
+  { key: "week", label: "Esta semana" },
+  { key: "month", label: "Este mês" },
+  { key: "custom", label: "Escolher data" },
 ];
 
 function OverviewPage() {
   const { organization } = Route.useRouteContext();
-  const [period, setPeriod] = useState<Period>("monthly");
-  const referenceDate = currentDateInputValue();
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("month");
+  const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
+  const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
+  const [customWeek, setCustomWeek] = useState<string>(currentDateInputValue);
+
+  const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth, customWeek);
 
   const { data, isLoading, isError, error } = useGetOrdersOverview({
     organizationId: organization.id,
@@ -46,15 +83,36 @@ function OverviewPage() {
       <header className="space-y-4">
         <h1 className="text-2xl font-heading">Visão geral</h1>
         <div className="flex gap-2 flex-wrap">
-          {PERIOD_OPTIONS.map(({ key, label }) => (
+          {QUICK_FILTERS.map(({ key, label }) => (
             <Button
               key={key}
-              onClick={() => setPeriod(key)}
-              variant={period === key ? "default" : "outline"}
+              onClick={() => setQuickFilter(key)}
+              variant={quickFilter === key ? "default" : "outline"}
             >
               {label}
             </Button>
           ))}
+          {quickFilter === "week" && (
+            <Input
+              type="date"
+              value={customWeek}
+              onChange={(e) => setCustomWeek(e.target.value)}
+            />
+          )}
+          {quickFilter === "custom" && (
+            <Input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+            />
+          )}
+          {quickFilter === "month" && (
+            <Input
+              type="month"
+              value={customMonth}
+              onChange={(e) => setCustomMonth(e.target.value)}
+            />
+          )}
         </div>
         {rangeLabel && (
           <p className="text-sm text-muted-foreground">{rangeLabel}</p>

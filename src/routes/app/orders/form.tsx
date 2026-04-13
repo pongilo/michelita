@@ -7,12 +7,12 @@ import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemContent } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
 import { currencyFormatter } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
-import { EditIcon, Trash2Icon } from "lucide-react";
+import { EllipsisVerticalIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { CustomerListModal } from "@/components/customer-list-modal";
 import { ProductListModal } from "@/components/product-list-modal";
 import { OrderNoteModal } from "@/components/order-note-modal";
@@ -20,12 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
 import { useState } from "react";
 import { OrderItemNoteModal } from "@/components/order-item-note-modal";
-
-function localDatetimeNow() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
@@ -34,19 +29,10 @@ export const Route = createFileRoute("/app/orders/form")({
 function OrderFormRoute() {
   const { organization } = Route.useRouteContext();
   const [deliveryDate, setDeliveryDate] = useState(() => {
-    return localDatetimeNow()
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
   })
-
-  function emptyItem(): CreateOrderInput["items"][number] {
-    return {
-      description: "",
-      unitPrice: 0,
-      quantity: 1,
-      deliveredAt: deliveryDate,
-      note: "",
-      isDelivered: false,
-    };
-  }
 
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization.id,
@@ -58,7 +44,7 @@ function OrderFormRoute() {
     defaultValues: {
       organizationId: organization.id,
       customerId: "",
-      orderedAt: localDatetimeNow(),
+      orderedAt: deliveryDate,
       isPaid: false,
       note: "",
       shippingFee: 0,
@@ -71,7 +57,6 @@ function OrderFormRoute() {
 
   const {
     fields,
-    append: appendItem,
     remove: removeItem,
   } = useFieldArray({
     control,
@@ -83,11 +68,11 @@ function OrderFormRoute() {
   const discount = watch("discount");
   const watchedNote = watch('note');
 
-  const subtotal = items.reduce(
+  const total = items.reduce(
     (acc, item) => acc + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0),
     0
-  );
-  const total = subtotal + (Number(shippingFee) || 0) - (Number(discount) || 0);
+  ) + (Number(shippingFee) || 0) - (Number(discount) || 0);
+  const totalItems = items.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 
   async function onCreateOrder(values: CreateOrderOutput) {
     await createOrder({
@@ -109,16 +94,15 @@ function OrderFormRoute() {
     }, {
       onSuccess: (data) => {
         toast.success(`Pedido criado com sucesso. ID: ${data.id}`);
-        const newOrderedAt = localDatetimeNow();
         reset({
           organizationId: organization.id,
           customerId: "",
-          orderedAt: newOrderedAt,
+          orderedAt: deliveryDate,
           isPaid: false,
           note: "",
           shippingFee: 0,
           discount: 0,
-          items: [emptyItem()],
+          items: [],
         });
       },
       onError: (error) => {
@@ -138,19 +122,86 @@ function OrderFormRoute() {
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
         <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
-          <h1 className="text-2xl font-heading mb-4">Novo pedido</h1>
-          {watchedNote ? (
-            <div className="flex items-center">
-              <p className="text-base text-muted-foreground">Observação: {watchedNote}</p>
-              <Button type="button" variant="ghost" size="icon-sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
-                <EditIcon />
+          <div className="space-y-4">
+            <h1 className="text-2xl font-heading">Novo pedido</h1>
+            {items.length === 0 ? (
+              <div>
+                <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Adicione os itens do pedido'}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={index} className="space-y-2">
+                    <Item size="sm" variant="muted">
+                      <ItemContent>
+                        <ItemTitle>{item.description}</ItemTitle>
+                        <ItemDescription>{currencyFormatter.format((Number(item.unitPrice || 0)))}</ItemDescription>
+                        {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
+                        {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
+                      </ItemContent>
+                      <ItemActions>
+                        <div className="flex items-center gap-1">
+                          {item.quantity === 1 ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => removeItem(index)}
+                            >
+                              <Trash2Icon />
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => setValue(`items.${index}.quantity`, item.quantity - 1)}
+                            >
+                              <MinusIcon />
+                            </Button>
+                          )}
+                          <span className="w-6 text-center text-sm font-medium tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            onClick={() => setValue(`items.${index}.quantity`, item.quantity + 1)}
+                          >
+                            <PlusIcon />
+                          </Button>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                            <EllipsisVerticalIcon />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} resetScroll={false} />}>
+                              {deliveryDate !== item.deliveredAt ? 'Editar entrega' : 'Agendar entrega'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} resetScroll={false} />}>
+                              {item.note ? 'Editar observação' : 'Adicionar observação'}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => removeItem(index)} className="text-destructive focus:text-destructive">
+                              Remover
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </ItemActions>
+                    </Item>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} resetScroll={false} />}>
+                Catalogo de produtos
               </Button>
             </div>
-          ) : (
-            <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} />}>
-              Adicionar observação
-            </Button>
-          )}
+          </div>
 
           <Separator />
 
@@ -185,136 +236,37 @@ function OrderFormRoute() {
 
           <Separator />
 
-          {selectedCustomer ? (
-            <div className="flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="font-heading text-base font-medium">{selectedCustomer.name}</p>
-              </div>
-              <Button size="icon" variant="ghost" onClick={() => setValue("customerId", "", { shouldValidate: true })} title="Remover cliente vinculado">
-                <Trash2Icon className="text-destructive" />
+          <div className="space-y-4">
+            <p className="font-heading text-base font-medium">Cliente (opcional)</p>
+            <p className="text-base text-muted-foreground">
+              {selectedCustomer?.name ?? "Nenhum cliente selecionado para este pedido"}
+            </p>
+            {selectedCustomer ? (
+              <Button size="sm" variant="outline" onClick={() => setValue("customerId", "", { shouldValidate: true })}>
+                Remover
               </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="font-heading text-base font-medium">Cliente (opcional)</p>
-              <p className="text-base text-muted-foreground">Nenhum cliente selecionado para este pedido</p>
-              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "customer" }} />}>
+            ) : (
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                nativeButton={false} 
+                render={<Link to="." search={{ modal: "customer" }} resetScroll={false} />}
+              >
                 Selecionar
               </Button>
-            </div>
-          )}
+            )}
+          </div>
           <FieldError>{errors.customerId?.message}</FieldError>
 
           <Separator />
 
           <div className="space-y-4">
-            <p className="font-heading text-base font-medium">Produtos</p>
-            {items.length === 0 ? (
-              <div>
-                <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Nenhum item adicionado para este pedido'}</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {items.map((_, index) => (
-                  <div key={fields[index]?.id ?? index} className="space-y-2">
-                    <div className="flex justify-between items-center gap-2">
-                      <p>
-                        Item {index + 1}{" "}
-                        <span className="text-xs font-normal opacity-60">
-                          {currencyFormatter.format((Number(items[index]?.unitPrice) || 0) * (Number(items[index]?.quantity) || 0))}
-                        </span>
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-destructive"
-                        onClick={() => removeItem(index)}
-                      >
-                        <Trash2Icon />
-                      </Button>
-                    </div>
-                    <Item size="sm" variant="muted">
-                      <ItemContent>
-                        <FieldGroup className="grid gap-3 md:grid-cols-3">
-                          <Field className="md:col-span-2">
-                            <FieldLabel>Descrição</FieldLabel>
-                            <Input
-                              type="text"
-                              {...register(`items.${index}.description`)}
-                              className="bg-white"
-                            />
-                            <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
-                          </Field>
-  
-                          <div className="flex gap-3">
-                            <Field>
-                              <FieldLabel>Valor (R$)</FieldLabel>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                                className="bg-white"
-                              />
-                              <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
-                            </Field>
-                            <Field>
-                              <FieldLabel>Qtd</FieldLabel>
-                              <Input
-                                type="number"
-                                min="1"
-                                step="1"
-                                {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                                className="bg-white"
-                              />
-                              <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
-                            </Field>
-                          </div>
-  
-                          <div className="md:col-span-3 space-y-2">
-                            {deliveryDate === watch(`items.${index}.deliveredAt`) ? (
-                              <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
-                                Agendar entrega
-                              </Button>
-                            ) : (
-                              <div className="flex gap-1 items-center">
-                                <span>Entregar:</span>
-                                <span>{deliveryDate !== watch(`items.${index}.deliveredAt`) && watch(`items.${index}.deliveredAt`)}</span>
-                                <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} />}>
-                                  Editar
-                                </Button>
-                              </div>
-                            )}
-                            {!watch(`items.${index}.note`) ? (
-                              <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
-                                Adicionar observação
-                              </Button>
-                            ) : (
-                              <div className="flex gap-1 items-center">
-                                <span>Observação:</span>
-                                <span>{watch(`items.${index}.note`)}</span>
-                                <Button type="button" variant="ghost" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} />}>
-                                  Editar
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </FieldGroup>
-                      </ItemContent>
-                    </Item>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} />}>
-                Catalogo de produtos
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem())}>
-                Adicionar
-              </Button>
-            </div>
+            <p className="font-heading text-base font-medium">Observação (opcional)</p>
+            <p className="text-base text-muted-foreground">{watchedNote || "Nenhuma observação para este pedido"}</p>
+            <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} resetScroll={false} />}>
+              {watchedNote ? "Editar" : "Adicionar"}
+            </Button>
           </div>
 
           <Separator />
@@ -358,7 +310,7 @@ function OrderFormRoute() {
           <div className="flex items-center">
             <div className="flex-1 space-y-1">
               <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
-              <p className="text-sm font-heading text-muted-foreground">Itens: {currencyFormatter.format(subtotal)}</p>
+              <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
             </div>
             <div className="flex-none">
               <Button type="submit" disabled={isCreatingOrder} className="w-40" variant="default" size="lg">

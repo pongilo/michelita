@@ -3,7 +3,7 @@ import { getOrdersOverview } from "@/lib/api/order/get-orders-overview";
 
 type UseGetOrdersOverviewProps = {
   organizationId: string;
-  period: "weekly" | "monthly";
+  period: "daily" | "weekly" | "monthly";
   referenceDate: string;
 };
 

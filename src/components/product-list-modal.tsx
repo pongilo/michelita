@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { currencyFormatter } from "@/lib/utils/formatter";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 type ProductListModalProps = {
   organizationId: string;
@@ -25,17 +25,22 @@ type ProductListModalProps = {
 export function ProductListModal({ organizationId, deliveryDate }: ProductListModalProps) {
   const [modal, setModal] = useQueryState("modal");
   const [search, setSearch] = useState("");
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const { control } = useFormContext<CreateOrderInput>();
+  const { control, setValue, watch } = useFormContext<CreateOrderInput>();
 
-  const { append: appendItem } = useFieldArray({ control, name: "items" });
+  const { fields: items, append: appendItem, remove: removeItem } = useFieldArray({ control, name: "items" });
+
+  const itemsWatched = watch("items", items);
+  const total = itemsWatched.reduce(
+    (acc, item) => acc + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0),
+    0
+  );
+  const totalItems = itemsWatched.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 
   const isOpen = modal === "product";
 
   function onClose() {
     setModal(null);
     setSearch("");
-    setQuantities({});
   }
 
   const { data: products = [], isLoading } = useGetProducts({ organizationId });
@@ -43,31 +48,6 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  function getQty(productId: string) {
-    return quantities[productId] ?? 0;
-  }
-
-  function setQty(productId: string, value: number) {
-    setQuantities((prev) => ({ ...prev, [productId]: Math.max(0, value) }));
-  }
-
-  function handleAdd() {
-    for (const product of filteredProducts) {
-      const qty = getQty(product.id);
-      if (qty > 0) {
-        appendItem({
-          description: product.name,
-          unitPrice: product.price,
-          quantity: qty,
-          deliveredAt: deliveryDate,
-          note: "",
-          isDelivered: false,
-        });
-      }
-    }
-    onClose();
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -95,27 +75,41 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
             </EmptyState>
           ) : (
             <ItemGroup>
-              {filteredProducts.map((product, i) => (
-                <div key={product.id}>
-                  <Item size="xs">
-                    <ItemContent>
-                      <ItemTitle>{product.name}</ItemTitle>
-                      <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
-                    </ItemContent>
-                    <ItemActions className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {getQty(product.id) !== 0 && (
+              {filteredProducts.map((product, i) => {
+                const itemIndex = itemsWatched.findIndex((item) => item.description === product.name);
+                const inCart = itemIndex !== -1;
+
+                return (
+                  <div key={product.id}>
+                    <Item size="xs">
+                      <ItemContent>
+                        <ItemTitle>{product.name}</ItemTitle>
+                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                      </ItemContent>
+                      <ItemActions className="flex items-center gap-1">
+                        {inCart && (
                           <>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => setQty(product.id, getQty(product.id) - 1)}
-                            >
-                              <MinusIcon />
-                            </Button>
+                            {itemsWatched[itemIndex].quantity === 1 ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => removeItem(itemIndex)}
+                              >
+                                <Trash2Icon />
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity - 1)}
+                              >
+                                <MinusIcon />
+                              </Button>
+                            )}
                             <span className="w-6 text-center text-sm font-medium tabular-nums">
-                              {getQty(product.id)}
+                              {itemsWatched[itemIndex].quantity}
                             </span>
                           </>
                         )}
@@ -123,23 +117,46 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
                           type="button"
                           variant="outline"
                           size="icon-sm"
-                          onClick={() => setQty(product.id, getQty(product.id) + 1)}
+                          onClick={() => {
+                            if (inCart) {
+                              setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity + 1);
+                            } else {
+                              appendItem({
+                                description: product.name,
+                                unitPrice: product.price,
+                                quantity: 1,
+                                deliveredAt: deliveryDate,
+                                note: "",
+                                isDelivered: false,
+                              });
+                            }
+                          }}
                         >
                           <PlusIcon />
                         </Button>
-                      </div>
-                    </ItemActions>
-                  </Item>
-                  {i < filteredProducts.length - 1 && <ItemSeparator />}
-                </div>
-              ))}
+                      </ItemActions>
+                    </Item>
+                    {i < filteredProducts.length - 1 && <ItemSeparator />}
+                  </div>
+                );
+              })}
             </ItemGroup>
           )}
         </div>
 
-        <Button type="button" className="w-full" onClick={handleAdd} disabled={filteredProducts.every((p) => getQty(p.id) === 0)}>
-          Aplicar
-        </Button>
+        <div className="flex items-center">
+          <div className="flex-1 space-y-1">
+            <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
+            <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+          </div>
+          <div className="flex-none">
+            <Button type="button" className="w-40" onClick={onClose} size="lg">
+              Concluir
+            </Button>
+          </div>
+        </div>
+
+        
       </DialogContent>
     </Dialog>
   );
