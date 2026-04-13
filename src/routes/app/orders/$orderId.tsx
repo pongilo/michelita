@@ -1,42 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { OrderAction } from "@/components/order-action";
 import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
 import { OrderEditItemsModal } from "@/components/order-edit-items-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TransactionFormModal, type TransactionFormValues } from "@/components/transaction-form-modal";
+import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
-import { useLinkOrderTransaction } from "@/hooks/tanstack/order/use-link-order-transaction";
-import { useCreateTransaction } from "@/hooks/tanstack/transaction/use-create-transaction";
-import { useGetTransactions } from "@/hooks/tanstack/transaction/use-get-transactions";
-import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate } from "@/lib/utils/formatter";
-import { toast } from "sonner";
+import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoadingState } from "@/components/ui/loading-state";
-
-const methodLabel: Record<string, string> = {
-  PIX: "PIX",
-  CASH: "Dinheiro",
-  CREDIT_CARD: "Cartao de credito",
-  DEBIT_CARD: "Cartao de debito",
-};
-
-function localDatetimeNow() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
-
-function currentDateInputValue() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
-}
 
 // ── Route ────────────────────────────────────────────────────────────────────
 
@@ -54,80 +27,9 @@ function OrderDetailsPage() {
     orderId,
   });
 
-  const { data: allTransactions = [] } = useGetTransactions({
-    organizationId: organization.id,
-    period: "monthly",
-    referenceDate: currentDateInputValue(),
-  });
-
-  const { mutateAsync: createTransaction, isPending: isCreatingTransaction } = useCreateTransaction({
-    organizationId: organization.id,
-  });
-  const { link, unlink } = useLinkOrderTransaction({ organizationId: organization.id, orderId });
-
   // ── Modal state ──────────────────────────────────────────────────────────
-  const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
   const [isEditItemsModalOpen, setIsEditItemsModalOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState("");
-
-  const linkedTransactionIds = useMemo(
-    () => new Set(order?.transactions.map((t) => t.id) ?? []),
-    [order?.transactions],
-  );
-
-  const availableToLink = allTransactions.filter((t) => !linkedTransactionIds.has(t.id));
-
-  async function handleCreateTransaction(values: TransactionFormValues) {
-    try {
-      await createTransaction({
-        organizationId: organization.id,
-        type: values.type,
-        amount: values.amount,
-        method: values.method,
-        madeAt: values.madeAt,
-        linkedOrderId: orderId,
-        linkedCustomerId: values.linkedCustomerId || undefined,
-        description: values.description,
-      });
-      setIsNewTransactionModalOpen(false);
-      toast.success("Transacao criada e vinculada ao pedido.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao criar transacao.");
-    }
-  }
-
-  async function handleLinkTransaction() {
-    if (!selectedTransactionId) return;
-    try {
-      await link.mutateAsync({ organizationId: organization.id, orderId, transactionId: selectedTransactionId });
-      setIsLinkModalOpen(false);
-      setSelectedTransactionId("");
-      toast.success("Transacao vinculada ao pedido.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao vincular transacao.");
-    }
-  }
-
-  async function handleUnlinkTransaction(transactionId: string) {
-    const confirmed = window.confirm("Deseja desvincular esta transacao do pedido?");
-    if (!confirmed) return;
-    try {
-      await unlink.mutateAsync({ organizationId: organization.id, orderId, transactionId });
-      toast.success("Transacao desvinculada do pedido.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao desvincular transacao.");
-    }
-  }
-
-  const fixedLinkedOrder = order
-    ? { id: order.id, label: `#${order.id.slice(0, 8)}${order.customer ? ` – ${order.customer.name}` : ""}` }
-    : undefined;
-
-  const fixedLinkedCustomer = order?.customer
-    ? { id: order.customer.id, name: order.customer.name }
-    : undefined;
 
   if (isLoading) {
     return (
@@ -177,13 +79,6 @@ function OrderDetailsPage() {
                 <OrderAction.MarkAsPaid />
               )}
               <OrderAction.MarkAllDelivered />
-              <OrderAction.Separator />
-              <DropdownMenuItem onClick={() => { setSelectedTransactionId(""); setIsLinkModalOpen(true); }}>
-                Vincular transação
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsNewTransactionModalOpen(true)}>
-                Nova transação
-              </DropdownMenuItem>
               <OrderAction.Separator />
               <OrderAction.DeleteOrder onSuccess={() => navigate({ to: "/app/orders" })} />
             </OrderAction.Content>
@@ -296,43 +191,6 @@ function OrderDetailsPage() {
               </ItemGroup>
             )}
           </div>
-
-          {/* Transações */}
-          <h2>Transações</h2>
-          {order.transactions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma transação vinculada.</p>
-          ) : (
-            <ItemGroup>
-              {order.transactions.map((transaction) => (
-                <Item key={transaction.id} size="sm" variant="outline">
-                  <ItemMedia className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${transaction.type === "entry" ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                    {transaction.type === "entry" ? "↑" : "↓"}
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemTitle>
-                      {transaction.description || (transaction.type === "entry" ? "Entrada" : "Saída")}
-                    </ItemTitle>
-                    <ItemDescription>
-                      {methodLabel[transaction.method] ?? transaction.method}
-                      {" · "}
-                      {datetimeFormatter.format(new Date(transaction.madeAt))}
-                      {transaction.linkedCustomers.length > 0 && (
-                        <> · {transaction.linkedCustomers.map((c) => c.name).join(", ")}</>
-                      )}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <span className={`text-sm font-semibold ${transaction.type === "entry" ? "text-success" : "text-error"}`}>
-                      {transaction.type === "entry" ? "+" : "−"}{currencyFormatter.format(Math.abs(transaction.amount))}
-                    </span>
-                    <Button type="button" variant="ghost" size="xs" className="text-destructive" disabled={unlink.isPending} onClick={() => handleUnlinkTransaction(transaction.id)}>
-                      ×
-                    </Button>
-                  </ItemActions>
-                </Item>
-              ))}
-            </ItemGroup>
-          )}
         </div>
 
         <OrderEditInfoModal
@@ -350,68 +208,6 @@ function OrderDetailsPage() {
           organizationId={organization.id}
           items={order.item}
         />
-
-        <TransactionFormModal
-          isOpen={isNewTransactionModalOpen}
-          mode="create"
-          isSubmitting={isCreatingTransaction}
-          customers={[]}
-          fixedLinkedOrder={fixedLinkedOrder}
-          fixedLinkedCustomer={fixedLinkedCustomer}
-          errorMessage=""
-          successMessage=""
-          initialValues={{ madeAt: localDatetimeNow() }}
-          onClose={() => setIsNewTransactionModalOpen(false)}
-          onSubmit={handleCreateTransaction}
-        />
-
-        <Dialog open={isLinkModalOpen} onOpenChange={(open) => { if (!open) { setIsLinkModalOpen(false); setSelectedTransactionId(""); } }}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Vincular transação existente</DialogTitle>
-            </DialogHeader>
-
-            {availableToLink.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma transacao disponivel para vincular no periodo atual.</p>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Selecione a transacao</p>
-                <Select value={selectedTransactionId} onValueChange={(v) => setSelectedTransactionId(v ?? "")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableToLink.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        #{t.id.slice(0, 8)} – {t.type === "entry" ? "Entrada" : "Saida"}{" "}
-                        {currencyFormatter.format(Math.abs(t.amount))} –{" "}
-                        {datetimeFormatter.format(new Date(t.madeAt))}
-                        {t.description ? ` – ${t.description}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => { setIsLinkModalOpen(false); setSelectedTransactionId(""); }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                disabled={!selectedTransactionId || link.isPending}
-                onClick={handleLinkTransaction}
-              >
-                {link.isPending ? "Vinculando..." : "Vincular"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </main>
     );
   }

@@ -30,8 +30,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
       throw new Error("Cliente nao encontrado para a organizacao informada.");
     }
 
-    const [orders, transactions] = await Promise.all([
-      prisma.order.findMany({
+    const orders = await prisma.order.findMany({
         where: {
           organizationId: data.organizationId,
           customerId: data.customerId,
@@ -54,28 +53,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
             },
           },
         },
-      }),
-      prisma.transaction.findMany({
-        where: {
-          organizationId: data.organizationId,
-          customer: {
-            some: {
-              customerId: data.customerId,
-            },
-          },
-        },
-        orderBy: {
-          madeAt: "desc",
-        },
-        select: {
-          id: true,
-          amount: true,
-          method: true,
-          madeAt: true,
-          description: true,
-        },
-      }),
-    ]);
+      });
 
     const orderSummaries = orders.map((order) => {
       const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
@@ -92,28 +70,15 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
 
     const totalOrders = orderSummaries.length;
     const totalInvoiced = orderSummaries.reduce((sum, order) => sum + order.itemTotal, 0);
-    const totalReceived = transactions.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
-
-    const recentTransactions = transactions.slice(0, 20).map((transaction) => ({
-      id: transaction.id,
-      amount: Number(transaction.amount),
-      method: transaction.method,
-      madeAt: transaction.madeAt,
-      description: transaction.description,
-      type: Number(transaction.amount) >= 0 ? "entry" : "exit",
-    }));
 
     return {
       customer,
       metrics: {
         totalOrders,
         totalInvoiced: Number(totalInvoiced.toFixed(2)),
-        totalReceived: Number(totalReceived.toFixed(2)),
-        balance: Number((totalReceived - totalInvoiced).toFixed(2)),
         lastOrderAt: orderSummaries[0]?.orderedAt ?? null,
       },
       recentOrders: orderSummaries.slice(0, 15),
-      recentTransactions,
     };
   });
 
