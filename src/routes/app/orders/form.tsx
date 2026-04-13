@@ -7,12 +7,11 @@ import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
+import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
 import { currencyFormatter } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
-import { EllipsisVerticalIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { CustomerListModal } from "@/components/customer-list-modal";
 import { ProductListModal } from "@/components/product-list-modal";
 import { OrderNoteModal } from "@/components/order-note-modal";
@@ -20,7 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
 import { useState } from "react";
 import { OrderItemNoteModal } from "@/components/order-item-note-modal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { OrderEditItemModal } from "@/components/order-edit-item-modal";
 
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
@@ -55,10 +54,7 @@ function OrderFormRoute() {
 
   const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = methods;
 
-  const {
-    fields,
-    remove: removeItem,
-  } = useFieldArray({
+  const { fields } = useFieldArray({
     control,
     name: "items",
   });
@@ -118,6 +114,7 @@ function OrderFormRoute() {
       <CustomerListModal organizationId={organization.id} />
       <ProductListModal organizationId={organization.id} deliveryDate={deliveryDate} />
       <OrderScheduleItemModal deliveryDate={deliveryDate} />
+      <OrderEditItemModal deliveryDate={deliveryDate} />
       <OrderNoteModal />
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
@@ -132,65 +129,13 @@ function OrderFormRoute() {
               <div className="space-y-4">
                 {items.map((item, index) => (
                   <div key={index} className="space-y-2">
-                    <Item size="sm" variant="muted">
+                    <Item size="sm" variant="muted" render={<Link to="." search={{ modal: "editItem", itemIndex: index }} resetScroll={false} />}>
                       <ItemContent>
-                        <ItemTitle>{item.description}</ItemTitle>
+                        <ItemTitle>{item.quantity}x {item.description}</ItemTitle>
                         <ItemDescription>{currencyFormatter.format((Number(item.unitPrice || 0)))}</ItemDescription>
                         {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
                         {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
                       </ItemContent>
-                      <ItemActions>
-                        <div className="flex items-center gap-1">
-                          {item.quantity === 1 ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => removeItem(index)}
-                            >
-                              <Trash2Icon />
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => setValue(`items.${index}.quantity`, item.quantity - 1)}
-                            >
-                              <MinusIcon />
-                            </Button>
-                          )}
-                          <span className="w-6 text-center text-sm font-medium tabular-nums">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon-sm"
-                            onClick={() => setValue(`items.${index}.quantity`, item.quantity + 1)}
-                          >
-                            <PlusIcon />
-                          </Button>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-                            <EllipsisVerticalIcon />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem render={<Link to="." search={{ modal: "scheduleItem", itemIndex: index }} resetScroll={false} />}>
-                              {deliveryDate !== item.deliveredAt ? 'Editar entrega' : 'Agendar entrega'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem render={<Link to="." search={{ modal: "itemNote", itemIndex: index }} resetScroll={false} />}>
-                              {item.note ? 'Editar observação' : 'Adicionar observação'}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => removeItem(index)} className="text-destructive focus:text-destructive">
-                              Remover
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </ItemActions>
                     </Item>
                   </div>
                 ))}
