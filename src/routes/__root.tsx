@@ -13,6 +13,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import appCss from '@/styles.css?url'
 import { Toaster } from 'sonner';
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { AuthProvider } from "@/contexts/auth-context"
 
 const queryClient = new QueryClient();
     
@@ -65,15 +66,17 @@ function RootComponent() {
       </head>
       <body>
         <GoogleAnalytics />
-        <TooltipProvider>
         <QueryClientProvider client={queryClient}>
-          <NuqsAdapter>
-            <Outlet />
-          </NuqsAdapter>
+          <AuthProvider>
+            <TooltipProvider>
+              <NuqsAdapter>
+                <Outlet />
+              </NuqsAdapter>
+            </TooltipProvider>
+          </AuthProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <TanStackRouterDevtools />
-        </TooltipProvider>
         <Toaster />
         <Scripts />
       </body>

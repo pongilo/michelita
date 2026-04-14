@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useRequiredAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/app/customers/")({
 });
 
 function CustomersPage() {
-  const { organization } = Route.useRouteContext();
+  const { organization } = useRequiredAuth();
   const { data: customers = [], isLoading, isError, error } = useGetCustomers({
     organizationId: organization.id,
   });

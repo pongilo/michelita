@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useRequiredAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
@@ -30,7 +31,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 function ProductsPage() {
-  const { organization } = Route.useRouteContext();
+  const { organization } = useRequiredAuth();
   const { data: products = [], isLoading, isError, error } = useGetProducts({
     organizationId: organization.id,
   });

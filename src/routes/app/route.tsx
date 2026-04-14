@@ -1,7 +1,7 @@
-import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { signOut } from "@/lib/api/auth/sign-out";
-import { getUser } from "@/lib/api/auth/get-user";
-import { getOrganization } from "@/lib/api/organization/get-organization";
+import { useAuth } from "@/contexts/auth-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LayoutDashboardIcon, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import {
@@ -21,26 +21,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 
 export const Route = createFileRoute("/app")({
-  shouldReload: false,
-  beforeLoad: async ({ location }) => {
-    const { user } = await getUser();
-
-    if (!user) {
-      throw redirect({ to: "/login" });
-    }
-
-    const organization = await getOrganization({ ownerId: user.id });
-
-    if (!organization) {
-      throw redirect({ to: "/organization/new" });
-    }
-
-    return {
-      user,
-      organization,
-      pathname: location.pathname,
-    };
-  },
   component: PrivateLayout,
 });
 
@@ -53,10 +33,18 @@ const navItems = [
 
 function PrivateLayout() {
   const navigate = useNavigate();
-  const { organization, user, pathname } = Route.useRouteContext();
+  const queryClient = useQueryClient();
+  const { user, organization, isLoading } = useAuth();
+  const { location } = useRouterState();
+
+  if (isLoading) return null;
+  if (!user) return <Navigate to="/login" />;
+  if (!organization) return <Navigate to="/organization/new" />;
 
   async function handleSignOut() {
     await signOut();
+    queryClient.setQueryData(["auth-user"], { user: null });
+    queryClient.removeQueries({ queryKey: ["organization"] });
     await navigate({ to: "/login" });
   }
 
@@ -137,7 +125,7 @@ function PrivateLayout() {
       <SidebarInset>
         <div className="flex justify-between items-center p-5">
           <SidebarTrigger />
-          {pathname !== "/app/orders/form" && (
+          {location.pathname !== "/app/orders/form" && (
             <Button size="sm" nativeButton={false} render={<Link to="/app/orders/form" />}>
               Novo pedido
             </Button>

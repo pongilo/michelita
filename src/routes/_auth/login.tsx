@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutateAsync: signIn } = useSignIn()
 
@@ -36,6 +38,7 @@ function LoginPage() {
   async function onSubmit({ email, password }: LoginFormValues) {
     await signIn({ email, password }, {
       onSuccess: async () => {
+        await queryClient.refetchQueries({ queryKey: ["auth-user"] });
         await navigate({ to: "/app/orders" });
       },
       onError: (error) => {

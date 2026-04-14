@@ -3,11 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const getUserServerFn = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error) {
-    throw new Error(error.message);
-  }
+  const { data } = await supabase.auth.getUser();
 
   return data;
 });

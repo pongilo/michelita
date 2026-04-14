@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useRequiredAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { OrderAction } from "@/components/order-action";
 import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/app/orders/$orderId")({
 });
 
 function OrderDetailsPage() {
-  const { organization } = Route.useRouteContext();
+  const { organization } = useRequiredAuth();
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
 

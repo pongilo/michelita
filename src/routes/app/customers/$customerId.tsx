@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useRequiredAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/app/customers/$customerId")({
 });
 
 function CustomerDetailsPage() {
-  const { organization } = Route.useRouteContext();
+  const { organization } = useRequiredAuth();
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

@@ -1,4 +1,6 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useRequiredAuth } from "@/contexts/auth-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -33,8 +35,8 @@ type ProfileValues = z.infer<typeof profileSchema>;
 type PasswordValues = z.infer<typeof passwordSchema>;
 
 function AccountPage() {
-  const { user } = Route.useRouteContext();
-  const router = useRouter();
+  const { user } = useRequiredAuth();
+  const queryClient = useQueryClient();
 
   const {
     register: registerProfile,
@@ -62,7 +64,7 @@ function AccountPage() {
     try {
       await updateUser({ name: values.name, email: values.email });
       toast.success("Perfil atualizado com sucesso.");
-      router.invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao atualizar perfil.");
     }

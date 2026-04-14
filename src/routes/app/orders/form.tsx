@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRequiredAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/app/orders/form")({
 });
 
 function OrderFormRoute() {
-  const { organization } = Route.useRouteContext();
+  const { organization } = useRequiredAuth();
   const [deliveryDate, setDeliveryDate] = useState(() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);

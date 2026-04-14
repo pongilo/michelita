@@ -4,7 +4,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { signOut } from "@/lib/api/auth/sign-out";
+import { useAuth } from "@/contexts/auth-context";
 import { useCreateOrganization } from "@/hooks/tanstack/organization/use-create-organization";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -18,16 +20,12 @@ type CreateOrganizationFormValues = z.infer<typeof createOrganizationSchema>;
 
 export const Route = createFileRoute("/_auth/organization/new")({
   component: CreateOrganizationPage,
-  beforeLoad({ context }) {
-    return {
-      userId: context.userId
-    }
-  },
 });
 
 function CreateOrganizationPage() {
   const navigate = useNavigate();
-  const { userId } = Route.useRouteContext();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { mutateAsync: createOrganization } = useCreateOrganization();
 
   const {
@@ -39,10 +37,12 @@ function CreateOrganizationPage() {
   });
 
   async function onSubmit(values: CreateOrganizationFormValues) {
+    if (!user) return;
     await createOrganization(
-      { name: values.name, ownerId: userId },
+      { name: values.name, ownerId: user.id },
       {
         onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["organization", user.id] });
           await navigate({ to: "/app/orders" });
         },
         onError: (error) => {
@@ -54,6 +54,8 @@ function CreateOrganizationPage() {
 
   async function handleSignOut() {
     await signOut();
+    queryClient.setQueryData(["auth-user"], { user: null });
+    queryClient.removeQueries({ queryKey: ["organization"] });
     await navigate({ to: "/login" });
   }
 

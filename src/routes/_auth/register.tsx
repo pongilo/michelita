@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -29,6 +30,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { mutateAsync: signUp } = useSignUp();
 
   const {
@@ -49,6 +51,7 @@ function RegisterPage() {
             return;
           }
 
+          await queryClient.refetchQueries({ queryKey: ["auth-user"] });
           await navigate({ to: "/app/orders" });
         },
         onError: (error) => {
