@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
-export function OrderEditItemModal({ deliveryDate }: { deliveryDate: string }) {
+export function OrderEditItemModal() {
   const [modal, setModal] = useQueryState("modal");
   const [itemIndex, setItemIndex] = useQueryState("itemIndex", parseAsInteger);
   const { register, watch, setValue, control, formState: { errors } } = useFormContext<CreateOrderInput>();
@@ -108,24 +108,6 @@ export function OrderEditItemModal({ deliveryDate }: { deliveryDate: string }) {
               <FieldError>{itemErrors?.unitPrice?.message}</FieldError>
             </Field>
           </div>
-
-          <Field>
-            <FieldLabel>Data de entrega</FieldLabel>
-            <Input
-              type="datetime-local"
-              {...register(`items.${idx}.deliveredAt`)}
-            />
-            {watchedItem.deliveredAt !== deliveryDate && (
-              <button
-                type="button"
-                className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-                onClick={() => setValue(`items.${idx}.deliveredAt`, deliveryDate)}
-              >
-                Usar data padrão do pedido
-              </button>
-            )}
-            <FieldError>{itemErrors?.deliveredAt?.message}</FieldError>
-          </Field>
 
           <Field>
             <FieldLabel>Observação (opcional)</FieldLabel>

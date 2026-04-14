@@ -116,7 +116,7 @@ function OrderFormRoute() {
       <CustomerListModal organizationId={organization!.id} />
       <ProductListModal organizationId={organization!.id} deliveryDate={deliveryDate} />
       <OrderScheduleItemModal deliveryDate={deliveryDate} />
-      <OrderEditItemModal deliveryDate={deliveryDate} />
+      <OrderEditItemModal />
       <OrderNoteModal />
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
@@ -170,6 +170,7 @@ function OrderFormRoute() {
                 onChange={(e) => {
                   const newDate = e.target.value;
                   setDeliveryDate(newDate)
+                  setValue(`orderedAt`, newDate, { shouldValidate: true })
                   items.forEach((_, index) => {
                     setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
                   });
