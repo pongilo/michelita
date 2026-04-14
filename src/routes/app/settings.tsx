@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +21,7 @@ const orgSchema = z.object({
 type OrgValues = z.infer<typeof orgSchema>;
 
 function SettingsPage() {
-  const { user, organization } = useRequiredAuth();
+  const { user, organization } = useAuth();
   const queryClient = useQueryClient();
 
   const {
@@ -31,15 +31,15 @@ function SettingsPage() {
   } = useForm<OrgValues>({
     resolver: zodResolver(orgSchema),
     defaultValues: {
-      name: organization.name,
+      name: organization!.name,
     },
   });
 
   async function onSubmit(values: OrgValues) {
     try {
-      await updateOrganization({ id: organization.id, name: values.name });
+      await updateOrganization({ id: organization!.id, name: values.name });
       toast.success("Configurações salvas com sucesso.");
-      await queryClient.invalidateQueries({ queryKey: ["organization", user.id] });
+      await queryClient.invalidateQueries({ queryKey: ["organization", user!.id] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar configurações.");
     }

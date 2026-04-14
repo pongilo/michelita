@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +35,7 @@ type ProfileValues = z.infer<typeof profileSchema>;
 type PasswordValues = z.infer<typeof passwordSchema>;
 
 function AccountPage() {
-  const { user } = useRequiredAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const {
@@ -45,8 +45,8 @@ function AccountPage() {
   } = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user.user_metadata.name ?? "",
-      email: user.email ?? "",
+      name: user!.user_metadata.name ?? "",
+      email: user!.email ?? "",
     },
   });
 

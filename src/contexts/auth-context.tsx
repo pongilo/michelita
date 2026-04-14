@@ -58,16 +58,3 @@ export function useAuth() {
   }
   return context;
 }
-
-/**
- * Versão com tipos não-nullable de useAuth.
- * Usar apenas em componentes dentro do layout protegido (/app),
- * onde user e organization já estão garantidos pelo PrivateLayout.
- */
-export function useRequiredAuth() {
-  const auth = useAuth();
-  return auth as typeof auth & {
-    user: NonNullable<typeof auth.user>;
-    organization: NonNullable<typeof auth.organization>;
-  };
-}

@@ -3,14 +3,14 @@ import { getOrdersOverview } from "@/lib/api/order/get-orders-overview";
 
 type UseGetOrdersOverviewProps = {
   organizationId: string;
-  period: "daily" | "weekly" | "monthly";
-  referenceDate: string;
+  startAt: Date
+  endAt: Date
 };
 
-export function useGetOrdersOverview({ organizationId, period, referenceDate }: UseGetOrdersOverviewProps) {
+export function useGetOrdersOverview({ organizationId, startAt, endAt }: UseGetOrdersOverviewProps) {
   return useQuery({
-    queryKey: ["orders-overview", organizationId, period, referenceDate],
-    queryFn: async () => getOrdersOverview({ organizationId, period, referenceDate }),
+    queryKey: ["orders-overview", organizationId, startAt, endAt],
+    queryFn: async () => getOrdersOverview({ organizationId, startAt, endAt }),
     enabled: !!organizationId,
     refetchInterval: 60_000,
   });

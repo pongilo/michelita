@@ -9,16 +9,24 @@ function AuthLayout() {
   const { user, organization, isLoading } = useAuth();
   const { location } = useRouterState();
 
-  if (!isLoading) {
-    if (!user) {
-      if (location.pathname === "/organization/new") {
-        return <Navigate to="/login" />;
-      }
-    } else if (organization) {
-      return <Navigate to="/app/orders" />;
-    } else if (location.pathname !== "/organization/new") {
-      return <Navigate to="/organization/new" />;
-    }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Carregando...
+      </div>
+    )
+  }
+
+  if (!user && location.pathname === "/organization/new") {
+    return <Navigate to="/login" />;
+  }
+  
+  if (organization) {
+    return <Navigate to="/app/orders" />;
+  }
+  
+  if (location.pathname !== "/organization/new") {
+    return <Navigate to="/organization/new" />;
   }
 
   return (

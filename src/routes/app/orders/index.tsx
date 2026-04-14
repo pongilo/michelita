@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
@@ -59,7 +59,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
 ];
 
 function OrdersPage() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
   const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
   const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
@@ -67,7 +67,7 @@ function OrdersPage() {
   const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
 
   const { data, isLoading, isError, error } = useListOrders({
-    organizationId: organization.id,
+    organizationId: organization!.id,
     period,
     referenceDate,
   });

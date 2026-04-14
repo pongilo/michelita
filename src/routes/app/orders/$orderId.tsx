@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { OrderAction } from "@/components/order-action";
 import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
@@ -19,12 +19,12 @@ export const Route = createFileRoute("/app/orders/$orderId")({
 });
 
 function OrderDetailsPage() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
 
   const { data: order, isLoading, isError, error } = useGetOrder({
-    organizationId: organization.id,
+    organizationId: organization!.id,
     orderId,
   });
 
@@ -68,7 +68,7 @@ function OrderDetailsPage() {
             </div>
             <p className="text-muted-foreground text-base">{formatFullDate(new Date(order.orderedAt))}</p>
           </div>
-          <OrderAction orderId={orderId} organizationId={organization.id}>
+          <OrderAction orderId={orderId} organizationId={organization!.id}>
             <OrderAction.Trigger />
             <OrderAction.Content>
               <OrderAction.EditOrder onEdit={() => setIsEditInfoModalOpen(true)} />
@@ -172,7 +172,7 @@ function OrderDetailsPage() {
                       <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
                         {item.isDelivered ? "Entregue" : "A entregar"}
                       </Badge>
-                      <OrderAction orderId={orderId} itemId={item.id} organizationId={organization.id}>
+                      <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
                         <OrderAction.Trigger />
                         <OrderAction.Content>
                           <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
@@ -198,7 +198,7 @@ function OrderDetailsPage() {
           open={isEditInfoModalOpen}
           onOpenChange={setIsEditInfoModalOpen}
           orderId={orderId}
-          organizationId={organization.id}
+          organizationId={organization!.id}
           order={order}
         />
 
@@ -206,7 +206,7 @@ function OrderDetailsPage() {
           open={isEditItemsModalOpen}
           onOpenChange={setIsEditItemsModalOpen}
           orderId={orderId}
-          organizationId={organization.id}
+          organizationId={organization!.id}
           items={order.item}
         />
       </main>

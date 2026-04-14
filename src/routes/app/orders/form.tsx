@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/app/orders/form")({
 });
 
 function OrderFormRoute() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const [deliveryDate, setDeliveryDate] = useState(() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -36,14 +36,14 @@ function OrderFormRoute() {
   })
 
   const { data: customers = [] } = useGetCustomers({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
   const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
 
   const methods = useForm<CreateOrderInput, unknown, CreateOrderOutput>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: {
-      organizationId: organization.id,
+      organizationId: organization!.id,
       customerId: "",
       orderedAt: deliveryDate,
       isPaid: false,
@@ -93,7 +93,7 @@ function OrderFormRoute() {
       onSuccess: (data) => {
         toast.success(`Pedido criado com sucesso. ID: ${data.id}`);
         reset({
-          organizationId: organization.id,
+          organizationId: organization!.id,
           customerId: "",
           orderedAt: deliveryDate,
           isPaid: false,
@@ -113,8 +113,8 @@ function OrderFormRoute() {
 
   return (
     <FormProvider {...methods}>
-      <CustomerListModal organizationId={organization.id} />
-      <ProductListModal organizationId={organization.id} deliveryDate={deliveryDate} />
+      <CustomerListModal organizationId={organization!.id} />
+      <ProductListModal organizationId={organization!.id} deliveryDate={deliveryDate} />
       <OrderScheduleItemModal deliveryDate={deliveryDate} />
       <OrderEditItemModal deliveryDate={deliveryDate} />
       <OrderNoteModal />

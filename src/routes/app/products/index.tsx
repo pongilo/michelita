@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
@@ -31,16 +31,16 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 function ProductsPage() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const { data: products = [], isLoading, isError, error } = useGetProducts({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
   const { mutateAsync: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
 
   const [search, setSearch] = useState("");
@@ -61,7 +61,7 @@ function ProductsPage() {
         toast.success("Produto atualizado com sucesso.");
       } else {
         await createProduct({
-          organizationId: organization.id,
+          organizationId: organization!.id,
           name: values.name,
           price: values.price,
         });
@@ -91,7 +91,7 @@ function ProductsPage() {
     if (!confirmed) return;
 
     try {
-      await deleteProduct({ id: productId, organizationId: organization.id });
+      await deleteProduct({ id: productId, organizationId: organization!.id });
       toast.success("Produto excluído com sucesso.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir produto.");

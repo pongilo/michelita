@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,20 +20,20 @@ export const Route = createFileRoute("/app/customers/$customerId")({
 });
 
 function CustomerDetailsPage() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
-    organizationId: organization.id,
+    organizationId: organization!.id,
     customerId,
   });
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
 
   async function onSubmit(values: CustomerFormValues) {
@@ -58,7 +58,7 @@ function CustomerDetailsPage() {
     const confirmed = window.confirm("Deseja realmente excluir este cliente? Esta ação não pode ser desfeita.");
     if (!confirmed) return;
     try {
-      await deleteCustomer({ id: data.customer.id, organizationId: organization.id });
+      await deleteCustomer({ id: data.customer.id, organizationId: organization!.id });
       await navigate({ to: "/app/customers" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir cliente.");

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useRequiredAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
@@ -18,9 +18,9 @@ export const Route = createFileRoute("/app/customers/")({
 });
 
 function CustomersPage() {
-  const { organization } = useRequiredAuth();
+  const { organization } = useAuth();
   const { data: customers = [], isLoading, isError, error } = useGetCustomers({
-    organizationId: organization.id,
+    organizationId: organization!.id,
   });
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
   const [search, setSearch] = useState("");
@@ -38,7 +38,7 @@ function CustomersPage() {
   async function onSubmit(values: CustomerFormValues) {
     try {
       const customer = await createCustomer({
-        organizationId: organization.id,
+        organizationId: organization!.id,
         name: values.name.trim(),
         phone: values.phone?.trim() || undefined,
         address: values.address?.trim() || undefined,
