@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } 
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LayoutDashboardIcon, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, CalendarCheck2Icon } from 'lucide-react'
+import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, CalendarCheck2Icon } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,

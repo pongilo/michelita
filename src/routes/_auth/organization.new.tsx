@@ -43,7 +43,7 @@ function CreateOrganizationPage() {
       {
         onSuccess: async () => {
           await queryClient.invalidateQueries({ queryKey: ["organization", user.id] });
-          await navigate({ to: "/app/orders" });
+          await navigate({ to: "/app/overview" });
         },
         onError: (error) => {
           toast.error(error.message);

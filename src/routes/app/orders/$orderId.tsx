@@ -44,7 +44,7 @@ function OrderDetailsPage() {
     return (
       <div className="space-y-4">
         <p className="text-destructive">Erro ao carregar pedido: {error.message}</p>
-        <Button type="button" variant="outline" onClick={() => navigate({ to: "/app/orders" })}>
+        <Button type="button" variant="outline" onClick={() => navigate({ to: "/app/history" })}>
           Voltar para lista de pedidos
         </Button>
       </div>
@@ -81,7 +81,7 @@ function OrderDetailsPage() {
               )}
               <OrderAction.MarkAllDelivered />
               <OrderAction.Separator />
-              <OrderAction.DeleteOrder onSuccess={() => navigate({ to: "/app/orders" })} />
+              <OrderAction.DeleteOrder onSuccess={() => navigate({ to: "/app/history" })} />
             </OrderAction.Content>
           </OrderAction>
         </div>

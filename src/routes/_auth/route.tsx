@@ -22,7 +22,7 @@ function AuthLayout() {
   }
   
   if (organization) {
-    return <Navigate to="/app/orders" />;
+    return <Navigate to="/app/deliveries" />;
   }
   
   if (location.pathname !== "/organization/new") {
