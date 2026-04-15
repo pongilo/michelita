@@ -1,74 +1,42 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 
-type QuickFilter = "today" | "tomorrow" | "week" | "month" | "custom";
-type DashboardPeriod = "daily" | "weekly" | "monthly";
-
-function currentDateInputValue() {
+function getDayPeriod(offset: number) {
   const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
+  const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset));
+  return date.toISOString().slice(0, 10);
 }
 
-function tomorrowDateInputValue() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  local.setDate(local.getDate() + 1);
-  return local.toISOString().slice(0, 10);
-}
-
-function currentMonthInputValue() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 7);
-}
-
-function quickFilterToPeriod(filter: QuickFilter, customDate: string, customMonth: string): { period: DashboardPeriod; referenceDate: string } {
-  switch (filter) {
-    case "today":
-      return { period: "daily", referenceDate: currentDateInputValue() };
-    case "tomorrow":
-      return { period: "daily", referenceDate: tomorrowDateInputValue() };
-    case "week":
-      return { period: "weekly", referenceDate: currentDateInputValue() };
-    case "month":
-      return { period: "monthly", referenceDate: `${customMonth}-01` };
-    case "custom":
-      return { period: "daily", referenceDate: customDate };
-  }
-}
-
-export const Route = createFileRoute("/app/orders/")({
-  component: OrdersPage,
+const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
 });
 
-const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
-  { key: "today", label: "Hoje" },
-  { key: "tomorrow", label: "Amanhã" },
-  { key: "week", label: "Esta semana" },
-  { key: "month", label: "Este mês" },
-  { key: "custom", label: "Escolher data" },
-];
+export const Route = createFileRoute("/app/deliveries/")({
+  component: DeliveriesPage,
+});
 
-function OrdersPage() {
+function DeliveriesPage() {
   const { organization } = useAuth();
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("today");
-  const [customDate, setCustomDate] = useState<string>(currentDateInputValue);
-  const [customMonth, setCustomMonth] = useState<string>(currentMonthInputValue);
+  const [dayOffset, setDayOffset] = useState(0);
 
-  const { period, referenceDate } = quickFilterToPeriod(quickFilter, customDate, customMonth);
+  const referenceDate = getDayPeriod(dayOffset);
+  const isToday = dayOffset === 0;
+  const isTomorrow = dayOffset === 1;
 
   const { data, isLoading, isError, error } = useListOrders({
     organizationId: organization!.id,
-    period,
+    period: "daily",
     referenceDate,
   });
 
@@ -76,43 +44,37 @@ function OrdersPage() {
   const totalItems = data?.itemsByDay.reduce((sum, day) => sum + day.itemCount, 0) ?? 0;
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
 
+  const dayLabel = dayFormatter.format(new Date(referenceDate + "T00:00:00Z"));
+
   return (
-    <main className="mx-auto w-full max-w-6xl p-5">
-      <header className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-heading">Pedidos</h1>
-            {totalItems > 0 && (
-              <p className="text-sm text-muted-foreground">
-                ({deliveredCount} de {totalItems} entregues)
-              </p>
-            )}
-          </div>
+    <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
+      <header className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-heading">Entregas</h1>
+          {totalItems > 0 && (
+            <p className="text-sm text-muted-foreground">
+              ({deliveredCount} de {totalItems} entregues)
+            </p>
+          )}
         </div>
-        <div className="flex gap-2 flex-wrap mb-5">
-          {QUICK_FILTERS.map(({ key, label }) => (
-            <Button
-              key={key}
-              onClick={() => setQuickFilter(key)}
-              variant={quickFilter === key ? "default" : "outline"}
-            >
-              {label}
-            </Button>
-          ))}
-          {quickFilter === "custom" && (
-            <Input
-              type="date"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-            />
-          )}
-          {quickFilter === "month" && (
-            <Input
-              type="month"
-              value={customMonth}
-              onChange={(e) => setCustomMonth(e.target.value)}
-            />
-          )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setDayOffset((o) => o - 1)}
+            className="btn btn-ghost btn-sm btn-circle"
+            aria-label="Dia anterior"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <span className="text-sm font-medium capitalize min-w-48 text-center">
+            {isToday ? "Hoje" : isTomorrow ? "Amanhã" : dayLabel}
+          </span>
+          <button
+            onClick={() => setDayOffset((o) => o + 1)}
+            className="btn btn-ghost btn-sm btn-circle"
+            aria-label="Próximo dia"
+          >
+            <ChevronRight className="size-4" />
+          </button>
         </div>
       </header>
 

@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } 
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LayoutDashboardIcon, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon } from 'lucide-react'
+import { ChevronsUpDown, LayoutDashboardIcon, ListCheckIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, CalendarCheck2Icon } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -16,6 +16,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarGroupContent,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -23,13 +24,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export const Route = createFileRoute("/app")({
   component: PrivateLayout,
 });
-
-const navItems = [
-  { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
-  { to: "/app/orders", icon: ListCheckIcon, label: "Pedidos" },
-  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
-  { to: "/app/products", icon: PackageIcon, label: "Produtos" },
-] as const;
 
 function PrivateLayout() {
   const navigate = useNavigate();
@@ -47,6 +41,24 @@ function PrivateLayout() {
     queryClient.removeQueries({ queryKey: ["organization"] });
     await navigate({ to: "/login" });
   }
+
+  const navItems = [
+  {
+    label: 'Pedidos',
+    links: [
+      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
+      { to: "/app/deliveries", icon: CalendarCheck2Icon, label: "Entregas" },
+      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
+    ]
+  },
+  {
+    label: 'Mais',
+    links: [
+      { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
+      { to: "/app/products", icon: PackageIcon, label: "Produtos" },
+    ]
+  }
+] as const;
 
   return (
     <SidebarProvider>
@@ -99,7 +111,30 @@ function PrivateLayout() {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
+          {navItems.map((item, itemIndex) => (
+            <SidebarGroup key={`group-${itemIndex}`}>
+              {item.label && <SidebarGroupLabel>{item.label}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                {item.links.map((link) => (
+                  <SidebarMenuItem key={link.to}>
+                    <SidebarMenuButton render={
+                      <Link
+                        to={link.to}
+                        activeOptions={{ exact: true }}
+                        className="font-medium"
+                      >
+                        <link.icon className="size-4" />
+                        <span>{link.label}</span>
+                      </Link>
+                    }>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarGroupContent>  
+            </SidebarGroup>
+          ))}
+
+            {/* <SidebarGroupLabel>Pedidos</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => (
@@ -119,7 +154,7 @@ function PrivateLayout() {
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
+          </SidebarGroup> */}
         </SidebarContent>
       </Sidebar>
       <SidebarInset>

@@ -20,12 +20,15 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         organizationId,
         orderedAt: { gte: startAt, lt: endAt },
       },
+      orderBy: { orderedAt: "asc" },
       select: {
+        id: true,
         isPaid: true,
         shippingFee: true,
         discount: true,
-        orderedAt:  true,
-        item: { select: { description: true, total: true } },
+        orderedAt: true,
+        customer: { select: { name: true } },
+        item: { select: { description: true, quantity: true, total: true, isDelivered: true } },
       },
     });
 
@@ -47,6 +50,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         shippingFee: order.shippingFee !== null ? Number(order.shippingFee) : null,
         discount: order.discount !== null ? Number(order.discount) : null,
         item: order.item.map((i) => ({ ...i, total: Number(i.total) })),
+        orderedAt: order.orderedAt.toISOString(),
       })),
       stats: {
         orderCount,

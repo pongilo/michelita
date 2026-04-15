@@ -26,7 +26,8 @@ import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOverviewIndexRouteImport } from './routes/app/overview/index'
-import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
+import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
+import { Route as AppDeliveriesIndexRouteImport } from './routes/app/deliveries/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
@@ -116,9 +117,14 @@ const AppOverviewIndexRoute = AppOverviewIndexRouteImport.update({
   path: '/overview/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
+const AppHistoryIndexRoute = AppHistoryIndexRouteImport.update({
+  id: '/history/',
+  path: '/history/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppDeliveriesIndexRoute = AppDeliveriesIndexRouteImport.update({
+  id: '/deliveries/',
+  path: '/deliveries/',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
@@ -166,7 +172,8 @@ export interface FileRoutesByFullPath {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/orders/': typeof AppOrdersIndexRoute
+  '/app/deliveries/': typeof AppDeliveriesIndexRoute
+  '/app/history/': typeof AppHistoryIndexRoute
   '/app/overview/': typeof AppOverviewIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
@@ -189,7 +196,8 @@ export interface FileRoutesByTo {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers': typeof AppCustomersIndexRoute
-  '/app/orders': typeof AppOrdersIndexRoute
+  '/app/deliveries': typeof AppDeliveriesIndexRoute
+  '/app/history': typeof AppHistoryIndexRoute
   '/app/overview': typeof AppOverviewIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -215,7 +223,8 @@ export interface FileRoutesById {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/orders/': typeof AppOrdersIndexRoute
+  '/app/deliveries/': typeof AppDeliveriesIndexRoute
+  '/app/history/': typeof AppHistoryIndexRoute
   '/app/overview/': typeof AppOverviewIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
@@ -240,7 +249,8 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
-    | '/app/orders/'
+    | '/app/deliveries/'
+    | '/app/history/'
     | '/app/overview/'
     | '/app/products/'
   fileRoutesByTo: FileRoutesByTo
@@ -263,7 +273,8 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers'
-    | '/app/orders'
+    | '/app/deliveries'
+    | '/app/history'
     | '/app/overview'
     | '/app/products'
   id:
@@ -288,7 +299,8 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
-    | '/app/orders/'
+    | '/app/deliveries/'
+    | '/app/history/'
     | '/app/overview/'
     | '/app/products/'
   fileRoutesById: FileRoutesById
@@ -420,11 +432,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOverviewIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/orders/': {
-      id: '/app/orders/'
-      path: '/orders'
-      fullPath: '/app/orders/'
-      preLoaderRoute: typeof AppOrdersIndexRouteImport
+    '/app/history/': {
+      id: '/app/history/'
+      path: '/history'
+      fullPath: '/app/history/'
+      preLoaderRoute: typeof AppHistoryIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/deliveries/': {
+      id: '/app/deliveries/'
+      path: '/deliveries'
+      fullPath: '/app/deliveries/'
+      preLoaderRoute: typeof AppDeliveriesIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/customers/': {
@@ -514,7 +533,8 @@ interface AppRouteRouteChildren {
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
-  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
+  AppDeliveriesIndexRoute: typeof AppDeliveriesIndexRoute
+  AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOverviewIndexRoute: typeof AppOverviewIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
 }
@@ -526,7 +546,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
-  AppOrdersIndexRoute: AppOrdersIndexRoute,
+  AppDeliveriesIndexRoute: AppDeliveriesIndexRoute,
+  AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOverviewIndexRoute: AppOverviewIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
 }
