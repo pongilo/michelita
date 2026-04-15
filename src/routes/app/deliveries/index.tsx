@@ -3,24 +3,17 @@ import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { timeFormatter, formatDayLabel } from "@/lib/utils/formatter";
+import { timeFormatter, formatDayLabel, shortDateFormatter } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { Button } from "@/components/ui/button";
 
 function getDayPeriod(offset: number) {
   const now = new Date();
   const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset));
   return date.toISOString().slice(0, 10);
 }
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 export const Route = createFileRoute("/app/deliveries/")({
   component: DeliveriesPage,
@@ -44,37 +37,37 @@ function DeliveriesPage() {
   const totalItems = data?.itemsByDay.reduce((sum, day) => sum + day.itemCount, 0) ?? 0;
   const deliveredCount = allItems.filter(i => i.isDelivered).length;
 
-  const dayLabel = dayFormatter.format(new Date(referenceDate + "T00:00:00Z"));
+  const dayLabel = shortDateFormatter.format(new Date(referenceDate + "T00:00:00Z"));
 
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-2xl font-heading">Entregas</h1>
+        <h1 className="text-2xl font-heading">
+          Entregas{` `}
           {totalItems > 0 && (
-            <p className="text-sm text-muted-foreground">
-              ({deliveredCount} de {totalItems} entregues)
-            </p>
+            <span className="text-sm text-muted-foreground">({deliveredCount} de {totalItems})</span>
           )}
-        </div>
+        </h1>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={() => setDayOffset((o) => o - 1)}
-            className="btn btn-ghost btn-sm btn-circle"
             aria-label="Dia anterior"
+            variant="ghost"
+            size="icon"
           >
             <ChevronLeft className="size-4" />
-          </button>
-          <span className="text-sm font-medium capitalize min-w-48 text-center">
+          </Button>
+          <span className="text-sm font-medium capitalize text-center">
             {isToday ? "Hoje" : isTomorrow ? "Amanhã" : dayLabel}
           </span>
-          <button
+          <Button
             onClick={() => setDayOffset((o) => o + 1)}
-            className="btn btn-ghost btn-sm btn-circle"
             aria-label="Próximo dia"
+            variant="ghost"
+            size="icon"
           >
             <ChevronRight className="size-4" />
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -87,7 +80,7 @@ function DeliveriesPage() {
             return (
               <div key={index} className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  {formatDayLabel(new Date(itemByDay.date))} - {itemByDay.itemCount} {itemByDay.itemCount === 1 ? "item" : "itens"}
+                  {formatDayLabel(new Date(itemByDay.date))}
                 </p>
                 {itemByDay.groups.length === 0 ? (
                   <Item variant="outline" className="text-muted-foreground">

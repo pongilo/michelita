@@ -26,6 +26,11 @@ export const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "UTC",
 });
 
+export const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  timeZone: "UTC",
+});
+
 export function formatDayLabel(date: Date) {
   const formatted = dayLabelFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);

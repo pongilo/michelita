@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { useGetOrdersOverview } from "@/hooks/tanstack/order/use-get-orders-overview";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, monthFormatter } from "@/lib/utils/formatter";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app/overview/")({
   component: OverviewPage,
@@ -17,12 +18,6 @@ function getMonthPeriod(offset: number) {
   const end = new Date(Date.UTC(now.getFullYear(), now.getMonth() + offset + 1, 1));
   return { start, end };
 }
-
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 type Order = {
   isPaid: boolean;
@@ -66,24 +61,26 @@ function OverviewPage() {
       <header className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-heading">Visão geral</h1>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={() => setMonthOffset((o) => o - 1)}
-            className="btn btn-ghost btn-sm btn-circle"
             aria-label="Mês anterior"
+            variant="ghost"
+            size="icon"
           >
             <ChevronLeft className="size-4" />
-          </button>
-          <span className="text-sm font-medium capitalize min-w-32 text-center">
+          </Button>
+          <span className="text-sm font-medium capitalize text-center">
             {monthLabel}
           </span>
-          <button
+          <Button
             onClick={() => setMonthOffset((o) => o + 1)}
             disabled={isCurrentMonth}
-            className="btn btn-ghost btn-sm btn-circle disabled:opacity-30"
             aria-label="Próximo mês"
+            variant="ghost"
+            size="icon"
           >
             <ChevronRight className="size-4" />
-          </button>
+          </Button>
         </div>
       </header>
 
