@@ -17,18 +17,29 @@ function AuthLayout() {
     )
   }
 
+  // Usuário autenticado com organização → vai para o app
+  if (user && organization) {
+    return <Navigate to="/app/overview" />;
+  }
+
+  // Usuário autenticado sem organização → precisa criar uma organização
+  if (user && !organization) {
+    if (location.pathname !== "/organization/new") {
+      return <Navigate to="/organization/new" />;
+    }
+    return (
+      <div className="h-screen bg-muted">
+        <Outlet />
+      </div>
+    );
+  }
+
+  // Usuário não autenticado tentando acessar /organization/new → volta para login
   if (!user && location.pathname === "/organization/new") {
     return <Navigate to="/login" />;
   }
-  
-  if (organization) {
-    return <Navigate to="/app/deliveries" />;
-  }
-  
-  if (location.pathname !== "/organization/new") {
-    return <Navigate to="/organization/new" />;
-  }
 
+  // Usuário não autenticado → mostra login/register
   return (
     <div className="h-screen bg-muted">
       <Outlet />
