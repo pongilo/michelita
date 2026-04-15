@@ -17,6 +17,7 @@ import {
   SidebarTrigger,
   SidebarGroupContent,
   SidebarGroupLabel,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -24,6 +25,105 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export const Route = createFileRoute("/app")({
   component: PrivateLayout,
 });
+
+const navItems = [
+  {
+    label: 'Pedidos',
+    links: [
+      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
+      { to: "/app/deliveries", icon: CalendarCheck2Icon, label: "Entregas" },
+      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
+    ]
+  },
+  {
+    label: 'Mais',
+    links: [
+      { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
+      { to: "/app/products", icon: PackageIcon, label: "Produtos" },
+    ]
+  }
+] as const;
+
+function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userName: string; onSignOut: () => void }) {
+  const { setOpenMobile } = useSidebar();
+
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  />
+                }
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  {orgName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-medium">{orgName}</span>
+                </div>
+                <ChevronsUpDown className="ml-auto" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-(--anchor-width)"
+                align="start"
+              >
+                <DropdownMenuItem render={
+                  <Link to="/app/settings" onClick={() => setOpenMobile(false)}>
+                    <SettingsIcon className="size-4" />
+                    <span>Configurações</span>
+                  </Link>
+                }/>
+                <DropdownMenuItem render={
+                  <Link to="/app/account" onClick={() => setOpenMobile(false)}>
+                    <User2Icon className="size-4" />
+                    <span>{userName}</span>
+                  </Link>
+                }/>
+                <DropdownMenuItem render={
+                  <button type="button" onClick={onSignOut} className="w-full">
+                    <LogOutIcon className="size-4 shrink-0" />
+                    <span>Sair</span>
+                  </button>
+                }/>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        {navItems.map((item, itemIndex) => (
+          <SidebarGroup key={`group-${itemIndex}`}>
+            {item.label && <SidebarGroupLabel>{item.label}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              {item.links.map((link) => (
+                <SidebarMenuItem key={link.to}>
+                  <SidebarMenuButton render={
+                    <Link
+                      to={link.to}
+                      activeOptions={{ exact: true }}
+                      className="font-medium"
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      <link.icon className="size-4" />
+                      <span>{link.label}</span>
+                    </Link>
+                  }>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+    </Sidebar>
+  );
+}
 
 function PrivateLayout() {
   const navigate = useNavigate();
@@ -42,121 +142,13 @@ function PrivateLayout() {
     await navigate({ to: "/login" });
   }
 
-  const navItems = [
-  {
-    label: 'Pedidos',
-    links: [
-      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
-      { to: "/app/deliveries", icon: CalendarCheck2Icon, label: "Entregas" },
-      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
-    ]
-  },
-  {
-    label: 'Mais',
-    links: [
-      { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
-      { to: "/app/products", icon: PackageIcon, label: "Produtos" },
-    ]
-  }
-] as const;
-
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <SidebarMenuButton
-                      size="lg"
-                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                    />
-                  }
-                >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    {organization.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex flex-col gap-0.5 leading-none">
-                    <span className="font-medium">{organization.name}</span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-(--anchor-width)"
-                  align="start"
-                >
-                  <DropdownMenuItem render={
-                    <Link to="/app/settings">
-                      <SettingsIcon className="size-4" />
-                      <span>Configurações</span>
-                    </Link>
-                  }/>
-                  <DropdownMenuItem render={
-                    <Link to="/app/account">
-                      <User2Icon className="size-4" />
-                      <span>{user.user_metadata.name}</span>
-                    </Link>
-                  }/>
-                  <DropdownMenuItem render={
-                    <button type="button" onClick={handleSignOut} className="w-full">
-                      <LogOutIcon className="size-4 shrink-0" />
-                      <span>Sair</span>
-                    </button>
-                  }/>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          {navItems.map((item, itemIndex) => (
-            <SidebarGroup key={`group-${itemIndex}`}>
-              {item.label && <SidebarGroupLabel>{item.label}</SidebarGroupLabel>}
-              <SidebarGroupContent>
-                {item.links.map((link) => (
-                  <SidebarMenuItem key={link.to}>
-                    <SidebarMenuButton render={
-                      <Link
-                        to={link.to}
-                        activeOptions={{ exact: true }}
-                        className="font-medium"
-                      >
-                        <link.icon className="size-4" />
-                        <span>{link.label}</span>
-                      </Link>
-                    }>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarGroupContent>  
-            </SidebarGroup>
-          ))}
-
-            {/* <SidebarGroupLabel>Pedidos</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton render={
-                      <Link
-                        to={item.to}
-                        activeOptions={{ exact: true }}
-                        className="font-medium"
-                      >
-                        <item.icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    }>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup> */}
-        </SidebarContent>
-      </Sidebar>
+      <AppSidebar
+        orgName={organization.name}
+        userName={user.user_metadata.name}
+        onSignOut={handleSignOut}
+      />
       <SidebarInset>
         <div className="flex justify-between items-center p-5">
           <SidebarTrigger />
