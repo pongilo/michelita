@@ -8,8 +8,8 @@ import { currencyFormatter, formatDayLabel, monthFormatter } from "@/lib/utils/f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/app/history/")({
-  component: HistoryPage,
+export const Route = createFileRoute("/app/orders/")({
+  component: OrdersPage,
 });
 
 function getMonthPeriod(offset: number) {
@@ -64,7 +64,7 @@ function groupOrdersByDay(orders: Order[]): { date: string; orders: Order[] }[] 
     .map(([date, orders]) => ({ date, orders }));
 }
 
-function HistoryPage() {
+function OrdersPage() {
   const { organization } = useAuth();
   const [monthOffset, setMonthOffset] = useState(0);
   const { start, end } = getMonthPeriod(monthOffset);
@@ -84,7 +84,7 @@ function HistoryPage() {
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-heading">Histórico</h1>
+        <h1 className="text-2xl font-heading">Pedidos</h1>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setMonthOffset((o) => o - 1)}
@@ -142,9 +142,6 @@ function HistoryPage() {
                 <div className="divide-y divide-base-200 rounded-xl border border-base-200 overflow-hidden">
                   {orders.map((order) => {
                     const total = orderTotal(order);
-                    const itemSummary = order.item
-                      .map((i) => `${i.quantity}× ${i.description}`)
-                      .join(", ");
                     return (
                       <Link
                         key={order.id}
@@ -156,9 +153,7 @@ function HistoryPage() {
                           <p className="text-sm font-medium truncate">
                             {order.customer?.name ?? "Cliente não informado"}
                           </p>
-                          {itemSummary && (
-                            <p className="text-xs text-base-content/50 truncate">{itemSummary}</p>
-                          )}
+                          <p className="text-xs text-base-content/50 truncate">{order.item.length} {order.item.length === 1 ? 'item' : 'itens'}</p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           {order.isPaid ? (

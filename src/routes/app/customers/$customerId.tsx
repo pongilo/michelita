@@ -3,14 +3,13 @@ import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
+import { Item, ItemContent, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import { currencyFormatter, dateFormatter as datetimeFormatter, formatFullDate } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +68,7 @@ function CustomerDetailsPage() {
     <main className="mx-auto w-full max-w-4xl p-5">
 
       {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-nowrap items-center justify-between gap-3">
         <h1 className="text-2xl font-heading">{data?.customer.name ?? "Cliente"}</h1>
         {data && (
           <DropdownMenu>
@@ -97,64 +96,38 @@ function CustomerDetailsPage() {
 
       {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
-      {data ? (
-        <div className="space-y-5">
-
-          {/* Contato */}
-          {(data.customer.phone || data.customer.address || data.customer.note) ? (
-            <Card size="sm">
-              <CardContent>
-                <ItemGroup>
-                  {data.customer.phone && (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Telefone</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{data.customer.phone}</ItemTitle></ItemContent>
-                    </Item>
-                  )}
-                  {data.customer.address && (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Endereço</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{data.customer.address}</ItemTitle></ItemContent>
-                    </Item>
-                  )}
-                  {data.customer.note && (
-                    <Item size="sm">
-                      <ItemContent><ItemDescription>Observação</ItemDescription></ItemContent>
-                      <ItemContent><ItemTitle>{data.customer.note}</ItemTitle></ItemContent>
-                    </Item>
-                  )}
-                </ItemGroup>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {/* Métricas */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card size="sm">
-              <CardHeader>
-                <CardDescription>Pedidos</CardDescription>
-                <CardTitle className="text-lg">{data.metrics.totalOrders}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card size="sm">
-              <CardHeader>
-                <CardDescription>Último pedido</CardDescription>
-                <CardTitle className="text-sm">
-                  {data.metrics.lastOrderAt ? datetimeFormatter.format(new Date(data.metrics.lastOrderAt)) : "—"}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-            <Card size="sm">
-              <CardHeader>
-                <CardDescription>Vendas</CardDescription>
-                <CardTitle className="text-lg">{currencyFormatter.format(data.metrics.totalInvoiced)}</CardTitle>
-              </CardHeader>
-            </Card>
-          </section>
+      {data && (
+        <div className="space-y-8">
+          <div className="divide-y md:border md:py-1 md:px-5 md:rounded-2xl md:card">
+            {data.customer.phone && (
+              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                <p className="font-heading text-base font-medium">Telefone</p>
+                <p className="text-base text-muted-foreground">
+                  {data.customer.phone}
+                </p>
+              </div>
+            )}
+            {data.customer.address && (
+              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                <p className="font-heading text-base font-medium">Endereço</p>
+                <p className="text-base text-muted-foreground">
+                  {data.customer.address}
+                </p>
+              </div>
+            )}
+            {data.customer.note && (
+              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                <p className="font-heading text-base font-medium">Observação</p>
+                <p className="text-base text-muted-foreground">
+                  {data.customer.note}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Pedidos */}
           <div className="space-y-2">
-            <h2 className="font-heading text-base font-medium">Pedidos</h2>
+            <h2 className="font-heading text-base font-medium">Pedidos ({data.metrics.totalOrders})</h2>
             {data.recentOrders.length === 0 ? (
               <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
             ) : (
@@ -185,7 +158,7 @@ function CustomerDetailsPage() {
             )}
           </div>
         </div>
-      ) : null}
+      )}
 
       <CustomerFormModal
         isOpen={isEditModalOpen}

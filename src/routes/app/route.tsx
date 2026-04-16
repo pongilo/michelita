@@ -28,11 +28,11 @@ export const Route = createFileRoute("/app")({
 
 const navItems = [
   {
-    label: 'Pedidos',
+    label: '',
     links: [
       { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
+      { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
       { to: "/app/deliveries", icon: CalendarCheck2Icon, label: "Entregas" },
-      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
     ]
   },
   {
