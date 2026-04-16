@@ -27,13 +27,15 @@ export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
 });
 
+function localDatetime() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 function OrderFormRoute() {
   const { organization } = useAuth();
-  const [deliveryDate, setDeliveryDate] = useState(() => {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16);
-  })
+  const [deliveryDate, setDeliveryDate] = useState(() => localDatetime())
 
   const { data: customers = [] } = useGetCustomers({
     organizationId: organization!.id,
@@ -92,16 +94,18 @@ function OrderFormRoute() {
     }, {
       onSuccess: (data) => {
         toast.success(`Pedido criado com sucesso. ID: ${data.id}`);
+        const newDeliveryDate = localDatetime()
         reset({
           organizationId: organization!.id,
           customerId: "",
-          orderedAt: deliveryDate,
+          orderedAt: newDeliveryDate,
           isPaid: false,
           note: "",
           shippingFee: 0,
           discount: 0,
           items: [],
         });
+        setDeliveryDate(newDeliveryDate)
       },
       onError: (error) => {
         toast.error(error instanceof Error ? error.message : "Erro ao registrar pedido.");
@@ -166,11 +170,10 @@ function OrderFormRoute() {
               <FieldLabel className="font-heading text-base font-medium">Quando o pedido será entregue?</FieldLabel>
               <Input
                 type="datetime-local"
-                defaultValue={deliveryDate}
+                value={deliveryDate}
                 onChange={(e) => {
                   const newDate = e.target.value;
                   setDeliveryDate(newDate)
-                  setValue(`orderedAt`, newDate, { shouldValidate: true })
                   items.forEach((_, index) => {
                     setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
                   });

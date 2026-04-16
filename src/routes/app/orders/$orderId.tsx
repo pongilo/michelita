@@ -68,7 +68,7 @@ function OrderDetailsPage() {
             </div>
             <p className="text-muted-foreground text-base">{formatFullDate(new Date(order.orderedAt))}</p>
           </div>
-          <OrderAction orderId={orderId} organizationId={organization!.id}>
+          <OrderAction orderId={orderId} organizationId={organization!.id} onDeleteOrderSuccess={() => navigate({ to: "/app/orders" })}>
             <OrderAction.Trigger />
             <OrderAction.Content>
               <OrderAction.EditOrder onEdit={() => setIsEditInfoModalOpen(true)} />
@@ -81,7 +81,7 @@ function OrderDetailsPage() {
               )}
               <OrderAction.MarkAllDelivered />
               <OrderAction.Separator />
-              <OrderAction.DeleteOrder onSuccess={() => navigate({ to: "/app/orders" })} />
+              <OrderAction.DeleteOrder />
             </OrderAction.Content>
           </OrderAction>
         </div>

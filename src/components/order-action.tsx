@@ -2,7 +2,7 @@ import * as React from "react";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useDeleteOrder } from "@/hooks/tanstack/order/use-delete-order";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
@@ -22,6 +30,7 @@ interface OrderActionContextValue {
   orderId: string;
   itemId: string | undefined;
   organizationId: string;
+  openDeleteOrderDialog: () => void;
 }
 
 const OrderActionContext = React.createContext<OrderActionContextValue | null>(null);
@@ -38,13 +47,49 @@ interface OrderActionProps {
   orderId: string;
   itemId?: string;
   organizationId: string;
+  onDeleteOrderSuccess?: () => void;
   children: React.ReactNode;
 }
 
-function OrderAction({ orderId, itemId, organizationId, children }: OrderActionProps) {
+function OrderAction({ orderId, itemId, organizationId, onDeleteOrderSuccess, children }: OrderActionProps) {
+  const [deleteOrderOpen, setDeleteOrderOpen] = React.useState(false);
+  const { mutate, isPending } = useDeleteOrder({ organizationId });
+
+  function handleDeleteConfirm() {
+    mutate(
+      { id: orderId, organizationId },
+      {
+        onSuccess: () => {
+          toast.success("Pedido deletado.");
+          setDeleteOrderOpen(false);
+          onDeleteOrderSuccess?.();
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao deletar pedido."),
+      },
+    );
+  }
+
   return (
-    <OrderActionContext.Provider value={{ orderId, itemId, organizationId }}>
+    <OrderActionContext.Provider value={{ orderId, itemId, organizationId, openDeleteOrderDialog: () => setDeleteOrderOpen(true) }}>
       <DropdownMenu>{children}</DropdownMenu>
+      <Dialog open={deleteOrderOpen} onOpenChange={setDeleteOrderOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Deletar pedido</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja deletar este pedido? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOrderOpen(false)} disabled={isPending}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isPending}>
+              {isPending ? "Deletando..." : "Deletar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </OrderActionContext.Provider>
   );
 }
@@ -262,29 +307,11 @@ function OrderActionViewOrder() {
 
 // ── Delete Order ──────────────────────────────────────────────────────────────
 
-function OrderActionDeleteOrder({ onSuccess }: { onSuccess?: () => void }) {
-  const { orderId, organizationId } = useOrderActionContext();
-  const { mutate, isPending } = useDeleteOrder({ organizationId });
-
-  function handleSelect() {
-    // Defer confirm so Base UI can finish closing the menu before the dialog blocks the thread
-    setTimeout(() => {
-      if (!window.confirm("Tem certeza que deseja deletar este pedido? Esta ação não pode ser desfeita.")) return;
-      mutate(
-        { id: orderId, organizationId },
-        {
-          onSuccess: () => {
-            toast.success("Pedido deletado.");
-            onSuccess?.();
-          },
-          onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao deletar pedido."),
-        },
-      );
-    }, 0);
-  }
+function OrderActionDeleteOrder() {
+  const { openDeleteOrderDialog } = useOrderActionContext();
 
   return (
-    <DropdownMenuItem variant="destructive" onClick={handleSelect} disabled={isPending}>
+    <DropdownMenuItem variant="destructive" onClick={openDeleteOrderDialog}>
       Deletar pedido
     </DropdownMenuItem>
   );
