@@ -154,7 +154,7 @@ function OrderFormRoute() {
             )}
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} resetScroll={false} />}>
-                Catalogo de produtos
+                Adicionar
               </Button>
             </div>
           </div>
