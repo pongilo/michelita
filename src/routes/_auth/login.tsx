@@ -39,7 +39,7 @@ function LoginPage() {
     await signIn({ email, password }, {
       onSuccess: async () => {
         await queryClient.refetchQueries({ queryKey: ["auth-user"] });
-        await navigate({ to: "/app/overview" });
+        await navigate({ to: "/app/orders" });
       },
       onError: (error) => {
         toast.error(error.message);

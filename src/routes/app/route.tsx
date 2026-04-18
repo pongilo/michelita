@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } 
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, CalendarCheck2Icon } from 'lucide-react'
+import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -30,14 +30,14 @@ const navItems = [
   {
     label: '',
     links: [
-      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
       { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
-      { to: "/app/deliveries", icon: CalendarCheck2Icon, label: "Entregas" },
     ]
   },
   {
     label: 'Mais',
     links: [
+      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
+      { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },
     ]

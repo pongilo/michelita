@@ -19,7 +19,7 @@ function AuthLayout() {
 
   // Usuário autenticado com organização → vai para o app
   if (user && organization) {
-    return <Navigate to="/app/overview" />;
+    return <Navigate to="/app/orders" />;
   }
 
   // Usuário autenticado sem organização → precisa criar uma organização
