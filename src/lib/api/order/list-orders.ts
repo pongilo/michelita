@@ -48,6 +48,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
           select: {
             id: true,
             orderedAt: true,
+            note: true,
             customer: true,
             isPaid: true,
           },
