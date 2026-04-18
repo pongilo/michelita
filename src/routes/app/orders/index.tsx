@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPinIcon, StickyNoteIcon, User2Icon } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { timeFormatter, shortDateFormatter, dateFormatter } from "@/lib/utils/formatter";
+import { timeFormatter, shortDateFormatter, currencyFormatter } from "@/lib/utils/formatter";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Item } from "@/components/ui/item";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 function getDayPeriod(offset: number) {
   const now = new Date();
@@ -80,7 +81,7 @@ function DeliveriesPage() {
         {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
         {data && (
-          <div className="space-y-2">
+          <div className="space-y-4">
             <div className="flex">
               <button
                 onClick={() => setActiveTab("em-andamento")}
@@ -110,14 +111,15 @@ function DeliveriesPage() {
               <>
                 {visibleGroups.map((group) => {
                   const allDelivered = group.items.every(i => i.isDelivered);
+                  const total = group.items.reduce((sum, item) => sum + item.total, 0)
 
                   return (
                     <Link key={group.key} to="/app/orders/$orderId" params={{ orderId: group.order.id }} className="block rounded-md bg-background shadow p-5 space-y-2 hover:ring hover:ring-primary">
                       <div>
                         <div className="flex justify-between items-center">
-                          <p className="text-xs text-muted-foreground uppercase">
+                          <p className="text-xs text-muted-foreground uppercase font-medium">
                             {allDelivered ? 'Entregue às ' : 'Entregar às '}
-                            {timeFormatter.format(new Date(group.deliveredAt))}
+                            {timeFormatter.format(new Date(group.deliveredAt))} • {currencyFormatter.format(total)}
                           </p>
                           {group.order.isPaid ? (
                             <Badge className="bg-green-500/15 text-green-700 border-green-200">
@@ -125,7 +127,7 @@ function DeliveriesPage() {
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">
-                              Pagamento pendente
+                              Pendente
                             </Badge>
                           )}
                         </div>
@@ -150,11 +152,26 @@ function DeliveriesPage() {
                           )}
                         </div>
                       ))}
-                      <div>
-                        <p className="text-sm text-muted-foreground italic">
-                          Pedido feito {group.order.customer?.name && `por ${group.order.customer?.name}`} em {dateFormatter.format(group.order.orderedAt)}
-                        </p>
-                        {group.order.customer?.address && <p className="text-sm text-muted-foreground italic">{group.order.customer?.address}</p>}
+                      <Separator />
+                      <div className="space-y-1">
+                        {group.order.customer?.name && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <User2Icon className="size-4" />
+                            {group.order.customer?.name}
+                          </p>
+                        )}
+                        {group.order.customer?.address && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <MapPinIcon className="size-4" />
+                            {group.order.customer?.address}
+                          </p>
+                        )}
+                        {group.order.customer?.note && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <StickyNoteIcon className="size-4" />
+                            {group.order.customer?.note}
+                          </p>
+                        )}
                       </div>
                     </Link>
                   );

@@ -89,8 +89,6 @@ function OrderDetailsPage() {
 
 
         <div className="space-y-5">
-          <Separator />
-
           <div>
             {(order.shippingFee || order.discount) && (
               <>

@@ -41,6 +41,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
         id: true,
         description: true,
         quantity: true,
+        total: true,
         deliveredAt: true,
         note: true,
         isDelivered: true,
@@ -57,11 +58,12 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
     });
 
     type RawItem = typeof items[0];
+    type OrderGroupItem = Pick<RawItem, "id" | "description" | "quantity" | "note" | "isDelivered"> & { total: number };
     type OrderGroup = {
       key: string;
       deliveredAt: string;
       order: RawItem["order"];
-      items: Array<Pick<RawItem, "id" | "description" | "quantity" | "note" | "isDelivered">>;
+      items: OrderGroupItem[];
     };
 
     const groupMap = new Map<string, OrderGroup>();
@@ -79,6 +81,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
         id: item.id,
         description: item.description,
         quantity: item.quantity,
+        total: Number(item.total),
         note: item.note,
         isDelivered: item.isDelivered,
       });
