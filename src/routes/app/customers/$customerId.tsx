@@ -100,7 +100,7 @@ function CustomerDetailsPage() {
         <div className="space-y-8">
           <div className="divide-y md:border md:py-1 md:px-5 md:rounded-2xl md:card">
             {data.customer.phone && (
-              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Telefone</p>
                 <p className="text-base text-muted-foreground">
                   {data.customer.phone}
@@ -108,7 +108,7 @@ function CustomerDetailsPage() {
               </div>
             )}
             {data.customer.address && (
-              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Endereço</p>
                 <p className="text-base text-muted-foreground">
                   {data.customer.address}
@@ -116,7 +116,7 @@ function CustomerDetailsPage() {
               </div>
             )}
             {data.customer.note && (
-              <div className="space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Observação</p>
                 <p className="text-base text-muted-foreground">
                   {data.customer.note}

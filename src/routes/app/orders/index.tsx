@@ -151,7 +151,7 @@ function OrdersPage() {
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {order.customer?.name ?? "Cliente não informado"}
+                            {order.customer?.name ?? order.id.slice(0, 8)}
                           </p>
                           <p className="text-xs text-base-content/50 truncate">{order.item.length} {order.item.length === 1 ? 'item' : 'itens'}</p>
                         </div>

@@ -11,6 +11,7 @@ import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Separator } from "@/components/ui/separator";
 
 // ── Route ────────────────────────────────────────────────────────────────────
 
@@ -86,30 +87,45 @@ function OrderDetailsPage() {
           </OrderAction>
         </div>
 
+
         <div className="space-y-5">
-          <ItemGroup>
-            <Item variant="outline">
-              <ItemContent>
-                <ItemTitle>Total</ItemTitle>
-                <ItemDescription>{currencyFormatter.format(order.total)}</ItemDescription>
-                {(order.shippingFee || order.discount) && (
-                  <ItemDescription>
-                    Itens: {currencyFormatter.format(order.itemTotal)}
-                    {order.shippingFee ? ` + Frete: ${currencyFormatter.format(order.shippingFee)}` : ""}
-                    {order.discount ? ` − Desconto: ${currencyFormatter.format(order.discount)}` : ""}
-                  </ItemDescription>
+          <Separator />
+
+          <div>
+            {(order.shippingFee || order.discount) && (
+              <>
+                <div className="py-1 flex justify-between flex-wrap">
+                  <p className="text-base text-muted-foreground">Subtotal</p>
+                  <p className="text-base text-muted-foreground">{currencyFormatter.format(order.itemTotal)}</p>
+                </div>
+                {order.shippingFee && (
+                  <div className="py-1 flex justify-between flex-wrap">
+                    <p className="text-base text-muted-foreground">Frete</p>
+                    <p className="text-base text-muted-foreground">+ {currencyFormatter.format(order.shippingFee)}</p>
+                  </div>
                 )}
-              </ItemContent>
-            </Item>
-            {order.note && (
-              <Item variant="outline">
-                <ItemContent>
-                  <ItemTitle>Observação</ItemTitle>
-                  <ItemDescription>{order.note}</ItemDescription>
-                </ItemContent>
-              </Item>
+                {order.discount && (
+                  <div className="py-1 flex justify-between flex-wrap">
+                    <p className="text-base text-muted-foreground">Desconto</p>
+                    <p className="text-base text-muted-foreground">- {currencyFormatter.format(order.discount)}</p>
+                  </div>
+                )}
+              </>
             )}
-          </ItemGroup>
+            <div className="py-1 flex justify-between flex-wrap">
+              <p className="font-heading text-base font-medium">Total</p>
+              <p className="font-heading text-base font-medium">{currencyFormatter.format(order.total)}</p>
+            </div>
+          </div>
+          {order.note && (
+            <>
+              <Separator />
+              <div className="py-1">
+                <p className="font-heading text-base font-medium">Observação</p>
+                <p className="text-base text-muted-foreground">{order.note}</p>
+              </div>
+            </>
+          )}
 
           {/* Cliente */}
           <div className="space-y-2">
