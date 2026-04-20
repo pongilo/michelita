@@ -25,7 +25,7 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
         </h1>
         <p className="font-body text-base md:text-xl text-center text-white/80 mt-2 mb-5">{description}</p>
       </header>
-      <div className="max-w-7xl mx-auto space-y-10 mt-16" id={id}>
+      <div className="max-w-7xl mx-auto space-y-16 mt-16" id={id}>
         {menu.map((m) => (
           <div key={m.name} className="space-y-5">
             <div className="px-5 space-y-1">
@@ -35,7 +35,10 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
               )}
             </div>
             <div className="font-body text-white text-base grid grid-cols-1 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-5 gap-1">
-              {m.items.map(item => (
+              {[...m.items].sort((a, b) => {
+                  const parse = (p: string) => parseFloat(p.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                  return parse(a.price) - parse(b.price);
+                }).map(item => (
                 <div
                   key={item.name}
                   className="p-2 cursor-default flex sm:flex-col-reverse justify-between items-center duration-200 hover:bg-white/20 rounded-3xl"
