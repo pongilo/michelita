@@ -4,8 +4,18 @@ export const bolosCaseiros = {
   description: "Perfeito para acompanhar seu café.",
   menu: [
     {
-      name: '',
-      description: '',
+      name: 'Queridinhos Michelita 💜',
+      description: 'Os sabores mais amados e pedidos, que conquistaram o coração dos nossos clientes.',
+      items: [
+        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
+        { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
+        { name: "Milho cremoso", description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
+        { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
+      ]
+    },
+    {
+      name: 'Todos os sabores',
+      description: 'Experimente todos os nossos bolos caseiros, criados com carinho e ingredientes de qualidade.',
       items: [
         { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
         { name: "Cenoura", description: "O clássico de sempre. Massa macia e leve que conquista à primeira mordida.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
