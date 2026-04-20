@@ -26,9 +26,10 @@ import { currencyFormatter } from "@/lib/utils/formatter";
 import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
-type ProductListModalProps = {
+type ProductListContentProps = {
   organizationId: string;
   deliveryDate: string;
+  onClose: () => void;
 };
 
 const customItemSchema = z.object({
@@ -41,8 +42,7 @@ const customItemSchema = z.object({
 
 type CustomItemForm = z.infer<typeof customItemSchema>;
 
-export function ProductListModal({ organizationId, deliveryDate }: ProductListModalProps) {
-  const [modal, setModal] = useQueryState("modal");
+export function ProductListContent({ organizationId, deliveryDate, onClose }: ProductListContentProps) {
   const [search, setSearch] = useState("");
   const { control, setValue, watch } = useFormContext<CreateOrderInput>();
 
@@ -55,11 +55,9 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
   );
   const totalItems = itemsWatched.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 
-  const isOpen = modal === "product";
-
-  function onClose() {
-    setModal(null);
+  function handleClose() {
     setSearch("");
+    onClose();
   }
 
   const { data: products = [], isLoading } = useGetProducts({ organizationId });
@@ -80,10 +78,7 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
     },
   });
 
-  const customProductTotal = (customForm.watch('unitPrice') * customForm.watch('quantity')) || 0
-
-
-
+  const customProductTotal = (customForm.watch('unitPrice') * customForm.watch('quantity')) || 0;
   const watchedQuantity = customForm.watch("quantity");
 
   async function onAddCustomItem(values: CustomItemForm) {
@@ -111,219 +106,229 @@ export function ProductListModal({ organizationId, deliveryDate }: ProductListMo
     });
 
     customForm.reset();
-    onClose();
+    handleClose();
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg sm:h-auto sm:max-h-[80vh] max-w-screen h-screen flex flex-col max-sm:rounded-none">
-        <DialogHeader>
-          <DialogTitle>Adicionar item</DialogTitle>
-        </DialogHeader>
+    <Tabs defaultValue="catalog" className="px-5 max-sm:pt-5">
+      <TabsList className="w-full mb-3">
+        <TabsTrigger value="catalog" className="flex-1">Catálogo</TabsTrigger>
+        <TabsTrigger value="custom" className="flex-1">Produto personalizado</TabsTrigger>
+      </TabsList>
 
-        <Tabs defaultValue="catalog" className="flex-1 overflow-hidden">
-          <TabsList className="w-full">
-            <TabsTrigger value="catalog" className="flex-1">Catálogo</TabsTrigger>
-            <TabsTrigger value="custom" className="flex-1">Produto personalizado</TabsTrigger>
-          </TabsList>
+      <TabsContent value="catalog">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar produto..."
+        />
 
-          <TabsContent value="catalog" className="flex flex-col overflow-hidden mt-3 flex-1">
-            <div className="flex-1 overflow-y-auto relative">
-              <div className="sticky top-0 z-10 bg-background pb-3">
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar produto..."
-                />
-              </div>
+        {isLoading ? (
+          <LoadingState label="Carregando produtos..." />
+        ) : filteredProducts.length === 0 ? (
+          <EmptyState compact>
+            <EmptyState.Icon>🔍</EmptyState.Icon>
+            <EmptyState.Title>
+              {search ? `Nenhum resultado para "${search}"` : "Nenhum produto encontrado"}
+            </EmptyState.Title>
+          </EmptyState>
+        ) : (
+          <ItemGroup>
+            {filteredProducts.map((product, i) => {
+              const itemIndex = itemsWatched.findIndex((item) => item.description === product.name);
+              const inCart = itemIndex !== -1;
 
-              {isLoading ? (
-                <LoadingState label="Carregando produtos..." />
-              ) : filteredProducts.length === 0 ? (
-                <EmptyState compact>
-                  <EmptyState.Icon>🔍</EmptyState.Icon>
-                  <EmptyState.Title>
-                    {search ? `Nenhum resultado para "${search}"` : "Nenhum produto encontrado"}
-                  </EmptyState.Title>
-                </EmptyState>
-              ) : (
-                <ItemGroup>
-                  {filteredProducts.map((product, i) => {
-                    const itemIndex = itemsWatched.findIndex((item) => item.description === product.name);
-                    const inCart = itemIndex !== -1;
-
-                    return (
-                      <div key={product.id}>
-                        <Item size="xs">
-                          <ItemContent>
-                            <ItemTitle>{product.name}</ItemTitle>
-                            {inCart ? (
-                              <ItemDescription>{itemsWatched[itemIndex].quantity} x {currencyFormatter.format(product.price)} = {currencyFormatter.format(itemsWatched[itemIndex].quantity * product.price)}</ItemDescription>
-                            ) : (
-                              <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
-                            )}
-                          </ItemContent>
-                          <ItemActions className="flex items-center gap-1">
-                            {inCart && (
-                              <>
-                                {itemsWatched[itemIndex].quantity === 1 ? (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => removeItem(itemIndex)}
-                                  >
-                                    <Trash2Icon />
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity - 1)}
-                                  >
-                                    <MinusIcon />
-                                  </Button>
-                                )}
-                                <span className="w-6 text-center text-sm font-medium tabular-nums">
-                                  {itemsWatched[itemIndex].quantity}
-                                </span>
-                              </>
-                            )}
+              return (
+                <div key={product.id}>
+                  <Item size="xs">
+                    <ItemContent>
+                      <ItemTitle>{product.name}</ItemTitle>
+                      {inCart ? (
+                        <ItemDescription>{itemsWatched[itemIndex].quantity} x {currencyFormatter.format(product.price)} = {currencyFormatter.format(itemsWatched[itemIndex].quantity * product.price)}</ItemDescription>
+                      ) : (
+                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                      )}
+                    </ItemContent>
+                    <ItemActions className="flex items-center gap-1">
+                      {inCart && (
+                        <>
+                          {itemsWatched[itemIndex].quantity === 1 ? (
                             <Button
                               type="button"
                               variant="outline"
                               size="icon-sm"
-                              onClick={() => {
-                                if (inCart) {
-                                  setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity + 1);
-                                } else {
-                                  appendItem({
-                                    description: product.name,
-                                    unitPrice: product.price,
-                                    quantity: 1,
-                                    deliveredAt: deliveryDate,
-                                    note: "",
-                                    isDelivered: false,
-                                  });
-                                }
-                              }}
+                              onClick={() => removeItem(itemIndex)}
                             >
-                              <PlusIcon />
+                              <Trash2Icon />
                             </Button>
-                          </ItemActions>
-                        </Item>
-                        {i < filteredProducts.length - 1 && <ItemSeparator />}
-                      </div>
-                    );
-                  })}
-                </ItemGroup>
-              )}
-            </div>
-            <div className="flex items-center pt-2 border-t">
-              <div className="flex-1 space-y-1">
-                <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
-                <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
-              </div>
-              <div className="flex-none">
-                <Button type="button" className="w-40" onClick={onClose} size="lg">
-                  Concluir
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="custom">
-            <form onSubmit={customForm.handleSubmit(onAddCustomItem)} className="flex flex-col overflow-y-auto mt-3 flex-1">
-              <div className="space-y-4 flex-1 pb-8">
-                <Field>
-                  <FieldLabel>Descrição</FieldLabel>
-                  <Input
-                    placeholder="Ex: Bolo de chocolate"
-                    {...customForm.register("description")}
-                  />
-                  <FieldError>{customForm.formState.errors.description?.message}</FieldError>
-                </Field>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field>
-                    <FieldLabel>Quantidade</FieldLabel>
-                    <div className="flex items-center gap-1">
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity - 1)}
+                            >
+                              <MinusIcon />
+                            </Button>
+                          )}
+                          <span className="w-6 text-center text-sm font-medium tabular-nums">
+                            {itemsWatched[itemIndex].quantity}
+                          </span>
+                        </>
+                      )}
                       <Button
                         type="button"
                         variant="outline"
                         size="icon-sm"
-                        onClick={() => customForm.setValue("quantity", Math.max(1, watchedQuantity - 1))}
-                      >
-                        <MinusIcon />
-                      </Button>
-                      <Input
-                        type="number"
-                        min="1"
-                        step="1"
-                        placeholder="1"
-                        {...customForm.register("quantity", { valueAsNumber: true })}
-                        className="text-center"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => customForm.setValue("quantity", watchedQuantity + 1)}
+                        onClick={() => {
+                          if (inCart) {
+                            setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity + 1);
+                          } else {
+                            appendItem({
+                              description: product.name,
+                              unitPrice: product.price,
+                              quantity: 1,
+                              deliveredAt: deliveryDate,
+                              note: "",
+                              isDelivered: false,
+                            });
+                          }
+                        }}
                       >
                         <PlusIcon />
                       </Button>
-                    </div>
-                    <FieldError>{customForm.formState.errors.quantity?.message}</FieldError>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Valor unitário</FieldLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0,00"
-                      {...customForm.register("unitPrice", { valueAsNumber: true })}
-                    />
-                    <FieldError>{customForm.formState.errors.unitPrice?.message}</FieldError>
-                  </Field>
+                    </ItemActions>
+                  </Item>
+                  {i < filteredProducts.length - 1 && <ItemSeparator />}
                 </div>
+              );
+            })}
+          </ItemGroup>
+        )}
+        <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
+          <div className="flex-1 space-y-1">
+            <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
+            <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+          </div>
+          <div className="flex-none">
+            <Button type="button" className="w-40" onClick={handleClose} size="lg">
+              Concluir
+            </Button>
+          </div>
+        </div>
+      </TabsContent>
 
-                <Field>
-                  <FieldLabel>Observação (opcional)</FieldLabel>
-                  <Textarea rows={3} placeholder="Escreva uma observação..." {...customForm.register("note")} />
-                </Field>
+      <TabsContent value="custom">
+        <form onSubmit={customForm.handleSubmit(onAddCustomItem)} className="flex flex-col overflow-y-auto flex-1">
+          <div className="space-y-4 flex-1 pb-8">
+            <Field>
+              <FieldLabel>Descrição</FieldLabel>
+              <Input
+                placeholder="Ex: Bolo de chocolate"
+                {...customForm.register("description")}
+              />
+              <FieldError>{customForm.formState.errors.description?.message}</FieldError>
+            </Field>
 
-                <Field orientation="horizontal">
-                  <Controller
-                    name="addToCatalog"
-                    control={customForm.control}
-                    render={({ field }) => (
-                      <Checkbox
-                        id="addToCatalog"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel>Quantidade</FieldLabel>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => customForm.setValue("quantity", Math.max(1, watchedQuantity - 1))}
+                  >
+                    <MinusIcon />
+                  </Button>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="1"
+                    {...customForm.register("quantity", { valueAsNumber: true })}
+                    className="text-center"
                   />
-                  <Label htmlFor="addToCatalog">Adicionar ao catálogo de produtos</Label>
-                </Field>
-              </div>
-              <div className="flex items-center pt-4 border-t">
-                <div className="flex-1 space-y-1">
-                  <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(customProductTotal)}</p>
-                </div>
-                <div className="flex-none">
-                  <Button type="submit" disabled={isCreatingProduct} className="w-40">
-                    {isCreatingProduct ? "Salvando..." : "Adicionar"}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => customForm.setValue("quantity", watchedQuantity + 1)}
+                  >
+                    <PlusIcon />
                   </Button>
                 </div>
-              </div>
-            </form>
-          </TabsContent>
-        </Tabs>
+                <FieldError>{customForm.formState.errors.quantity?.message}</FieldError>
+              </Field>
+              <Field>
+                <FieldLabel>Valor unitário</FieldLabel>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...customForm.register("unitPrice", { valueAsNumber: true })}
+                />
+                <FieldError>{customForm.formState.errors.unitPrice?.message}</FieldError>
+              </Field>
+            </div>
 
-        
+            <Field>
+              <FieldLabel>Observação (opcional)</FieldLabel>
+              <Textarea rows={3} placeholder="Escreva uma observação..." {...customForm.register("note")} />
+            </Field>
+
+            <Field orientation="horizontal">
+              <Controller
+                name="addToCatalog"
+                control={customForm.control}
+                render={({ field }) => (
+                  <Checkbox
+                    id="addToCatalog"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <Label htmlFor="addToCatalog">Adicionar ao catálogo de produtos</Label>
+            </Field>
+          </div>
+          <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
+            <div className="flex-1 space-y-1">
+              <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(customProductTotal)}</p>
+            </div>
+            <div className="flex-none">
+              <Button type="submit" disabled={isCreatingProduct} className="w-40">
+                {isCreatingProduct ? "Salvando..." : "Adicionar"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+type ProductListModalProps = {
+  organizationId: string;
+  deliveryDate: string;
+};
+
+export function ProductListModal({ organizationId, deliveryDate }: ProductListModalProps) {
+  const [modal, setModal] = useQueryState("modal");
+  const isOpen = modal === "product";
+  const onClose = () => setModal(null);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[80vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="mb-0 p-5">
+          <DialogTitle>Adicionar item</DialogTitle>
+        </DialogHeader>
+        <div className="overflow-y-auto flex-1">
+          <ProductListContent organizationId={organizationId} deliveryDate={deliveryDate} onClose={onClose} />
+        </div>
       </DialogContent>
     </Dialog>
   );

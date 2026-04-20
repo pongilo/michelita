@@ -14,16 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-interface Props {
+interface OrderDeliveryContentProps {
   deliveryDate: string;
   setDeliveryDate: (date: string) => void;
+  onClose: () => void;
 }
 
-export function OrderDeliveryModal({ deliveryDate, setDeliveryDate }: Props) {
-  const [modal, setModal] = useQueryState("modal");
+export function OrderDeliveryContent({ deliveryDate, setDeliveryDate, onClose }: OrderDeliveryContentProps) {
   const { setValue, watch, getValues } = useFormContext<CreateOrderInput>();
-
-  const isOpen = modal === "delivery";
   const items = watch("items");
   const orderedAt = getValues("orderedAt");
 
@@ -33,10 +31,6 @@ export function OrderDeliveryModal({ deliveryDate, setDeliveryDate }: Props) {
   useEffect(() => {
     setIsDelivered(localDate === orderedAt);
   }, [localDate, orderedAt]);
-
-  function onClose() {
-    setModal(null);
-  }
 
   function onConfirm() {
     setDeliveryDate(localDate);
@@ -57,41 +51,56 @@ export function OrderDeliveryModal({ deliveryDate, setDeliveryDate }: Props) {
   }
 
   return (
+    <div className="space-y-4 p-5">
+      <Field>
+        <FieldLabel>Quando o pedido será entregue?</FieldLabel>
+        <Input
+          type="datetime-local"
+          value={localDate}
+          onChange={(e) => setLocalDate(e.target.value)}
+        />
+      </Field>
+      <Field orientation="horizontal" className="w-auto">
+        <Switch
+          id="isDeliveredModal"
+          checked={isDelivered}
+          onCheckedChange={setIsDelivered}
+        />
+        <Label htmlFor="isDeliveredModal">Marcar como entregue</Label>
+      </Field>
+      <div className="flex justify-between">
+        <div>
+          {orderedAt !== deliveryDate && (
+            <Button type="button" variant="ghost" onClick={onRemove}>
+              Remover agendamento
+            </Button>
+          )}
+        </div>
+        <Button type="button" onClick={onConfirm}>
+          Confirmar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface OrderDeliveryModalProps {
+  deliveryDate: string;
+  setDeliveryDate: (date: string) => void;
+}
+
+export function OrderDeliveryModal({ deliveryDate, setDeliveryDate }: OrderDeliveryModalProps) {
+  const [modal, setModal] = useQueryState("modal");
+  const isOpen = modal === "delivery";
+  const onClose = () => setModal(null);
+
+  return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="flex flex-col gap-0 p-0">
+        <DialogHeader className="mb-0 p-5">
           <DialogTitle>Entrega do pedido</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <Field>
-            <FieldLabel>Quando o pedido será entregue?</FieldLabel>
-            <Input
-              type="datetime-local"
-              value={localDate}
-              onChange={(e) => setLocalDate(e.target.value)}
-            />
-          </Field>
-          <Field orientation="horizontal" className="w-auto">
-            <Switch
-              id="isDeliveredModal"
-              checked={isDelivered}
-              onCheckedChange={setIsDelivered}
-            />
-            <Label htmlFor="isDeliveredModal">Marcar como entregue</Label>
-          </Field>
-          <div className="flex justify-between">
-            <div>
-              {orderedAt !== deliveryDate && (
-                <Button type="button" variant="ghost" onClick={onRemove}>
-                  Remover agendamento
-                </Button>
-              )}
-            </div>
-            <Button type="button" onClick={onConfirm}>
-              Confirmar
-            </Button>
-          </div>
-        </div>
+        <OrderDeliveryContent deliveryDate={deliveryDate} setDeliveryDate={setDeliveryDate} onClose={onClose} />
       </DialogContent>
     </Dialog>
   );

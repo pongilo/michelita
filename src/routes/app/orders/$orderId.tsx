@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
-import { currencyFormatter, formatFullDate, parseDateAsUTC } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Separator } from "@/components/ui/separator";
@@ -67,7 +67,7 @@ function OrderDetailsPage() {
                 {order.isPaid ? "Pago" : "Pendente"}
               </Badge>
             </div>
-            <p className="text-muted-foreground text-base">{formatFullDate(parseDateAsUTC(String(order.orderedAt)))}</p>
+            <p className="text-muted-foreground text-base">{formatFullDate(order.orderedAt)}</p>
           </div>
           <OrderAction orderId={orderId} organizationId={organization!.id} onDeleteOrderSuccess={() => navigate({ to: "/app/orders" })}>
             <OrderAction.Trigger />

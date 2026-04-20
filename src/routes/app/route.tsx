@@ -150,14 +150,14 @@ function PrivateLayout() {
         onSignOut={handleSignOut}
       />
       <SidebarInset>
-        <div className="flex justify-between items-center p-5">
-          <SidebarTrigger />
           {location.pathname !== "/app/orders/form" && (
-            <Button size="sm" nativeButton={false} render={<Link to="/app/orders/form" />}>
-              Novo pedido
-            </Button>
+            <div className="flex justify-between items-center p-5">
+              <SidebarTrigger />
+              <Button size="sm" nativeButton={false} render={<Link to="/app/orders/form" />}>
+                Novo pedido
+              </Button>
+            </div>
           )}
-        </div>
         <Outlet />
       </SidebarInset>
     </SidebarProvider>
