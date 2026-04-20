@@ -7,7 +7,7 @@ export const bolosCaseiros = {
       name: 'Queridinhos Michelita 💜',
       description: 'Os sabores mais amados e pedidos, que conquistaram o coração dos nossos clientes.',
       items: [
-        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
+        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
         { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
         { name: "Milho cremoso", description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
         { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
@@ -17,7 +17,7 @@ export const bolosCaseiros = {
       name: 'Todos os sabores',
       description: 'Experimente todos os nossos bolos caseiros, criados com carinho e ingredientes de qualidade.',
       items: [
-        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
+        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
         { name: "Cenoura", description: "O clássico de sempre. Massa macia e leve que conquista à primeira mordida.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
         { name: "Cenoura com brigadeiro", description: "O clássico, agora com camada generosa de brigadeiro artesanal Michelita por cima.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-cenoura-com-brigadeiro.jpeg' },
         { name: "Cenoura com gotas de chocolate", description: "Massa leve de cenoura com gotas de chocolate.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-cenoura-com-gotas-de-chocolate.jpeg' },
@@ -25,7 +25,7 @@ export const bolosCaseiros = {
         { name: "Chocolate com brigadeiro", description: "Dobro de chocolate: massa suculenta coberta com brigadeiro artesanal Michelita cremoso.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-chocolate-com-brigadeiro.jpeg' },
         { name: "Chocolate com gotas de chocolate", description: "Para os apaixonados por chocolate, com gotas espalhadas pela massa.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
         { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
-        { name: "Fubá", description: "Impossível não amar esse carinho de bolo! Com aquele gostinho de casa de vó, perfeito para seu café.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
+        { name: "Fubá", description: "Impossível não amar esse carinho de bolo! Com aquele gostinho de casa de vó, perfeito para seu café. Aprox. 900g", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
         { name: "Fubá com goiabada", description: "A combinação clássica do fubá com a doçura intensa da goiabada derretida.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
         { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
         { name: "Iogurte", description: "Leve, úmido e incrivelmente macio, com o toque suave do iogurte na massa.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
