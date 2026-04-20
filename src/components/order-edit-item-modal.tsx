@@ -25,7 +25,7 @@ export function OrderEditItemContent({ onClose }: { onClose: () => void }) {
   if (!watchedItem) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-5 md:pt-0">
       <Field>
         <FieldLabel>Descrição</FieldLabel>
         <Input
@@ -133,8 +133,8 @@ export function OrderEditItemModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg sm:h-auto sm:max-h-[80vh] max-w-screen h-screen flex flex-col max-sm:rounded-none">
-        <DialogHeader>
+      <DialogContent className="flex flex-col gap-0 p-0">
+        <DialogHeader className="mb-0 p-5">
           <DialogTitle>Editar item</DialogTitle>
         </DialogHeader>
         <OrderEditItemContent onClose={onClose} />
