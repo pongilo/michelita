@@ -7,35 +7,35 @@ export const bolosCaseiros = {
       name: '',
       description: '',
       items: [
-        { name: "Banana com canela", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
-        { name: "Cenoura", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
-        { name: "Cenoura com brigadeiro", price: 'R$ 36,00', img: '/bolos-caseiros/michelita-cenoura-com-brigadeiro.jpeg' },
-        { name: "Cenoura com gotas de chocolate", price: 'R$ 34,00', img: '/bolos-caseiros/michelita-cenoura-com-gotas-de-chocolate.jpeg' },
-        { name: "Chocolate", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
-        { name: "Chocolate com brigadeiro", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-chocolate-com-brigadeiro.jpeg' },
-        { name: "Chocolate com gotas de chocolate", price: 'R$ 36,00' },
-        { name: "Coco molhado", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
-        { name: "Fubá", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
-        { name: "Fubá com goiabada", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
-        { name: "Fubá cremoso", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
-        { name: "Iogurte", price: 'R$ 26,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
-        { name: "Laranja", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
-        { name: "Limão", price: 'R$ 27,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
-        { name: "Limão com mousse", price: 'R$ 37,00', img: '/bolos-caseiros/michelita-limao-com-mousse.jpeg' },
-        { name: "Maçã com canela", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-maca-com-canela.jpeg' },
-        { name: "Maçã com nozes", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-maca-com-nozes.jpeg' },
-        { name: "Milho cremoso", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
+        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
+        { name: "Cenoura", description: "O clássico de sempre. Massa macia e leve que conquista à primeira mordida.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
+        { name: "Cenoura com brigadeiro", description: "O clássico, agora com camada generosa de brigadeiro artesanal Michelita por cima.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-cenoura-com-brigadeiro.jpeg' },
+        { name: "Cenoura com gotas de chocolate", description: "Massa leve de cenoura com gotas de chocolate.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-cenoura-com-gotas-de-chocolate.jpeg' },
+        { name: "Chocolate", description: "Um abraço de chocolate em cada pedaço.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
+        { name: "Chocolate com brigadeiro", description: "Dobro de chocolate: massa suculenta coberta com brigadeiro artesanal Michelita cremoso.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-chocolate-com-brigadeiro.jpeg' },
+        { name: "Chocolate com gotas de chocolate", description: "Para os apaixonados por chocolate, com gotas espalhadas pela massa.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
+        { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
+        { name: "Fubá", description: "Impossível não amar esse carinho de bolo! Com aquele gostinho de casa de vó, perfeito para seu café.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
+        { name: "Fubá com goiabada", description: "A combinação clássica do fubá com a doçura intensa da goiabada derretida.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
+        { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
+        { name: "Iogurte", description: "Leve, úmido e incrivelmente macio, com o toque suave do iogurte na massa.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
+        { name: "Laranja", description: "Levinho e aromático, com sabor cítrico suave de laranja.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
+        { name: "Limão", description: "Macio e refrescante, com leve toque cítrico de limão.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
+        { name: "Limão com mousse", description: "Massa suave de limão com cobertura cremosa de mousse equilibrado perfeitamente.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-limao-com-mousse.jpeg' },
+        { name: "Maçã com canela", description: "Reconfortante e aromático, com pedaços de maçã e canela que perfumam a casa toda.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-maca-com-canela.jpeg' },
+        { name: "Maçã com nozes", description: "Massa úmida com pedaços de maçã e a crocância especial das nozes.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-maca-com-nozes.jpeg' },
+        { name: "Milho cremoso", description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
       ]
     },
-    {
-      name: 'Adicionais',
-      description: '',
-      items: [
-        { name: 'Gotas de chocolate', price: 'R$ 8,00' },
-        { name: 'Cobertura de brigadeiro', price: 'R$ 10,00' },
-        { name: 'Cobertura de mousse de limão', price: 'R$ 10,00' },
-      ]
-    }
+    // {
+    //   name: 'Adicionais',
+    //   description: '',
+    //   items: [
+    //     { name: 'Gotas de chocolate', description: '', price: 'R$ 10,00' },
+    //     { name: 'Cobertura de brigadeiro', description: '', price: 'R$ 12,00' },
+    //     { name: 'Cobertura de mousse de limão', description: '', price: 'R$ 12,00' },
+    //   ]
+    // }
   ],
 };
 

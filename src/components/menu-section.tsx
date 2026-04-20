@@ -40,10 +40,12 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
                   key={item.name}
                   className="p-2 cursor-default flex sm:flex-col-reverse justify-between items-center duration-200 hover:bg-white/20 rounded-3xl"
                 >
-                  <div className="flex-1 p-3 space-y-0.5 w-full">
-                    <p className="font-bold">{item.name}</p>
-                    <p className="text-white/80">{item.description}</p>
-                    <p>{item.price}</p>
+                  <div className="flex-1 p-3 w-full">
+                    <p className="font-bold text-base">{item.name}</p>
+                    {item.description && (
+                      <p className="text-white/80 text-sm mt-0.5">{item.description}</p>
+                    )}
+                    <p className="font-bold text-sm mt-1">{item.price}</p>
                   </div>
                   <div className="w-30 sm:w-full aspect-square rounded-2xl overflow-hidden bg-white/10">
                     {item.img && (
