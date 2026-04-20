@@ -110,6 +110,15 @@ export function OrderEditItemModal() {
           </div>
 
           <Field>
+            <FieldLabel>Data de entrega</FieldLabel>
+            <Input
+              type="datetime-local"
+              {...register(`items.${idx}.deliveredAt`)}
+            />
+            <FieldError>{itemErrors?.deliveredAt?.message}</FieldError>
+          </Field>
+
+          <Field>
             <FieldLabel>Observação (opcional)</FieldLabel>
             <Textarea rows={3} placeholder="Escreva uma observação..." {...register(`items.${idx}.note`)} />
             <FieldError>{itemErrors?.note?.message}</FieldError>

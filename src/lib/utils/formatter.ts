@@ -50,3 +50,10 @@ export function formatFullDate(date: Date) {
   const formatted = fullDateFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
+
+// Parses a datetime-local string (e.g. "2024-01-15T14:00") as UTC,
+// so the time stored is exactly what the user typed — no timezone shift.
+export function parseDateAsUTC(value: string): Date {
+  return new Date(value.endsWith("Z") ? value : `${value}Z`);
+}
+

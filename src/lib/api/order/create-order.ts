@@ -7,7 +7,7 @@ export const orderItemSchema = z.object({
   unitPrice: z.number().min(0, "Preço unitário deve ser maior ou igual a zero."),
   quantity: z.number().int().min(1, "Quantidade mínima: 1."),
   deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatória."),
-  isDelivered: z.boolean().default(false),
+  isDelivered: z.boolean().default(true),
   note: z.string().trim().optional(),
 });
 

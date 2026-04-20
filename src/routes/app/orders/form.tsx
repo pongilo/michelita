@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, parseDateAsUTC } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
 import { CustomerListModal } from "@/components/customer-list-modal";
 import { ProductListModal } from "@/components/product-list-modal";
@@ -21,6 +21,7 @@ import { OrderScheduleItemModal } from "@/components/order-schedule-item-modal";
 import { useState } from "react";
 import { OrderItemNoteModal } from "@/components/order-item-note-modal";
 import { OrderEditItemModal } from "@/components/order-edit-item-modal";
+import { OrderDeliveryModal } from "@/components/order-delivery-modal";
 import { EditIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/orders/form")({
@@ -56,7 +57,7 @@ function OrderFormRoute() {
     },
   });
 
-  const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = methods;
+  const { control, register, handleSubmit, reset, setValue, watch, getValues, formState: { errors } } = methods;
 
   const { fields } = useFieldArray({
     control,
@@ -67,6 +68,7 @@ function OrderFormRoute() {
   const shippingFee = watch("shippingFee");
   const discount = watch("discount");
   const watchedNote = watch('note');
+  const orderedAt = getValues('orderedAt');
 
   const total = items.reduce(
     (acc, item) => acc + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0),
@@ -121,6 +123,7 @@ function OrderFormRoute() {
       <ProductListModal organizationId={organization!.id} deliveryDate={deliveryDate} />
       <OrderScheduleItemModal deliveryDate={deliveryDate} />
       <OrderEditItemModal />
+      <OrderDeliveryModal deliveryDate={deliveryDate} setDeliveryDate={setDeliveryDate} />
       <OrderNoteModal />
       <OrderItemNoteModal />
       <main className="mx-auto w-full max-w-5xl p-5">
@@ -165,34 +168,21 @@ function OrderFormRoute() {
 
           <Separator />
 
-          <FieldGroup>
-            <Field className="max-w-60">
-              <FieldLabel className="font-heading text-base font-medium">Quando o pedido será entregue?</FieldLabel>
-              <Input
-                type="datetime-local"
-                value={deliveryDate}
-                onChange={(e) => {
-                  const newDate = e.target.value;
-                  setDeliveryDate(newDate)
-                  items.forEach((_, index) => {
-                    setValue(`items.${index}.deliveredAt`, newDate, { shouldValidate: true });
-                  });
-                }}
-              />
-              <FieldError>{errors.orderedAt?.message}</FieldError>
-            </Field>
-            <Field orientation="horizontal" className="w-auto">
-              <Switch 
-                id="isDelivered"
-                onCheckedChange={(value) => {
-                  items.forEach((_, index) => {
-                    setValue(`items.${index}.isDelivered`, value, { shouldValidate: true });
-                  });
-                }}
-              />
-              <Label htmlFor="isDelivered">Marcar como entregue</Label>
-            </Field>
-          </FieldGroup>
+          <div className="space-y-4">
+            <p className="font-heading text-base font-medium">{deliveryDate === orderedAt ? "Entregue" : "Entregar"}</p>
+            <p className="text-base text-muted-foreground">
+              {formatFullDate(parseDateAsUTC(deliveryDate))}
+            </p>
+            <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                nativeButton={false} 
+                render={<Link to="." search={{ modal: "delivery" }} resetScroll={false} />}
+              >
+                {orderedAt === deliveryDate ? "Agendar" : "Reagendar"}
+              </Button>
+          </div>
 
           <Separator />
 
