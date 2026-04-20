@@ -36,7 +36,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
         deliveredAt: { gte: start, lt: end },
         order: { organizationId: data.organizationId },
       },
-      orderBy: { deliveredAt: "desc" },
+      orderBy: { deliveredAt: "asc" },
       select: {
         id: true,
         description: true,
@@ -52,6 +52,8 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
             note: true,
             customer: true,
             isPaid: true,
+            shippingFee: true,
+            discount: true,
           },
         },
       },
@@ -62,7 +64,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
     type OrderGroup = {
       key: string;
       deliveredAt: string;
-      order: RawItem["order"];
+      order: Omit<RawItem["order"], "shippingFee" | "discount"> & { shippingFee: number | null; discount: number | null };
       items: OrderGroupItem[];
     };
 
@@ -73,7 +75,11 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
         groupMap.set(key, {
           key,
           deliveredAt: item.deliveredAt?.toISOString() ?? "",
-          order: item.order,
+          order: {
+            ...item.order,
+            shippingFee: item.order.shippingFee !== null ? Number(item.order.shippingFee) : null,
+            discount: item.order.discount !== null ? Number(item.order.discount) : null,
+          },
           items: [],
         });
       }

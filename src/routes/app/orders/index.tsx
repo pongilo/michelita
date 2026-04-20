@@ -34,10 +34,6 @@ function DeliveriesPage() {
     referenceDate,
   });
 
-  const allItems = data?.groups.flatMap(g => g.items) ?? [];
-  const totalItems = data?.itemCount ?? 0;
-  const deliveredCount = allItems.filter(i => i.isDelivered).length;
-
   const inProgressGroups = data?.groups.filter(g => !g.items.every(i => i.isDelivered)) ?? [];
   const finishedGroups = data?.groups.filter(g => g.items.every(i => i.isDelivered)) ?? [];
   const visibleGroups = activeTab === "em-andamento" ? inProgressGroups : finishedGroups;
@@ -48,12 +44,7 @@ function DeliveriesPage() {
     <main className="bg-muted min-h-screen">
       <div className="mx-auto w-full max-w-6xl p-5 space-y-4">
         <header className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-heading">
-            Pedidos{` `}
-            {totalItems > 0 && (
-              <span className="text-sm text-muted-foreground">({deliveredCount} de {totalItems})</span>
-            )}
-          </h1>
+          <h1 className="text-2xl font-heading">Pedidos</h1>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setDayOffset((o) => o - 1)}
@@ -111,7 +102,7 @@ function DeliveriesPage() {
               <>
                 {visibleGroups.map((group) => {
                   const allDelivered = group.items.every(i => i.isDelivered);
-                  const total = group.items.reduce((sum, item) => sum + item.total, 0)
+                  const total = group.items.reduce((sum, item) => sum + item.total, 0) + (group.order.shippingFee ?? 0) - (group.order.discount ?? 0)
 
                   return (
                     <Link key={group.key} to="/app/orders/$orderId" params={{ orderId: group.order.id }} className="block rounded-md bg-background shadow p-5 space-y-2 hover:ring hover:ring-primary">
