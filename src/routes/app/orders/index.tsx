@@ -147,19 +147,19 @@ function DeliveriesPage() {
                       <div className="space-y-1">
                         {group.order.customer?.name && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <User2Icon className="size-4" />
+                            <User2Icon className="size-4 flex-none" />
                             {group.order.customer?.name}
                           </p>
                         )}
                         {group.order.customer?.address && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPinIcon className="size-4" />
+                            <MapPinIcon className="size-4 flex-none" />
                             {group.order.customer?.address}
                           </p>
                         )}
                         {group.order.customer?.note && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <StickyNoteIcon className="size-4" />
+                            <StickyNoteIcon className="size-4 flex-none" />
                             {group.order.customer?.note}
                           </p>
                         )}

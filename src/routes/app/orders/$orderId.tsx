@@ -165,45 +165,61 @@ function OrderDetailsPage() {
             {order.item.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
             ) : (
-              <ItemGroup>
-                {order.item.map((item) => (
-                  <Item key={item.id} size="sm" variant="outline">
-                    <ItemContent>
-                      <ItemTitle>
-                        <span className="text-primary font-bold">{item.quantity}x</span>
-                        {item.description}
-                      </ItemTitle>
-                      <ItemDescription>
-                        {formatFullDate(new Date(item.deliveredAt))}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </ItemDescription>
-                    </ItemContent>
-                    <ItemActions>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                        <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
-                      </div>
-                      <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
-                        {item.isDelivered ? "Entregue" : "A entregar"}
-                      </Badge>
-                      <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
-                        <OrderAction.Trigger />
-                        <OrderAction.Content>
-                          <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
-                          <OrderAction.Separator />
-                          {item.isDelivered ? (
-                            <OrderAction.UnmarkAsDelivered />
-                          ) : (
-                            <OrderAction.MarkAsDelivered />
-                          )}
-                          <OrderAction.Separator />
-                          <OrderAction.DeleteItem />
-                        </OrderAction.Content>
-                      </OrderAction>
-                    </ItemActions>
-                  </Item>
-                ))}
-              </ItemGroup>
+              <div className="space-y-4">
+                {Object.entries(
+                  order.item.reduce<Record<string, typeof order.item>>((groups, item) => {
+                    const key = new Date(item.deliveredAt).toISOString().slice(0, 10);
+                    (groups[key] ??= []).push(item);
+                    return groups;
+                  }, {})
+                )
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([dateKey, items]) => (
+                    <div key={dateKey} className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {formatFullDate(new Date(dateKey + "T12:00:00"))}
+                      </p>
+                      <ItemGroup>
+                        {items.map((item) => (
+                          <Item key={item.id} size="sm" variant="outline">
+                            <ItemContent>
+                              <ItemTitle>
+                                <span className="text-primary font-bold">{item.quantity}x</span>
+                                {item.description}
+                              </ItemTitle>
+                              {item.note && (
+                                <ItemDescription>{item.note}</ItemDescription>
+                              )}
+                            </ItemContent>
+                            <ItemActions>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
+                                <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
+                              </div>
+                              <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
+                                {item.isDelivered ? "Entregue" : "A entregar"}
+                              </Badge>
+                              <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
+                                <OrderAction.Trigger />
+                                <OrderAction.Content>
+                                  <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
+                                  <OrderAction.Separator />
+                                  {item.isDelivered ? (
+                                    <OrderAction.UnmarkAsDelivered />
+                                  ) : (
+                                    <OrderAction.MarkAsDelivered />
+                                  )}
+                                  <OrderAction.Separator />
+                                  <OrderAction.DeleteItem />
+                                </OrderAction.Content>
+                              </OrderAction>
+                            </ItemActions>
+                          </Item>
+                        ))}
+                      </ItemGroup>
+                    </div>
+                  ))}
+              </div>
             )}
           </div>
         </div>
