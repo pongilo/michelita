@@ -70,7 +70,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
   };
 
   return (
-    <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3 cursor-pointer">
+    <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
       <div className="absolute top-3 right-3">
         {isMobile ? (
           <Drawer direction="bottom" open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -135,7 +135,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
           ) : (
             <>
               <span className="size-1.5 rounded-full bg-yellow-600"></span>
-              <span className="text-yellow-700">Pendente</span>
+              <span className="text-yellow-700">A receber</span>
             </>
           )}
         </p>

@@ -7,11 +7,18 @@ import { OrderEditItemsModal } from "@/components/order-edit-items-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
-import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-order-item-delivery";
+import { useBulkUpdateOrderItemsDelivery } from "@/hooks/tanstack/order/use-bulk-update-order-items-delivery";
 import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
-import { CheckCircle2Icon, CircleIcon, MapPinIcon, PhoneIcon, StickyNoteIcon } from "lucide-react";
+import { MapPinIcon, MoreVerticalIcon, PhoneIcon, StickyNoteIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 // ── Route ────────────────────────────────────────────────────────────────────
 
@@ -29,9 +36,19 @@ function OrderDetailsPage() {
     orderId,
   });
 
-  const { mutate: toggleDelivery, isPending: isToggling } = useUpdateOrderItemDelivery({
+  const { mutate: bulkMarkDelivered, isPending: isBulkMarking } = useBulkUpdateOrderItemsDelivery({
     organizationId: organization!.id,
   });
+
+  const handleMarkGroupDelivered = (itemIds: string[]) => {
+    bulkMarkDelivered(
+      { itemIds, isDelivered: true },
+      {
+        onSuccess: () => toast.success("Itens marcados como entregues."),
+        onError: (err: unknown) => toast.error(err instanceof Error ? err.message : "Erro ao marcar como entregue."),
+      },
+    );
+  };
 
   // ── Modal state ──────────────────────────────────────────────────────────
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
@@ -189,56 +206,54 @@ function OrderDetailsPage() {
                   }, {})
                 )
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([dateKey, items]) => (
-                    <div key={dateKey} className="block rounded-md bg-background shadow p-5 space-y-2">
-                      <p className="text-xs text-muted-foreground uppercase font-medium">
-                        {formatFullDate(new Date(dateKey + "T12:00:00"))}
-                      </p>
-                      {items.map((item) => (
-                        <div key={item.id} className="flex items-start gap-3 py-1">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-base text-foreground">
-                              {item.quantity > 1 && (
-                                <span className="text-primary font-bold">{item.quantity}x </span>
+                  .map(([dateKey, items]) => {
+                    const allDelivered = items.every((i) => i.isDelivered);
+                    return (
+                      <div key={dateKey} className="block rounded-md bg-background shadow p-5 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs text-muted-foreground uppercase font-medium">
+                            {formatFullDate(new Date(dateKey + "T12:00:00"))}
+                          </p>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                              <MoreVerticalIcon className="size-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {!allDelivered && (
+                                <DropdownMenuItem
+                                  disabled={isBulkMarking}
+                                  onClick={() => handleMarkGroupDelivered(items.map((i) => i.id))}
+                                >
+                                  Marcar todos como entregue
+                                </DropdownMenuItem>
                               )}
-                              {item.description}
-                              <span className="text-muted-foreground"> — {currencyFormatter.format(item.total)}</span>
-                            </p>
-                            {item.note && (
-                              <p className="text-sm text-muted-foreground italic">
-                                Obs.: {item.note}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 flex-none">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isToggling}
-                              className={item.isDelivered ? "text-green-700 border-green-300 bg-green-500/10 hover:bg-green-500/20 hover:text-green-700" : ""}
-                              onClick={() => toggleDelivery({ orderItemId: item.id, isDelivered: !item.isDelivered })}
-                            >
-                              {item.isDelivered ? (
-                                <CheckCircle2Icon className="size-4" />
-                              ) : (
-                                <CircleIcon className="size-4" />
-                              )}
-                              {item.isDelivered ? "Entregue" : "Entregar"}
-                            </Button>
-                            <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
-                              <OrderAction.Trigger />
-                              <OrderAction.Content>
-                                <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
-                                <OrderAction.Separator />
-                                <OrderAction.DeleteItem />
-                              </OrderAction.Content>
-                            </OrderAction>
-                          </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      ))}
-                    </div>
-                  ))}
+                        {items.map((item) => (
+                          <div key={item.id} className="flex items-start gap-3 py-1">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base text-foreground">
+                                {item.quantity > 1 && (
+                                  <span className="text-primary font-bold">{item.quantity}x </span>
+                                )}
+                                {item.description}
+                                <span className="text-muted-foreground"> — {currencyFormatter.format(item.total)}</span>
+                              </p>
+                              {item.note && (
+                                <p className="text-sm text-muted-foreground italic">
+                                  Obs.: {item.note}
+                                </p>
+                              )}
+                            </div>
+                            <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                              {item.isDelivered ? "Entregue" : "Pendente"}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </div>
