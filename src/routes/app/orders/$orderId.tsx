@@ -6,10 +6,10 @@ import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
 import { OrderEditItemsModal } from "@/components/order-edit-items-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
+import { useUpdateOrderItemDelivery } from "@/hooks/tanstack/order/use-update-order-item-delivery";
 import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
-import { ChevronRightIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { CheckCircle2Icon, CircleIcon, MapPinIcon, PhoneIcon, StickyNoteIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Separator } from "@/components/ui/separator";
 
@@ -27,6 +27,10 @@ function OrderDetailsPage() {
   const { data: order, isLoading, isError, error } = useGetOrder({
     organizationId: organization!.id,
     orderId,
+  });
+
+  const { mutate: toggleDelivery, isPending: isToggling } = useUpdateOrderItemDelivery({
+    organizationId: organization!.id,
   });
 
   // ── Modal state ──────────────────────────────────────────────────────────
@@ -125,39 +129,50 @@ function OrderDetailsPage() {
             </>
           )}
 
-          {/* Cliente */}
-          <div className="space-y-2">
-            <h2 className="font-heading text-base font-medium">Cliente</h2>
-            {order.customer ? (
-              <Item variant="outline">
-                <ItemContent>
-                  <ItemTitle>{order.customer.name}</ItemTitle>
-                  {order.customer.phone && (
-                    <ItemDescription className="flex gap-2 items-center">
-                      <PhoneIcon className="size-4 shrink-0" />
-                      {order.customer.phone}
-                    </ItemDescription>
-                  )}
-                  {order.customer.address && (
-                    <ItemDescription className="flex gap-2 items-center">
-                      <MapPinIcon className="size-4 shrink-0" />
-                      {order.customer.address}
-                    </ItemDescription>
-                  )}
-                  {order.customer.note && (
-                    <ItemDescription><span className="text-primary">Observação:</span> {order.customer.note}</ItemDescription>
-                  )}
-                </ItemContent>
-                <ItemActions>
-                  <Button type="button" variant="ghost" size="icon-lg" nativeButton={false} render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
-                    <ChevronRightIcon />
-                  </Button>
-                </ItemActions>
-              </Item>
-            ) : (
-              <p className="text-sm text-muted-foreground">Sem cliente vinculado</p>
-            )}
-          </div>
+          <Separator />
+
+          {order.customer ? (
+            <div className="space-y-2">
+              <p className="font-heading text-base font-medium">{order.customer.name}</p>
+              {order.customer.phone && (
+                <p className="text-base text-muted-foreground flex gap-2 items-center">
+                  <PhoneIcon className="size-4 flex-none" />
+                  {order.customer.phone}
+                </p>
+              )}
+              {order.customer.address && (
+                <p className="text-base text-muted-foreground flex gap-2 items-center">
+                  <MapPinIcon className="size-4 flex-none" />
+                  {order.customer.address}
+                </p>
+              )}
+              {order.customer.note && (
+                <p className="text-base text-muted-foreground flex gap-2 items-center">
+                  <StickyNoteIcon className="size-4 flex-none" />
+                  {order.customer.note}
+                </p>
+              )}
+              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                Ver cliente
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="font-heading text-base font-medium">Cliente (opcional)</p>
+              <p className="text-base text-muted-foreground">Nenhum cliente selecionado para este pedido.</p>
+              {/* <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                nativeButton={false}
+                render={<Link to="." search={{ modal: "customer" }} resetScroll={false} />}
+              >
+                Selecionar
+              </Button> */}
+            </div>
+          )}
+
+          <Separator />
 
           {/* Itens */}
           <div className="space-y-2">
@@ -175,48 +190,53 @@ function OrderDetailsPage() {
                 )
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([dateKey, items]) => (
-                    <div key={dateKey} className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">
+                    <div key={dateKey} className="block rounded-md bg-background shadow p-5 space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase font-medium">
                         {formatFullDate(new Date(dateKey + "T12:00:00"))}
                       </p>
-                      <ItemGroup>
-                        {items.map((item) => (
-                          <Item key={item.id} size="sm" variant="outline">
-                            <ItemContent>
-                              <ItemTitle>
-                                <span className="text-primary font-bold">{item.quantity}x</span>
-                                {item.description}
-                              </ItemTitle>
-                              {item.note && (
-                                <ItemDescription>{item.note}</ItemDescription>
+                      {items.map((item) => (
+                        <div key={item.id} className="flex items-start gap-3 py-1">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-base text-foreground">
+                              {item.quantity > 1 && (
+                                <span className="text-primary font-bold">{item.quantity}x </span>
                               )}
-                            </ItemContent>
-                            <ItemActions>
-                              <div className="text-right">
-                                <p className="text-sm font-semibold">{currencyFormatter.format(item.total)}</p>
-                                <p className="text-xs text-muted-foreground">{currencyFormatter.format(item.unitPrice)} un.</p>
-                              </div>
-                              <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : ""} variant={item.isDelivered ? "default" : "outline"}>
-                                {item.isDelivered ? "Entregue" : "A entregar"}
-                              </Badge>
-                              <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
-                                <OrderAction.Trigger />
-                                <OrderAction.Content>
-                                  <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
-                                  <OrderAction.Separator />
-                                  {item.isDelivered ? (
-                                    <OrderAction.UnmarkAsDelivered />
-                                  ) : (
-                                    <OrderAction.MarkAsDelivered />
-                                  )}
-                                  <OrderAction.Separator />
-                                  <OrderAction.DeleteItem />
-                                </OrderAction.Content>
-                              </OrderAction>
-                            </ItemActions>
-                          </Item>
-                        ))}
-                      </ItemGroup>
+                              {item.description}
+                              <span className="text-muted-foreground"> — {currencyFormatter.format(item.total)}</span>
+                            </p>
+                            {item.note && (
+                              <p className="text-sm text-muted-foreground italic">
+                                Obs.: {item.note}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 flex-none">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={isToggling}
+                              className={item.isDelivered ? "text-green-700 border-green-300 bg-green-500/10 hover:bg-green-500/20 hover:text-green-700" : ""}
+                              onClick={() => toggleDelivery({ orderItemId: item.id, isDelivered: !item.isDelivered })}
+                            >
+                              {item.isDelivered ? (
+                                <CheckCircle2Icon className="size-4" />
+                              ) : (
+                                <CircleIcon className="size-4" />
+                              )}
+                              {item.isDelivered ? "Entregue" : "Entregar"}
+                            </Button>
+                            <OrderAction orderId={orderId} itemId={item.id} organizationId={organization!.id}>
+                              <OrderAction.Trigger />
+                              <OrderAction.Content>
+                                <OrderAction.EditItem onEdit={() => setIsEditItemsModalOpen(true)} />
+                                <OrderAction.Separator />
+                                <OrderAction.DeleteItem />
+                              </OrderAction.Content>
+                            </OrderAction>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
               </div>
