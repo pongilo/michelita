@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { formatDayLabel } from "@/lib/utils/formatter";
-import { LoadingState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import { OrderItem } from "@/components/order-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -30,12 +29,12 @@ function OrderPage() {
   });
 
   const inProgressGroups = data?.groups.filter((g) => !g.items.every((i) => i.isDelivered)) ?? [];
-  const finishedGroups = data?.groups.filter((g) => g.items.every((i) => i.isDelivered)) ?? [];;
+  const finishedGroups = data?.groups.filter((g) => g.items.every((i) => i.isDelivered)) ?? [];
 
   return (
     <main className="bg-muted min-h-screen">
-      <div className="mx-auto w-full max-w-6xl p-5 space-y-4">
-        <header className="flex items-center justify-between gap-4">
+      <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
+        <header className="flex items-center justify-between gap-4 px-5">
           <h1 className="text-2xl font-heading">Pedidos</h1>
           <div className="flex items-center gap-2">
             <Button
@@ -46,7 +45,7 @@ function OrderPage() {
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <span className="text-sm font-medium capitalize text-center">
+            <span className="text-sm font-medium capitalize text-center text-nowrap">
               {formatDayLabel(new Date(referenceDate + "T00:00:00Z"))}
             </span>
             <Button
@@ -60,12 +59,19 @@ function OrderPage() {
           </div>
         </header>
 
-        {isLoading && <LoadingState label="Carregando entregas..." />}
-        {isError && <p className="text-destructive text-sm">{error.message}</p>}
+        {isLoading && (
+          <div className="p-5 flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
+            Carregando pedidos...
+          </div>
+        )}
+        {isError && (
+          <p className="text-destructive text-sm p-5">{error.message}</p>
+        )}
 
         {data && (
           <Tabs defaultValue="inProgress" className="w-full">
-            <TabsList>
+            <TabsList className="px-5">
               <TabsTrigger value="inProgress">
                 Em andamento
                 {inProgressGroups.length > 0 && (
@@ -79,9 +85,9 @@ function OrderPage() {
                 )}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="inProgress" className="space-y-4">
+            <TabsContent value="inProgress" className="space-y-2 md:space-y-4 md:px-5">
               {inProgressGroups.length === 0 ? (
-                <p className="text-base text-muted-foreground p-4 text-center">
+                <p className="text-base text-muted-foreground p-5 text-center">
                   Nenhuma entrega em andamento para este dia.
                 </p>
               ) : (
@@ -92,9 +98,9 @@ function OrderPage() {
                 </>
               )}
             </TabsContent>
-            <TabsContent value="isFinished" className="space-y-4">
+            <TabsContent value="isFinished" className="space-y-2 md:space-y-4 md:px-5">
               {finishedGroups.length === 0 ? (
-                <p className="text-base text-muted-foreground p-4 text-center">
+                <p className="text-base text-muted-foreground p-5 text-center">
                   Nenhuma entrega finalizada para este dia.
                 </p>
               ) : (

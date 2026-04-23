@@ -70,7 +70,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
   };
 
   return (
-    <div className="relative rounded-md bg-background shadow p-5 space-y-3 cursor-pointer md:cursor-default">
+    <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3 cursor-pointer">
       <div className="absolute top-3 right-3">
         {isMobile ? (
           <Drawer direction="bottom" open={drawerOpen} onOpenChange={setDrawerOpen}>
