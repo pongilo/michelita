@@ -18,6 +18,7 @@ import {
 import {
   Drawer,
   DrawerContent,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useBulkUpdateOrderItemsDelivery } from "@/hooks/tanstack/order/use-bulk-update-order-items-delivery";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
@@ -84,15 +85,10 @@ function OrderCard({ group, organizationId }: { group: Group; organizationId: st
   };
 
   return (
-    <div
-      className="relative rounded-md bg-background shadow p-5 space-y-2 cursor-pointer md:cursor-default"
-      onClick={() => {
-        if (isMobile && !drawerOpen) setDrawerOpen(true);
-      }}
-    >
+    <div className="relative rounded-md bg-background shadow p-5 space-y-2 cursor-pointer md:cursor-default">
       <div>
         <div className="flex justify-between items-center gap-2">
-          <p className="text-xs text-muted-foreground uppercase font-medium">
+          <p className="text-xs uppercase font-medium text-blue-800">
             {allDelivered ? "Entregue às " : "Entregar às "}
             {timeFormatter.format(new Date(group.deliveredAt))} • {currencyFormatter.format(total)}
           </p>
@@ -102,11 +98,35 @@ function OrderCard({ group, organizationId }: { group: Group; organizationId: st
             ) : (
               <Badge className="bg-amber-400/20 text-amber-700 border-amber-300">Pendente</Badge>
             )}
-            <div className="hidden md:block" onClick={(e) => e.stopPropagation()}>
+            {isMobile ? (
+              <Drawer direction="bottom" open={drawerOpen} onOpenChange={setDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <MoreVerticalIcon />
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <div className="py-2">
+                    {!allDelivered && (
+                      <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
+                        Marcar como entregue
+                      </Button>
+                    )}
+                    {!group.order.isPaid && (
+                      <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkPaid} disabled={isMarkingPaid}>
+                        Marcar como pago
+                      </Button>
+                    )}
+                    <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewOrder}>
+                      Ver pedido
+                    </Button>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
                   <MoreVerticalIcon />
-                  <span className="sr-only">Ações</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {!allDelivered && (
@@ -122,7 +142,8 @@ function OrderCard({ group, organizationId }: { group: Group; organizationId: st
                   <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            )}
+          
           </div>
         </div>
         {group.order.note && (
@@ -169,26 +190,6 @@ function OrderCard({ group, organizationId }: { group: Group; organizationId: st
           </div>
         </>
       )}
-
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="bottom">
-        <DrawerContent>
-          <div className="py-2">
-            {!allDelivered && (
-              <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
-                Marcar como entregue
-              </Button>
-            )}
-            {!group.order.isPaid && (
-              <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkPaid} disabled={isMarkingPaid}>
-                Marcar como pago
-              </Button>
-            )}
-            <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewOrder}>
-              Ver pedido
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }
