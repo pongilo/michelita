@@ -5,13 +5,13 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemContent } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useUpdateOrderItems } from "@/hooks/tanstack/order/use-update-order-items";
 import { currencyFormatter } from "@/lib/utils/formatter";
-import { Trash2Icon } from "lucide-react";
+import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -79,6 +79,7 @@ export function OrderEditItemsModal({ open, onOpenChange, orderId, organizationI
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<EditItemsValues>({
     resolver: zodResolver(editItemsSchema),
@@ -134,100 +135,127 @@ export function OrderEditItemsModal({ open, onOpenChange, orderId, organizationI
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onOpenChange(false)}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar itens do pedido</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
-          <div className="space-y-4">
-            {fields.map((field, index) => {
-              const itemSubtotal =
-                (Number(watchedItems[index]?.unitPrice) || 0) * (Number(watchedItems[index]?.quantity) || 0);
+        <form onSubmit={handleSubmit(handleSave)} className="space-y-6">
+          {fields.map((field, index) => {
+            const qty = Number(watchedItems[index]?.quantity) || 1;
+            const itemSubtotal = (Number(watchedItems[index]?.unitPrice) || 0) * qty;
 
-              return (
-                <div key={field.id} className="space-y-2">
-                  <div className="flex justify-between items-center h-8">
+            return (
+              <div key={field.id} className="space-y-4">
+                {fields.length > 1 && (
+                  <div className="flex justify-between items-center">
                     <p className="font-heading text-base font-medium">
                       Item {index + 1}{" "}
                       <span className="text-xs font-normal opacity-60">
                         {currencyFormatter.format(itemSubtotal)}
                       </span>
                     </p>
-                    {fields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-destructive"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2Icon />
+                    </Button>
+                  </div>
+                )}
+
+                <Field>
+                  <FieldLabel>Descrição</FieldLabel>
+                  <Input placeholder="Ex: Bolo de chocolate" {...register(`items.${index}.description`)} />
+                  <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel>Quantidade</FieldLabel>
+                    <div className="flex items-center gap-1">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon-sm"
-                        className="text-destructive"
-                        onClick={() => remove(index)}
+                        onClick={() => setValue(`items.${index}.quantity`, Math.max(1, qty - 1))}
                       >
-                        <Trash2Icon />
+                        <MinusIcon />
                       </Button>
-                    )}
-                  </div>
-                  <Item size="xs" variant="outline">
-                    <ItemContent>
-                      <FieldGroup className="grid gap-3 md:grid-cols-3">
-                        <Field className="md:col-span-2">
-                          <FieldLabel>Nome do item</FieldLabel>
-                          <Input type="text" {...register(`items.${index}.description`)} />
-                          <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
-                        </Field>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                        className="text-center"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => setValue(`items.${index}.quantity`, qty + 1)}
+                      >
+                        <PlusIcon />
+                      </Button>
+                    </div>
+                    <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
+                  </Field>
 
-                        <div className="flex gap-3">
-                          <Field>
-                            <FieldLabel>Valor (R$)</FieldLabel>
-                            <Input type="number" min="0" step="0.01" {...register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
-                            <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
-                          </Field>
-                          <Field>
-                            <FieldLabel>Qtd</FieldLabel>
-                            <Input type="number" min="1" step="1" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
-                            <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
-                          </Field>
-                        </div>
-
-                        <Field orientation="horizontal">
-                          <Controller
-                            name={`items.${index}.isDelivered`}
-                            control={control}
-                            render={({ field: f }) => (
-                              <Checkbox
-                                id={`edit-isDelivered-${index}`}
-                                checked={f.value}
-                                onCheckedChange={f.onChange}
-                              />
-                            )}
-                          />
-                          <Label htmlFor={`edit-isDelivered-${index}`}>Marcar como entregue</Label>
-                        </Field>
-
-                        <Field>
-                          <FieldLabel>Data da entrega</FieldLabel>
-                          <Input type="datetime-local" {...register(`items.${index}.deliveredAt`)} />
-                          <FieldError>{errors.items?.[index]?.deliveredAt?.message}</FieldError>
-                        </Field>
-
-                        <Field>
-                          <FieldLabel>Observação</FieldLabel>
-                          <Input type="text" {...register(`items.${index}.note`)} />
-                        </Field>
-                      </FieldGroup>
-                    </ItemContent>
-                  </Item>
+                  <Field>
+                    <FieldLabel>Valor unitário</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                    />
+                    <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
+                  </Field>
                 </div>
-              );
-            })}
-          </div>
+
+                <Field>
+                  <FieldLabel>Data da entrega</FieldLabel>
+                  <Input type="datetime-local" {...register(`items.${index}.deliveredAt`)} />
+                  <FieldError>{errors.items?.[index]?.deliveredAt?.message}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Observação (opcional)</FieldLabel>
+                  <Textarea rows={3} placeholder="Escreva uma observação..." {...register(`items.${index}.note`)} />
+                </Field>
+
+                <Field orientation="horizontal">
+                  <Controller
+                    name={`items.${index}.isDelivered`}
+                    control={control}
+                    render={({ field: f }) => (
+                      <Checkbox
+                        id={`edit-isDelivered-${index}`}
+                        checked={f.value}
+                        onCheckedChange={f.onChange}
+                      />
+                    )}
+                  />
+                  <Label htmlFor={`edit-isDelivered-${index}`}>Marcar como entregue</Label>
+                </Field>
+
+                {index < fields.length - 1 && <hr className="border-border" />}
+              </div>
+            );
+          })}
 
           <Button type="button" variant="outline" size="sm" onClick={() => append(emptyItem())}>
             Adicionar item
           </Button>
 
-          <div className="rounded-2xl bg-muted px-4 py-3 text-sm flex justify-between">
-            <span>Total dos itens</span>
-            <span>{currencyFormatter.format(subtotal)}</span>
+          <div className="flex items-center py-4 border-t">
+            <div className="flex-1 space-y-1">
+              <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(subtotal)}</p>
+            </div>
           </div>
 
           <DialogFooter>

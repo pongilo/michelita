@@ -4,6 +4,7 @@ import { useState } from "react";
 import { OrderAction } from "@/components/order-action";
 import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
 import { OrderEditItemsModal } from "@/components/order-edit-items-modal";
+import { OrderDetailsItemEditModal, type EditableOrderItem } from "@/components/order-details-item-edit-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
@@ -53,6 +54,7 @@ function OrderDetailsPage() {
   // ── Modal state ──────────────────────────────────────────────────────────
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
   const [isEditItemsModalOpen, setIsEditItemsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditableOrderItem | null>(null);
 
   if (isLoading) {
     return (
@@ -246,9 +248,21 @@ function OrderDetailsPage() {
                                 </p>
                               )}
                             </div>
-                            <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
-                              {item.isDelivered ? "Entregue" : "Pendente"}
-                            </Badge>
+                            <div className="flex items-center gap-2 flex-none">
+                              <Badge className={item.isDelivered ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                                {item.isDelivered ? "Entregue" : "Pendente"}
+                              </Badge>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                                  <MoreVerticalIcon className="size-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setEditingItem(item)}>
+                                    Editar item
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -273,6 +287,14 @@ function OrderDetailsPage() {
           orderId={orderId}
           organizationId={organization!.id}
           items={order.item}
+        />
+
+        <OrderDetailsItemEditModal
+          open={editingItem !== null}
+          onOpenChange={(v) => { if (!v) setEditingItem(null); }}
+          orderId={orderId}
+          organizationId={organization!.id}
+          item={editingItem}
         />
       </main>
     );

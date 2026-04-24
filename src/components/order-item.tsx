@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -20,6 +21,7 @@ import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Separator } from "@/components/ui/separator";
 
 type Group = NonNullable<ReturnType<typeof useListOrders>["data"]>["groups"][number];
 
@@ -69,6 +71,11 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
     navigate({ to: "/app/orders/$orderId", params: { orderId: group.order.id } });
   };
 
+  const handleViewCustomer = () => {
+    if (!group.order.customer?.id) return;
+    navigate({ to: "/app/customers/$customerId", params: { customerId: group.order.customer.id! } });
+  };
+
   return (
     <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
       <div className="absolute top-3 right-3">
@@ -80,7 +87,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
               </Button>
             </DrawerTrigger>
             <DrawerContent>
-              <div className="py-2">
+              <div className="py-4 space-y-2">
                 {!allDelivered && (
                   <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
                     Marcar como entregue
@@ -91,8 +98,16 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
                     Marcar como pago
                   </Button>
                 )}
+                {(!allDelivered || !group.order.isPaid) && (
+                  <div className="px-4 py-2">
+                    <Separator />
+                  </div>
+                )}
                 <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewOrder}>
                   Ver pedido
+                </Button>
+                <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewCustomer}>
+                  Ver cliente
                 </Button>
               </div>
             </DrawerContent>
@@ -113,7 +128,11 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
                   Marcar como pago
                 </DropdownMenuItem>
               )}
+              {(!allDelivered || !group.order.isPaid) && (
+                <DropdownMenuSeparator />
+              )}
               <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleViewCustomer}>Ver cliente</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -135,7 +154,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
           ) : (
             <>
               <span className="size-1.5 rounded-full bg-yellow-600"></span>
-              <span className="text-yellow-700">A receber</span>
+              <span className="text-yellow-700">Pendente</span>
             </>
           )}
         </p>
