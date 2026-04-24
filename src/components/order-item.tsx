@@ -76,6 +76,13 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
     navigate({ to: "/app/customers/$customerId", params: { customerId: group.order.customer.id! } });
   };
 
+  const handleCopyAddress = () => {
+    if (!group.order.customer?.address) return;
+    navigator.clipboard.writeText(group.order.customer.address);
+    toast.success("Endereço copiado.");
+    setDrawerOpen(false);
+  };
+
   return (
     <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
       <div className="absolute top-3 right-3">
@@ -109,6 +116,11 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
                 <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewCustomer}>
                   Ver cliente
                 </Button>
+                {group.order.customer?.address && (
+                  <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleCopyAddress}>
+                    Copiar endereço
+                  </Button>
+                )}
               </div>
             </DrawerContent>
           </Drawer>
@@ -133,6 +145,9 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
               )}
               <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
               <DropdownMenuItem onClick={handleViewCustomer}>Ver cliente</DropdownMenuItem>
+              {group.order.customer?.address && (
+                <DropdownMenuItem onClick={handleCopyAddress}>Copiar endereço</DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
