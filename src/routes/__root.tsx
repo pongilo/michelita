@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 import {
   Outlet,
   createRootRoute,
@@ -39,26 +40,39 @@ export const Route = createRootRoute({
       { name: 'twitter:title', content: 'Michelita Confeitaria | Bolos Artesanais em Americana' },
       { name: 'twitter:description', content: 'Confira nossos sabores e encomende bolos caseiros, vulcão, de pote e personalizados para aniversários, festas e ocasiões especiais.' },
       { name: 'twitter:image', content: 'https://michelita.com.br/social.png' },
-
+      // PWA
+      { name: 'theme-color', content: '#593A93' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+      { name: 'apple-mobile-web-app-title', content: 'Michelita' },
     ],
     links: [
-      { 
-        rel: 'stylesheet', 
-        href: appCss 
-      },
       {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        href: '/favicon.png',
-      }
+        rel: 'stylesheet',
+        href: appCss
+      },
+      { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+      { rel: 'icon', href: '/pwa-icon.svg', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png' },
+      { rel: 'manifest', href: '/manifest.webmanifest' },
     ],
   }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 })
 
+function useRegisterSW() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    }
+  }, [])
+}
+
 function RootComponent() {
+  useRegisterSW()
+
   return (
     <html lang="pt-BR" className="scroll-smooth scroll-pt-20" data-theme="light">
       <head>
