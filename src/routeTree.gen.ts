@@ -24,10 +24,12 @@ import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-case
 import { Route as SiteBolosBombomRouteImport } from './routes/_site/bolos-bombom'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AppTransactionsIndexRouteImport } from './routes/app/transactions/index'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOverviewIndexRouteImport } from './routes/app/overview/index'
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
 import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
+import { Route as AppFinanceIndexRouteImport } from './routes/app/finance/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
@@ -107,6 +109,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AppTransactionsIndexRoute = AppTransactionsIndexRouteImport.update({
+  id: '/transactions/',
+  path: '/transactions/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -125,6 +132,11 @@ const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
 const AppHistoryIndexRoute = AppHistoryIndexRouteImport.update({
   id: '/history/',
   path: '/history/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFinanceIndexRoute = AppFinanceIndexRouteImport.update({
+  id: '/finance/',
+  path: '/finance/',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
@@ -172,10 +184,12 @@ export interface FileRoutesByFullPath {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
+  '/app/finance/': typeof AppFinanceIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/overview/': typeof AppOverviewIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
+  '/app/transactions/': typeof AppTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
@@ -196,10 +210,12 @@ export interface FileRoutesByTo {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers': typeof AppCustomersIndexRoute
+  '/app/finance': typeof AppFinanceIndexRoute
   '/app/history': typeof AppHistoryIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
   '/app/overview': typeof AppOverviewIndexRoute
   '/app/products': typeof AppProductsIndexRoute
+  '/app/transactions': typeof AppTransactionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -223,10 +239,12 @@ export interface FileRoutesById {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
+  '/app/finance/': typeof AppFinanceIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/overview/': typeof AppOverviewIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
+  '/app/transactions/': typeof AppTransactionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,10 +267,12 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
+    | '/app/finance/'
     | '/app/history/'
     | '/app/orders/'
     | '/app/overview/'
     | '/app/products/'
+    | '/app/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -273,10 +293,12 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers'
+    | '/app/finance'
     | '/app/history'
     | '/app/orders'
     | '/app/overview'
     | '/app/products'
+    | '/app/transactions'
   id:
     | '__root__'
     | '/_auth'
@@ -299,10 +321,12 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
+    | '/app/finance/'
     | '/app/history/'
     | '/app/orders/'
     | '/app/overview/'
     | '/app/products/'
+    | '/app/transactions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -418,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/app/transactions/': {
+      id: '/app/transactions/'
+      path: '/transactions'
+      fullPath: '/app/transactions/'
+      preLoaderRoute: typeof AppTransactionsIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
@@ -444,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/app/history/'
       preLoaderRoute: typeof AppHistoryIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/finance/': {
+      id: '/app/finance/'
+      path: '/finance'
+      fullPath: '/app/finance/'
+      preLoaderRoute: typeof AppFinanceIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/customers/': {
@@ -533,10 +571,12 @@ interface AppRouteRouteChildren {
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
+  AppFinanceIndexRoute: typeof AppFinanceIndexRoute
   AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppOverviewIndexRoute: typeof AppOverviewIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
+  AppTransactionsIndexRoute: typeof AppTransactionsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -546,10 +586,12 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
+  AppFinanceIndexRoute: AppFinanceIndexRoute,
   AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppOverviewIndexRoute: AppOverviewIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
+  AppTransactionsIndexRoute: AppTransactionsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

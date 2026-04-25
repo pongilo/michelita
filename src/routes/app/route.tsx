@@ -31,6 +31,7 @@ const navItems = [
     label: '',
     links: [
       { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
+      { to: "/app/finance", icon: ListOrderedIcon, label: "Financeiro" },
     ]
   },
   {
@@ -40,6 +41,7 @@ const navItems = [
       { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },
+      { to: "/app/transactions", icon: ListOrderedIcon, label: "Transações" },
     ]
   }
 ] as const;
