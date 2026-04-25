@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TRANSACTION_TYPES } from "@/components/transaction-form-modal";
 import { useAuth } from "@/contexts/auth-context";
 import { useGetTransactionsDashboard } from "@/hooks/tanstack/transaction/use-get-transactions-dashboard";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -241,6 +242,39 @@ function FinancePage() {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {data.paymentMethods.length > 0 && (
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Por método de pagamento</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="divide-y divide-border">
+                  <div className="grid grid-cols-3 pb-2 text-xs font-medium text-muted-foreground">
+                    <span>Método</span>
+                    <span className="text-center">Entradas</span>
+                    <span className="text-center">Saídas</span>
+                  </div>
+                  {TRANSACTION_TYPES.filter((t) =>
+                    data.paymentMethods.some((p) => p.type === t.value),
+                  ).map((t) => {
+                    const row = data.paymentMethods.find((p) => p.type === t.value)!;
+                    return (
+                      <div key={t.value} className="grid grid-cols-3 items-center py-3 text-sm">
+                        <span className="font-medium">{t.label}</span>
+                        <span className="text-center text-green-600 tabular-nums">
+                          {row.income > 0 ? currencyFormatter.format(row.income) : "—"}
+                        </span>
+                        <span className="text-center text-destructive tabular-nums">
+                          {row.expense > 0 ? currencyFormatter.format(row.expense) : "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           )}

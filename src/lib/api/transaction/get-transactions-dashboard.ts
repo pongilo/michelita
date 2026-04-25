@@ -20,6 +20,7 @@ const getTransactionsDashboardServerFn = createServerFn({ method: "POST" })
       },
       select: {
         amount: true,
+        type: true,
         category: { select: { id: true, name: true } },
       },
     });
@@ -30,6 +31,7 @@ const getTransactionsDashboardServerFn = createServerFn({ method: "POST" })
       string,
       { id: string | null; name: string; income: number; expense: number }
     >();
+    const paymentMap = new Map<string, { income: number; expense: number }>();
 
     for (const t of transactions) {
       const amount = Number(t.amount);
@@ -44,14 +46,21 @@ const getTransactionsDashboardServerFn = createServerFn({ method: "POST" })
         });
       }
 
+      if (!paymentMap.has(t.type)) {
+        paymentMap.set(t.type, { income: 0, expense: 0 });
+      }
+
       const cat = categoryMap.get(key)!;
+      const pay = paymentMap.get(t.type)!;
 
       if (amount >= 0) {
         totalIncome += amount;
         cat.income += amount;
+        pay.income += amount;
       } else {
         totalExpense += Math.abs(amount);
         cat.expense += Math.abs(amount);
+        pay.expense += Math.abs(amount);
       }
     }
 
@@ -63,12 +72,18 @@ const getTransactionsDashboardServerFn = createServerFn({ method: "POST" })
       }))
       .sort((a, b) => b.expense - a.expense || b.income - a.income);
 
+    const paymentMethods = Array.from(paymentMap.entries()).map(([type, totals]) => ({
+      type,
+      ...totals,
+    }));
+
     return {
       income: totalIncome,
       expense: totalExpense,
       balance: totalIncome - totalExpense,
       spentPercent: totalIncome > 0 ? (totalExpense / totalIncome) * 100 : null,
       categories,
+      paymentMethods,
     };
   });
 
