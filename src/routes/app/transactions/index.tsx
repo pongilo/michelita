@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useQueryState } from "nuqs";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { ArrowDownCircleIcon, ArrowUpCircleIcon, EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -13,6 +13,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/transactions/")({
   component: TransactionsPage,
@@ -39,6 +41,10 @@ const TRANSACTION_TYPE_LABELS = Object.fromEntries(
 
 function TransactionsPage() {
   const { organization } = useAuth();
+  const [modal, setModal] = useQueryState("modal");
+  const [transactionId, setTransactionId] = useQueryState("transactionId");
+  const isMobile = useIsMobile();
+
   const { data: transactions = [], isLoading, isError, error } = useGetTransactions({
     organizationId: organization!.id,
   });
@@ -53,10 +59,7 @@ function TransactionsPage() {
     organizationId: organization!.id,
   });
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
-
-  const editingTransaction = transactions.find((t) => t.id === editingTransactionId) ?? null;
+  const editingTransaction = transactions.find((t) => t.id === transactionId) ?? null;
   const isSubmitting = isCreating || isUpdating;
 
   const initialValues = editingTransaction
@@ -93,31 +96,31 @@ function TransactionsPage() {
         });
         toast.success("Transação criada com sucesso.");
       }
-      setIsFormOpen(false);
-      setEditingTransactionId(null);
+      setModal(null);
+      setTransactionId(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar transação.");
     }
   }
 
-  function handleStartEdit(transactionId: string) {
-    setEditingTransactionId(transactionId);
-    setIsFormOpen(true);
+  function handleOpenCreate() {
+    setTransactionId(null);
+    setModal("transaction");
   }
 
-  function handleClose() {
-    setIsFormOpen(false);
-    setEditingTransactionId(null);
+  function handleStartEdit(id: string) {
+    setTransactionId(id);
+    setModal("transaction");
   }
 
-  async function handleDelete(transactionId: string, description: string) {
+  async function handleDelete(id: string, description: string) {
     const confirmed = window.confirm(
       `Deseja realmente excluir a transação "${description}"? Esta ação não pode ser desfeita.`,
     );
     if (!confirmed) return;
 
     try {
-      await deleteTransaction({ id: transactionId, organizationId: organization!.id });
+      await deleteTransaction({ id, organizationId: organization!.id });
       toast.success("Transação excluída com sucesso.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao excluir transação.");
@@ -140,123 +143,108 @@ function TransactionsPage() {
     );
   }
 
-  if (transactions.length === 0) {
-    return (
-      <>
-        <EmptyState>
-          <EmptyState.Icon>💸</EmptyState.Icon>
-          <EmptyState.Title>Nenhuma transação ainda</EmptyState.Title>
-          <EmptyState.Description>
-            Registre suas transações financeiras aqui.
-          </EmptyState.Description>
-          <EmptyState.Action>
-            <Button size="sm" onClick={() => setIsFormOpen(true)}>
-              Nova transação
-            </Button>
-          </EmptyState.Action>
-        </EmptyState>
-
-        <TransactionFormModal
-          isOpen={isFormOpen}
-          mode="create"
-          isSubmitting={isSubmitting}
-          categories={categories}
-          organizationId={organization!.id}
-          onClose={handleClose}
-          onSubmit={onSubmit}
-        />
-      </>
-    );
-  }
+  const isTransactionModalOpen = modal === "transaction";
+  const formModal = (
+    <TransactionFormModal
+      isSubmitting={isSubmitting}
+      initialValues={initialValues}
+      categories={categories}
+      organizationId={organization!.id}
+      onSubmit={onSubmit}
+    />
+  );
 
   return (
-    <main className="mx-auto w-full max-w-4xl p-5">
-      <header className="mb-6 flex items-start justify-between">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-2xl font-heading">Transações</h1>
-          <p className="text-sm text-muted-foreground">
-            ({transactions.length}{" "}
-            {transactions.length === 1 ? "transação" : "transações"})
-          </p>
-        </div>
-        <Button
-          size="icon-sm"
-          onClick={() => {
-            setEditingTransactionId(null);
-            setIsFormOpen(true);
-          }}
-        >
-          <PlusIcon />
-        </Button>
-      </header>
+    <>
+      {formModal}
+      {(!isMobile || !isTransactionModalOpen) && (
+        transactions.length === 0 ? (
+          <EmptyState>
+            <EmptyState.Icon>💸</EmptyState.Icon>
+            <EmptyState.Title>Nenhuma transação ainda</EmptyState.Title>
+            <EmptyState.Description>
+              Registre suas transações financeiras aqui.
+            </EmptyState.Description>
+            <EmptyState.Action>
+              <Button size="sm" onClick={handleOpenCreate}>
+                Nova transação
+              </Button>
+            </EmptyState.Action>
+          </EmptyState>
+        ) : (
+          <main className="mx-auto w-full max-w-4xl p-5">
+            <header className="mb-6 flex items-start justify-between">
+              <div className="flex items-baseline gap-2">
+                <AppTitle>Transações</AppTitle>
+                <p className="text-sm text-muted-foreground">
+                  ({transactions.length}{" "}
+                  {transactions.length === 1 ? "transação" : "transações"})
+                </p>
+              </div>
+              <Button size="icon-sm" onClick={handleOpenCreate}>
+                <PlusIcon />
+              </Button>
+            </header>
 
-      {Array.from(
-        transactions.reduce((groups, transaction) => {
-          const dateKey = transaction.date.slice(0, 10);
-          if (!groups.has(dateKey)) groups.set(dateKey, []);
-          groups.get(dateKey)!.push(transaction);
-          return groups;
-        }, new Map<string, typeof transactions>()),
-      ).map(([dateKey, group]) => (
-        <div key={dateKey} className="mb-6">
-          <h2 className="mb-2 text-sm font-medium capitalize text-muted-foreground">
-            {groupDateFormatter.format(new Date(`${dateKey}T00:00:00Z`))}
-          </h2>
-          <ItemGroup>
-            {group.map((transaction) => (
-              <Item key={transaction.id} variant="outline">
-                <ItemMedia variant="icon">
-                  {transaction.amount > 0 ? (
-                    <ArrowUpCircleIcon className="size-5 text-green-500" />
-                  ) : (
-                    <ArrowDownCircleIcon className="size-5 text-red-500" />
-                  )}
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>{transaction.description}</ItemTitle>
-                  <ItemDescription>
-                    {currencyFormatter.format(transaction.amount)}
-                    {" · "}
-                    {TRANSACTION_TYPE_LABELS[transaction.type] ?? transaction.type}
-                    {transaction.category ? ` · ${transaction.category.name}` : ""}
-                    {" · "}
-                    {timeFormatter.format(new Date(transaction.date))}
-                  </ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => handleStartEdit(transaction.id)}
-                    disabled={isDeleting}
-                  >
-                    <EditIcon />
-                  </Button>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(transaction.id, transaction.description)}
-                    disabled={isDeleting}
-                  >
-                    <Trash2Icon />
-                  </Button>
-                </ItemActions>
-              </Item>
+            {Array.from(
+              transactions.reduce((groups, transaction) => {
+                const dateKey = transaction.date.slice(0, 10);
+                if (!groups.has(dateKey)) groups.set(dateKey, []);
+                groups.get(dateKey)!.push(transaction);
+                return groups;
+              }, new Map<string, typeof transactions>()),
+            ).map(([dateKey, group]) => (
+              <div key={dateKey} className="mb-6">
+                <h2 className="mb-2 text-sm font-medium capitalize text-muted-foreground">
+                  {groupDateFormatter.format(new Date(`${dateKey}T00:00:00Z`))}
+                </h2>
+                <ItemGroup>
+                  {group.map((transaction) => (
+                    <Item key={transaction.id} variant="outline">
+                      <ItemMedia variant="icon">
+                        {transaction.amount > 0 ? (
+                          <ArrowUpCircleIcon className="size-5 text-green-500" />
+                        ) : (
+                          <ArrowDownCircleIcon className="size-5 text-red-500" />
+                        )}
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{transaction.description}</ItemTitle>
+                        <ItemDescription>
+                          {currencyFormatter.format(transaction.amount)}
+                          {" · "}
+                          {TRANSACTION_TYPE_LABELS[transaction.type] ?? transaction.type}
+                          {transaction.category ? ` · ${transaction.category.name}` : ""}
+                          {" · "}
+                          {timeFormatter.format(new Date(transaction.date))}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleStartEdit(transaction.id)}
+                          disabled={isDeleting}
+                        >
+                          <EditIcon />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(transaction.id, transaction.description)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2Icon />
+                        </Button>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              </div>
             ))}
-          </ItemGroup>
-        </div>
-      ))}
-
-      <TransactionFormModal
-        isOpen={isFormOpen}
-        mode={editingTransaction ? "edit" : "create"}
-        isSubmitting={isSubmitting}
-        initialValues={initialValues}
-        categories={categories}
-        organizationId={organization!.id}
-        onClose={handleClose}
-        onSubmit={onSubmit}
-      />
-    </main>
+          </main>
+        )
+      )}
+    </>
   );
 }

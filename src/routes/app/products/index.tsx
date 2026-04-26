@@ -20,6 +20,7 @@ import {
   ItemActions,
 } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/products/")({
   component: ProductsPage,
@@ -146,7 +147,7 @@ function ProductsPage() {
       <header className="space-y-4 mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-heading">Produtos</h1>
+            <AppTitle>Produtos</AppTitle>
             <p className="text-sm text-muted-foreground">
               ({products.length} {products.length === 1 ? "produto cadastrado" : "produtos cadastrados"})
             </p>

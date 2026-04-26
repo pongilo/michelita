@@ -2,13 +2,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { useQueryState } from "nuqs";
+import { ChevronLeft, PlusIcon, XIcon, CheckIcon } from "lucide-react";
 import { FormModal } from "@/components/form-modal";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTransactionCategory } from "@/hooks/tanstack/transaction-category/use-create-transaction-category";
-import { PlusIcon, XIcon, CheckIcon } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const TRANSACTION_TYPES = [
   { value: "PIX", label: "Pix" },
@@ -28,7 +30,7 @@ export const transactionFormSchema = z.object({
 
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
-type TransactionFormModalProps = {
+type TransactionFormContentProps = {
   isOpen: boolean;
   mode: "create" | "edit";
   isSubmitting: boolean;
@@ -44,7 +46,7 @@ function nowDateTimeString() {
 }
 
 function getDefaultValues(
-  initialValues?: TransactionFormModalProps["initialValues"],
+  initialValues?: TransactionFormContentProps["initialValues"],
 ): TransactionFormValues {
   const rawAmount = initialValues?.amount ?? 0;
   return {
@@ -57,7 +59,7 @@ function getDefaultValues(
   };
 }
 
-export function TransactionFormModal({
+function TransactionFormContent({
   isOpen,
   mode,
   isSubmitting,
@@ -66,7 +68,7 @@ export function TransactionFormModal({
   organizationId,
   onClose,
   onSubmit,
-}: TransactionFormModalProps) {
+}: TransactionFormContentProps) {
   const {
     register,
     control,
@@ -111,182 +113,237 @@ export function TransactionFormModal({
   ];
 
   return (
-    <FormModal
-      isOpen={isOpen}
-      title={mode === "create" ? "Nova transação" : "Editar transação"}
-      onClose={onClose}
-    >
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-3">
-        <FieldGroup>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-3">
+      <FieldGroup>
+        <Field>
+          <FieldLabel>Descrição</FieldLabel>
+          <Input type="text" placeholder="Ex: Venda de bolo, compra de ingredientes" {...register("description")} />
+          <FieldError>{errors.description?.message}</FieldError>
+        </Field>
+
+        <Controller
+          name="direction"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-2 overflow-hidden rounded-lg border">
+              <button
+                type="button"
+                onClick={() => field.onChange("INCOME")}
+                className={`py-2 text-sm font-medium transition-colors ${
+                  field.value === "INCOME"
+                    ? "bg-green-500 text-white"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Entrada
+              </button>
+              <button
+                type="button"
+                onClick={() => field.onChange("EXPENSE")}
+                className={`py-2 text-sm font-medium transition-colors ${
+                  field.value === "EXPENSE"
+                    ? "bg-destructive text-destructive-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Saída
+              </button>
+            </div>
+          )}
+        />
+
+        <div className="grid md:grid-cols-2 gap-3">
           <Field>
-            <FieldLabel>Descrição</FieldLabel>
-            <Input type="text" placeholder="Ex: Venda de bolo, compra de ingredientes" {...register("description")} />
-            <FieldError>{errors.description?.message}</FieldError>
+            <FieldLabel>Valor (R$)</FieldLabel>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              {...register("amount", { valueAsNumber: true })}
+            />
+            <FieldError>{errors.amount?.message}</FieldError>
           </Field>
 
-          <Controller
-            name="direction"
-            control={control}
-            render={({ field }) => (
-              <div className="grid grid-cols-2 overflow-hidden rounded-lg border">
+          <Field>
+            <FieldLabel>Data e hora</FieldLabel>
+            <Input type="datetime-local" {...register("date")} />
+            <FieldError>{errors.date?.message}</FieldError>
+          </Field>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field>
+            <FieldLabel>Forma de pagamento</FieldLabel>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field }) => (
+                <Select items={TRANSACTION_TYPES} value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSACTION_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError>{errors.type?.message}</FieldError>
+          </Field>
+
+          <Field>
+            <div className="flex items-center justify-between">
+              <FieldLabel>Categoria</FieldLabel>
+              {!isAddingCategory && (
                 <button
                   type="button"
-                  onClick={() => field.onChange("INCOME")}
-                  className={`py-2 text-sm font-medium transition-colors ${
-                    field.value === "INCOME"
-                      ? "bg-green-500 text-white"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
+                  onClick={() => setIsAddingCategory(true)}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                 >
-                  Entrada
+                  <PlusIcon className="size-3" />
+                  Nova
                 </button>
-                <button
+              )}
+            </div>
+            {isAddingCategory ? (
+              <div className="flex gap-1.5">
+                <Input
+                  autoFocus
+                  type="text"
+                  placeholder="Nome da categoria"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); handleCreateCategory(); }
+                    if (e.key === "Escape") { setIsAddingCategory(false); setNewCategoryName(""); }
+                  }}
+                  disabled={isCreatingCategory}
+                />
+                <Button
                   type="button"
-                  onClick={() => field.onChange("EXPENSE")}
-                  className={`py-2 text-sm font-medium transition-colors ${
-                    field.value === "EXPENSE"
-                      ? "bg-destructive text-destructive-foreground"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
+                  size="icon-sm"
+                  onClick={handleCreateCategory}
+                  disabled={isCreatingCategory || newCategoryName.trim().length < 2}
                 >
-                  Saída
-                </button>
+                  <CheckIcon />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }}
+                  disabled={isCreatingCategory}
+                >
+                  <XIcon />
+                </Button>
               </div>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field>
-              <FieldLabel>Valor (R$)</FieldLabel>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0,00"
-                {...register("amount", { valueAsNumber: true })}
-              />
-              <FieldError>{errors.amount?.message}</FieldError>
-            </Field>
-
-            <Field>
-              <FieldLabel>Data e hora</FieldLabel>
-              <Input type="datetime-local" {...register("date")} />
-              <FieldError>{errors.date?.message}</FieldError>
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field>
-              <FieldLabel>Forma de pagamento</FieldLabel>
+            ) : (
               <Controller
-                name="type"
+                name="categoryId"
                 control={control}
                 render={({ field }) => (
-                  <Select items={TRANSACTION_TYPES} value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    items={categoryOptions}
+                    value={field.value ?? ""}
+                    onValueChange={(v) => field.onChange(v || null)}
+                  >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder="Sem categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TRANSACTION_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                      {categoryOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               />
-              <FieldError>{errors.type?.message}</FieldError>
-            </Field>
-
-            <Field>
-              <div className="flex items-center justify-between">
-                <FieldLabel>Categoria</FieldLabel>
-                {!isAddingCategory && (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingCategory(true)}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-                  >
-                    <PlusIcon className="size-3" />
-                    Nova
-                  </button>
-                )}
-              </div>
-              {isAddingCategory ? (
-                <div className="flex gap-1.5">
-                  <Input
-                    autoFocus
-                    type="text"
-                    placeholder="Nome da categoria"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); handleCreateCategory(); }
-                      if (e.key === "Escape") { setIsAddingCategory(false); setNewCategoryName(""); }
-                    }}
-                    disabled={isCreatingCategory}
-                  />
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    onClick={handleCreateCategory}
-                    disabled={isCreatingCategory || newCategoryName.trim().length < 2}
-                  >
-                    <CheckIcon />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }}
-                    disabled={isCreatingCategory}
-                  >
-                    <XIcon />
-                  </Button>
-                </div>
-              ) : (
-                <Controller
-                  name="categoryId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      items={categoryOptions}
-                      value={field.value ?? ""}
-                      onValueChange={(v) => field.onChange(v || null)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sem categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categoryOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              )}
-            </Field>
-          </div>
-
-        </FieldGroup>
-
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Salvando..."
-              : mode === "create"
-                ? "Salvar transação"
-                : "Salvar alterações"}
-          </Button>
+            )}
+          </Field>
         </div>
-      </form>
+      </FieldGroup>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting
+            ? "Salvando..."
+            : mode === "create"
+              ? "Salvar transação"
+              : "Salvar alterações"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+type TransactionFormModalProps = {
+  isSubmitting: boolean;
+  initialValues?: Partial<Omit<TransactionFormValues, "direction"> & { amount: number }>;
+  categories: { id: string; name: string }[];
+  organizationId: string;
+  onSubmit: (signedAmount: number, values: Omit<TransactionFormValues, "direction" | "amount">) => Promise<void> | void;
+};
+
+export function TransactionFormModal({
+  isSubmitting,
+  initialValues,
+  categories,
+  organizationId,
+  onSubmit,
+}: TransactionFormModalProps) {
+  const [modal, setModal] = useQueryState("modal");
+  const [, setTransactionId] = useQueryState("transactionId");
+  const isMobile = useIsMobile();
+
+  const isOpen = modal === "transaction";
+  const mode = initialValues !== undefined ? "edit" : "create";
+  const title = mode === "create" ? "Nova transação" : "Editar transação";
+
+  function onClose() {
+    setModal(null);
+    setTransactionId(null);
+  }
+
+  const contentProps: TransactionFormContentProps = {
+    isOpen,
+    mode,
+    isSubmitting,
+    initialValues,
+    categories,
+    organizationId,
+    onClose,
+    onSubmit,
+  };
+
+  if (isMobile && isOpen) {
+    return (
+      <main className="flex flex-col">
+        <div className="flex-none flex items-center gap-1 sticky top-0 bg-white z-20 p-3 border-b">
+          <Button type="button" variant="ghost" size="icon-lg" onClick={onClose}>
+            <ChevronLeft />
+          </Button>
+          <h2 className="text-xl font-heading">{title}</h2>
+        </div>
+        <div className="p-5">
+          <TransactionFormContent {...contentProps} />
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <FormModal isOpen={isOpen} title={title} onClose={onClose}>
+      <TransactionFormContent {...contentProps} />
     </FormModal>
   );
 }

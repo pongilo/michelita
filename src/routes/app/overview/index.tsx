@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { currencyFormatter, monthFormatter } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
+import { AppTitle } from "@/components/app-title";
 
 const dayMonthFormatter = new Intl.DateTimeFormat("pt-BR", {
   weekday: "short",
@@ -109,7 +110,7 @@ function OverviewPage() {
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-heading">Visão geral</h1>
+        <AppTitle>Visão geral</AppTitle>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setMonthOffset((o) => o - 1)}

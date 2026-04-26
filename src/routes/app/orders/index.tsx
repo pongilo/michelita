@@ -7,6 +7,7 @@ import { formatDayLabel } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { OrderItem } from "@/components/order-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AppTitle } from "@/components/app-title";
 
 function getDayPeriod(offset: number) {
   const now = new Date();
@@ -35,7 +36,7 @@ function OrderPage() {
     <main className="bg-muted min-h-screen">
       <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
         <header className="flex items-center justify-between gap-4 px-5">
-          <h1 className="text-2xl font-heading">Pedidos</h1>
+          <AppTitle>Pedidos</AppTitle>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setDayOffset((o) => o - 1)}

@@ -9,6 +9,7 @@ import { updateOrganization } from "@/lib/api/organization/update-organization";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
@@ -47,7 +48,7 @@ function SettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-8">
-      <h1 className="text-2xl font-semibold mb-8">Configurações</h1>
+      <AppTitle>Configurações</AppTitle>
 
       <section>
         <h2 className="text-base font-semibold mb-4">Informações da confeitaria</h2>

@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { AppTitle } from "@/components/app-title";
 
 // ── Route ────────────────────────────────────────────────────────────────────
 
@@ -83,9 +84,7 @@ function OrderDetailsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-heading">
-                Pedido #{order.id.slice(0, 8)}
-              </h1>
+              <AppTitle>Pedido #{order.id.slice(0, 8)}</AppTitle>
               <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
                 {order.isPaid ? "Pago" : "Pendente"}
               </Badge>

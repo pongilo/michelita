@@ -13,6 +13,7 @@ import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/customers/$customerId")({
   component: CustomerDetailsPage,
@@ -69,7 +70,7 @@ function CustomerDetailsPage() {
 
       {/* Header */}
       <div className="mb-6 flex flex-nowrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-heading">{data?.customer.name ?? "Cliente"}</h1>
+        <AppTitle>{data?.customer.name ?? "Cliente"}</AppTitle>
         {data && (
           <DropdownMenu>
             <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" })}>

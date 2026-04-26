@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { PlusIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/customers/")({
   component: CustomersPage,
@@ -93,7 +94,7 @@ function CustomersPage() {
       <header className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-heading">Clientes</h1>
+            <AppTitle>Clientes</AppTitle>
             <p className="text-sm text-muted-foreground">
               ({customers.length} {customers.length === 1 ? "cliente cadastrado" : "clientes cadastrados"})
             </p>

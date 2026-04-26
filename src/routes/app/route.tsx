@@ -1,9 +1,8 @@
-import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon } from 'lucide-react'
-import { Button } from "@/components/ui/button";
+import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon, PlusIcon, DollarSignIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -30,8 +29,9 @@ const navItems = [
   {
     label: '',
     links: [
+      { to: "/app/orders/form", icon: PlusIcon, label: "Novo Pedido" },
       { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
-      { to: "/app/finance", icon: ListOrderedIcon, label: "Financeiro" },
+      { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
     ]
   },
   {
@@ -131,7 +131,6 @@ function PrivateLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, organization, isLoading } = useAuth();
-  const { location } = useRouterState();
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" />;
@@ -152,14 +151,9 @@ function PrivateLayout() {
         onSignOut={handleSignOut}
       />
       <SidebarInset>
-          {location.pathname !== "/app/orders/form" && (
-            <div className="flex justify-between items-center p-5">
-              <SidebarTrigger />
-              <Button size="sm" nativeButton={false} render={<Link to="/app/orders/form" />}>
-                Novo pedido
-              </Button>
-            </div>
-          )}
+        <div className="flex justify-between items-center p-5 max-md:hidden">
+          <SidebarTrigger />
+        </div>
         <Outlet />
       </SidebarInset>
     </SidebarProvider>

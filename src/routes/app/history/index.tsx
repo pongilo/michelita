@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { currencyFormatter, formatDayLabel, monthFormatter } from "@/lib/utils/formatter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/history/")({
   component: OrdersPage,
@@ -84,7 +85,7 @@ function OrdersPage() {
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-heading">Histórico</h1>
+        <AppTitle>Histórico</AppTitle>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setMonthOffset((o) => o - 1)}

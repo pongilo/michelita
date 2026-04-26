@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/account")({
   component: AccountPage,
@@ -82,7 +83,7 @@ function AccountPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl p-5">
-      <h1 className="text-2xl font-semibold mb-8">Minha conta</h1>
+      <AppTitle>Minha conta</AppTitle>
 
       {/* Perfil */}
       <section className="mb-8">

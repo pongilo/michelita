@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { currencyFormatter } from "@/lib/utils/formatter";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/finance/")({
   component: FinancePage,
@@ -103,7 +104,7 @@ function FinancePage() {
   return (
     <main className="mx-auto w-full max-w-4xl p-5 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-heading">Financeiro</h1>
+        <AppTitle>Financeiro</AppTitle>
         <div className="flex items-center gap-1 rounded-lg border border-border bg-muted p-1">
           {(["day", "week", "month"] as PeriodType[]).map((p) => (
             <button

@@ -15,10 +15,11 @@ import { currencyFormatter, formatFullDate, parseDateAsUTC } from "@/lib/utils/f
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-import { EditIcon, XIcon } from "lucide-react";
+import { EditIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQueryState } from "nuqs";
 import { OrderFormPanels } from "@/components/order-form-panels";
+import { AppTitle } from "@/components/app-title";
 
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
@@ -126,12 +127,7 @@ function OrderFormRoute() {
         <main className="mx-auto w-full max-w-5xl p-5">
           <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-heading">Novo pedido</h1>
-                <Button type="button" variant="ghost" size="icon-lg" nativeButton={false} render={<Link to="/app/orders" />}>
-                  <XIcon />
-                </Button>
-              </div>
+              <AppTitle>Novo pedido</AppTitle>
               {items.length === 0 ? (
                 <div>
                   <p className="text-base text-muted-foreground data-[error=true]:text-destructive" data-error={!!errors.items?.message}>{errors.items?.message || 'Adicione os itens do pedido'}</p>
