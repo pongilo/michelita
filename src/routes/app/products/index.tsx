@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { normalize } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ function ProductsPage() {
   const isSubmitting = isCreatingProduct || isUpdatingProduct;
 
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
+    normalize(p.name).includes(normalize(search)),
   );
 
   async function onSubmit(values: ProductFormValues) {

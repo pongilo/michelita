@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { normalize } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -26,11 +27,11 @@ function CustomersPage() {
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
   const [search, setSearch] = useState("");
   const filteredCustomers = customers.filter((c) => {
-    const q = search.toLowerCase();
+    const q = normalize(search);
     return (
-      c.name.toLowerCase().includes(q) ||
+      normalize(c.name).includes(q) ||
       (c.phone ?? "").toLowerCase().includes(q) ||
-      (c.address ?? "").toLowerCase().includes(q)
+      normalize(c.address ?? "").includes(q)
     );
   });
 

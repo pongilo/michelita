@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFormContext } from "react-hook-form";
 import { useQueryState } from "nuqs";
 import type { CreateOrderInput } from "@/lib/api/order/create-order";
+import { normalize } from "@/lib/utils";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { customerFormSchema, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -39,11 +40,11 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
   const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
 
   const filteredCustomers = customers.filter((c) => {
-    const q = search.toLowerCase();
+    const q = normalize(search);
     return (
-      c.name.toLowerCase().includes(q) ||
+      normalize(c.name).includes(q) ||
       (c.phone ?? "").toLowerCase().includes(q) ||
-      (c.address ?? "").toLowerCase().includes(q)
+      normalize(c.address ?? "").includes(q)
     );
   });
 

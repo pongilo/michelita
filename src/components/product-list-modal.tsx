@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { currencyFormatter } from "@/lib/utils/formatter";
+import { normalize } from "@/lib/utils";
 import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,7 +65,7 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
 
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    normalize(p.name).includes(normalize(search))
   );
 
   const customForm = useForm<CustomItemForm>({
