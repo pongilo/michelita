@@ -35,10 +35,6 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
   const { mutate: markPaid, isPending: isMarkingPaid } = useUpdateOrder({ organizationId });
 
   const allDelivered = group.items.every((i) => i.isDelivered);
-  const total =
-    group.items.reduce((sum, item) => sum + item.total, 0) +
-    (group.order.shippingFee ?? 0) -
-    (group.order.discount ?? 0);
 
   const handleMarkDelivered = () => {
     markDelivered(
@@ -160,7 +156,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
             {timeFormatter.format(new Date(group.deliveredAt))}
           </span>
           <span className="size-1 rounded-full bg-blue-900"></span>
-          <span>{currencyFormatter.format(total)}</span>
+          <span>{currencyFormatter.format(group.order.total)}</span>
           {group.order.isPaid ? (
             <>
               <span className="size-1.5 rounded-full bg-green-600"></span>

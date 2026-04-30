@@ -39,12 +39,15 @@ const updateOrderItemsServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const existingOrder = await prisma.order.findFirst({
       where: { id: data.id, organizationId: data.organizationId },
-      select: { id: true },
+      select: { id: true, shippingFee: true, discount: true },
     });
 
     if (!existingOrder) {
       throw new Error("Pedido nao encontrado para a organizacao informada.");
     }
+
+    const itemTotal = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const orderTotal = Number((itemTotal + Number(existingOrder.shippingFee ?? 0) - Number(existingOrder.discount ?? 0)).toFixed(2));
 
     await prisma.$transaction(async (transaction) => {
       await transaction.orderItem.deleteMany({ where: { orderId: data.id } });
@@ -60,6 +63,11 @@ const updateOrderItemsServerFn = createServerFn({ method: "POST" })
           isDelivered: item.isDelivered ?? false,
           note: toOptionalString(item.note),
         })),
+      });
+
+      await transaction.order.update({
+        where: { id: data.id },
+        data: { total: orderTotal },
       });
     });
 

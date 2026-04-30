@@ -26,6 +26,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         isPaid: true,
         shippingFee: true,
         discount: true,
+        total: true,
         orderedAt: true,
         customer: { select: { name: true } },
         item: { select: { description: true, quantity: true, total: true, isDelivered: true } },
@@ -33,15 +34,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
     });
 
     const orderCount = orders.length;
-
-    let totalRevenue = 0;
-    for (const order of orders) {
-      const itemTotal = order.item.reduce((sum, i) => sum + Number(i.total), 0);
-      const shipping = Number(order.shippingFee ?? 0);
-      const discount = Number(order.discount ?? 0);
-      totalRevenue += itemTotal + shipping - discount;
-    }
-
+    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
     const averageTicket = orderCount > 0 ? totalRevenue / orderCount : 0;
 
     return {
@@ -49,6 +42,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         ...order,
         shippingFee: order.shippingFee !== null ? Number(order.shippingFee) : null,
         discount: order.discount !== null ? Number(order.discount) : null,
+        total: Number(order.total),
         item: order.item.map((i) => ({ ...i, total: Number(i.total) })),
         orderedAt: order.orderedAt.toISOString(),
       })),

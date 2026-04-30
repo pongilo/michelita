@@ -88,6 +88,9 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
       },
       select: {
         id: true,
+        shippingFee: true,
+        discount: true,
+        item: { select: { total: true } },
       },
     });
 
@@ -102,6 +105,7 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
       note?: string | null;
       shippingFee?: number | null;
       discount?: number | null;
+      total?: number;
     } = {};
 
     if (data.customerId !== undefined) {
@@ -128,16 +132,9 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
       updateData.discount = data.discount;
     }
 
-    await prisma.$transaction(async (transaction) => {
-      if (Object.keys(updateData).length > 0) {
-        await transaction.order.update({
-          where: {
-            id: data.id,
-          },
-          data: updateData,
-        });
-      }
+    const affectsTotal = data.shippingFee !== undefined || data.discount !== undefined || data.items !== undefined;
 
+    await prisma.$transaction(async (transaction) => {
       if (data.items !== undefined) {
         await transaction.orderItem.deleteMany({
           where: {
@@ -156,6 +153,27 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
             isDelivered: item.isDelivered ?? false,
             note: toOptionalString(item.note),
           })),
+        });
+      }
+
+      if (affectsTotal) {
+        const newItemsTotal =
+          data.items !== undefined
+            ? data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+            : existingOrder.item.reduce((sum, i) => sum + Number(i.total), 0);
+
+        const newShippingFee = data.shippingFee !== undefined ? (data.shippingFee ?? 0) : Number(existingOrder.shippingFee ?? 0);
+        const newDiscount = data.discount !== undefined ? (data.discount ?? 0) : Number(existingOrder.discount ?? 0);
+
+        updateData.total = Number((newItemsTotal + newShippingFee - newDiscount).toFixed(2));
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await transaction.order.update({
+          where: {
+            id: data.id,
+          },
+          data: updateData,
         });
       }
     });

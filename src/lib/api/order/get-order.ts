@@ -26,6 +26,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         note: true,
         shippingFee: true,
         discount: true,
+        total: true,
         customer: {
           select: {
             id: true,
@@ -60,7 +61,6 @@ const getOrderServerFn = createServerFn({ method: "POST" })
     const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
     const shippingFee = Number(order.shippingFee ?? 0);
     const discount = Number(order.discount ?? 0);
-    const total = itemTotal + shippingFee - discount;
 
     return {
       id: order.id,
@@ -71,6 +71,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
       note: order.note,
       shippingFee: shippingFee || null,
       discount: discount || null,
+      total: Number(order.total),
       customer: order.customer,
       item: order.item.map((item) => ({
         id: item.id,
@@ -83,7 +84,6 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         note: item.note,
       })),
       itemTotal,
-      total,
     };
   });
 

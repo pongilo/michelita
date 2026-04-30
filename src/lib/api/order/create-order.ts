@@ -66,6 +66,9 @@ const createOrderServerFn = createServerFn({ method: "POST" })
     }
 
 
+    const itemTotal = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const orderTotal = Number((itemTotal + (data.shippingFee ?? 0) - (data.discount ?? 0)).toFixed(2));
+
     const order = await prisma.order.create({
       data: {
         organizationId: data.organizationId,
@@ -75,6 +78,7 @@ const createOrderServerFn = createServerFn({ method: "POST" })
         note: toOptionalString(data.note),
         shippingFee: data.shippingFee ?? null,
         discount: data.discount ?? null,
+        total: orderTotal,
         item: {
           create: data.items.map((item) => ({
             description: item.description,

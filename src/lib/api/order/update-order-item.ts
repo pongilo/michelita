@@ -27,24 +27,46 @@ const updateOrderItemServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const item = await prisma.orderItem.findFirst({
       where: { id: data.orderItemId, order: { organizationId: data.organizationId } },
-      select: { id: true },
+      select: { id: true, orderId: true },
     });
 
     if (!item) throw new Error("Item nao encontrado.");
 
-    const total = Number((data.unitPrice * data.quantity).toFixed(2));
+    const itemTotal = Number((data.unitPrice * data.quantity).toFixed(2));
 
-    await prisma.orderItem.update({
-      where: { id: data.orderItemId },
-      data: {
-        description: data.description,
-        unit_price: data.unitPrice,
-        quantity: data.quantity,
-        total,
-        deliveredAt: toDateOrThrow(data.deliveredAt),
-        isDelivered: data.isDelivered,
-        note: data.note?.trim() || null,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.orderItem.update({
+        where: { id: data.orderItemId },
+        data: {
+          description: data.description,
+          unit_price: data.unitPrice,
+          quantity: data.quantity,
+          total: itemTotal,
+          deliveredAt: toDateOrThrow(data.deliveredAt),
+          isDelivered: data.isDelivered,
+          note: data.note?.trim() || null,
+        },
+      });
+
+      const order = await tx.order.findUniqueOrThrow({
+        where: { id: item.orderId },
+        select: {
+          shippingFee: true,
+          discount: true,
+          item: { select: { id: true, total: true } },
+        },
+      });
+
+      const newItemsTotal = order.item.reduce(
+        (sum, i) => sum + (i.id === data.orderItemId ? itemTotal : Number(i.total)),
+        0,
+      );
+      const orderTotal = Number((newItemsTotal + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0)).toFixed(2));
+
+      await tx.order.update({
+        where: { id: item.orderId },
+        data: { total: orderTotal },
+      });
     });
 
     return { id: data.orderItemId };

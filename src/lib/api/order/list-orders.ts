@@ -54,6 +54,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
             isPaid: true,
             shippingFee: true,
             discount: true,
+            total: true,
           },
         },
       },
@@ -64,7 +65,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
     type OrderGroup = {
       key: string;
       deliveredAt: string;
-      order: Omit<RawItem["order"], "shippingFee" | "discount"> & { shippingFee: number | null; discount: number | null };
+      order: Omit<RawItem["order"], "shippingFee" | "discount" | "total"> & { shippingFee: number | null; discount: number | null; total: number };
       items: OrderGroupItem[];
     };
 
@@ -79,6 +80,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
             ...item.order,
             shippingFee: item.order.shippingFee !== null ? Number(item.order.shippingFee) : null,
             discount: item.order.discount !== null ? Number(item.order.discount) : null,
+            total: Number(item.order.total),
           },
           items: [],
         });
