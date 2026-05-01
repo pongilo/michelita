@@ -8,6 +8,7 @@ import { currencyFormatter, formatDayLabel, monthFormatter } from "@/lib/utils/f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppTitle } from "@/components/app-title";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export const Route = createFileRoute("/app/history/")({
   component: OrdersPage,
@@ -82,6 +83,19 @@ function OrdersPage() {
   const orders = (data?.orders ?? []) as Order[];
   const dayGroups = groupOrdersByDay(orders);
 
+  const daysInMonth = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+  const daysElapsed = isCurrentMonth ? new Date().getDate() : daysInMonth;
+  const avgOrdersPerDay = orders.length > 0 ? orders.length / daysElapsed : 0;
+
+  const pendingRevenue = orders
+    .filter((o) => !o.isPaid)
+    .reduce((sum, o) => sum + orderTotal(o), 0);
+  const totalItems = orders.reduce((sum, o) => sum + o.item.reduce((s, i) => s + i.quantity, 0), 0);
+  const pendingItems = orders.reduce(
+    (sum, o) => sum + o.item.filter((i) => !i.isDelivered).reduce((s, i) => s + i.quantity, 0),
+    0,
+  );
+
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
@@ -114,7 +128,53 @@ function OrdersPage() {
       {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
       {data && (
-        <section className="space-y-6">
+        <>
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Total em pedidos</CardDescription>
+                <CardTitle className="text-2xl">
+                  {currencyFormatter.format(data.stats.totalRevenue)}
+                </CardTitle>
+                {pendingRevenue > 0 && (
+                  <p className="text-xs text-amber-700">
+                    {currencyFormatter.format(pendingRevenue)} pendente
+                  </p>
+                )}
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Pedidos realizados</CardDescription>
+                <CardTitle className="text-2xl">{data.stats.orderCount}</CardTitle>
+                {totalItems > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {totalItems} {totalItems === 1 ? "item" : "itens"} no total
+                    {pendingItems > 0 && (
+                      <span className="text-amber-700"> · {pendingItems} a entregar</span>
+                    )}
+                  </p>
+                )}
+              </CardHeader>
+            </Card>
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Ticket médio</CardDescription>
+                <CardTitle className="text-2xl">
+                  {data.stats.orderCount > 0
+                    ? currencyFormatter.format(data.stats.averageTicket)
+                    : "—"}
+                </CardTitle>
+                {avgOrdersPerDay > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {avgOrdersPerDay.toFixed(1).replace(".", ",")} pedidos por dia
+                  </p>
+                )}
+              </CardHeader>
+            </Card>
+          </section>
+
+          <section className="space-y-6">
           {dayGroups.length === 0 && (
             <p className="text-sm text-base-content/50">Nenhum pedido neste período.</p>
           )}
@@ -178,6 +238,7 @@ function OrdersPage() {
             );
           })}
         </section>
+        </>
       )}
     </main>
   );

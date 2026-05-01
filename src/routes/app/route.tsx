@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon, PlusIcon, DollarSignIcon } from 'lucide-react'
+import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon, PlusIcon, DollarSignIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -37,7 +37,6 @@ const navItems = [
   {
     label: 'Mais',
     links: [
-      { to: "/app/overview", icon: LayoutDashboardIcon, label: "Visão geral" },
       { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },

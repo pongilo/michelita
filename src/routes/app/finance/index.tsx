@@ -175,7 +175,7 @@ function FinancePage() {
 
             <Card size="sm">
               <CardHeader>
-                <CardDescription>Saldo</CardDescription>
+                <CardDescription>Resultado</CardDescription>
                 <CardTitle
                   className={`text-2xl ${data.balance >= 0 ? "text-green-600" : "text-destructive"}`}
                 >
