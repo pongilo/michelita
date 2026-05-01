@@ -4,6 +4,7 @@ interface Menu {
   items: {
     name: string
     description?: string;
+    highlight?: boolean;
     price: string
     img?: string
   }[]
@@ -17,6 +18,8 @@ interface MenuSectionProps {
 }
 
 export function MenuSection({ id, title, menu, description }: MenuSectionProps) {
+  const highlightedItems = menu.flatMap(m => m.items.filter(i => i.highlight));
+
   return (
     <main>
       <header className="mx-auto px-5 flex flex-col items-center justify-center pt-16">
@@ -26,6 +29,35 @@ export function MenuSection({ id, title, menu, description }: MenuSectionProps) 
         <p className="font-body text-base md:text-xl text-center text-white/80 mt-2 mb-5">{description}</p>
       </header>
       <div className="max-w-7xl mx-auto space-y-16 mt-16" id={id}>
+        {highlightedItems.length > 0 && (
+          <div className="space-y-5">
+            <div className="px-5 space-y-1">
+              <h2 className="font-display text-white text-2xl">Queridinhos Michelita 💜</h2>
+              <p className="font-body text-white/80 text-base">Os sabores mais amados e pedidos, que conquistaram o coração dos nossos clientes.</p>
+            </div>
+            <div className="font-body text-white text-base flex sm:px-3 flex-nowrap sm:gap-5 gap-1 overflow-y-auto">
+              {[...highlightedItems].sort((a, b) => {
+                  const parse = (p: string) => parseFloat(p.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                  return parse(a.price) - parse(b.price);
+                }).map(item => (
+                <div
+                  key={item.name}
+                  className="p-2 cursor-default duration-200 hover:bg-white/20 rounded-3xl"
+                >
+                  <div className="min-w-50 sm:w-full aspect-square rounded-2xl overflow-hidden bg-white/10">
+                    {item.img && (
+                      <img src={item.img} alt={item.name} className="object-cover size-full" />
+                    )}
+                  </div>
+                  <div className="flex-1 p-3 w-full">
+                    <p className="font-bold text-base">{item.name}</p>
+                    <p className="font-bold text-sm mt-1">{item.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {menu.map((m) => (
           <div key={m.name} className="space-y-5">
             <div className="px-5 space-y-1">

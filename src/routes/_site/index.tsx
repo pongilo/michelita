@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { docinhosDeFesta, bolosDePote, bolosDeFesta, bolosCaseiros, bolosFit, bolosVulcao } from '@/lib/utils/content';
+import { docinhosDeFesta, bolosDePote, bolosDeFesta, bolosCaseiros, bolosFit, bolosVulcao, bolosBombom } from '@/lib/utils/content';
 
 export const Route = createFileRoute("/_site/")({
   component: HomePage,
@@ -39,6 +39,7 @@ function HomePage() {
         {[
           { id: bolosCaseiros.id, label: bolosCaseiros.title, description: bolosCaseiros.description },
           { id: bolosVulcao.id, label: bolosVulcao.title, description: bolosVulcao.description },
+          { id: bolosBombom.id, label: bolosBombom.title, description: bolosBombom.description },
           { id: bolosDePote.id, label: bolosDePote.title, description: bolosDePote.description },
           { id: bolosDeFesta.id, label: bolosDeFesta.title, description: bolosDeFesta.description },
           { id: docinhosDeFesta.id, label: docinhosDeFesta.title, description: docinhosDeFesta.description },

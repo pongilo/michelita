@@ -23,6 +23,7 @@ import { Route as SiteBolosFitRouteImport } from './routes/_site/bolos-fit'
 import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
 import { Route as SiteBolosDeFestaRouteImport } from './routes/_site/bolos-de-festa'
 import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-caseiros'
+import { Route as SiteBolosBombomRouteImport } from './routes/_site/bolos-bombom'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthOrganizationNewRouteImport } from './routes/_auth/organization.new'
@@ -95,6 +96,11 @@ const SiteBolosCaseirosRoute = SiteBolosCaseirosRouteImport.update({
   path: '/bolos-caseiros',
   getParentRoute: () => SiteRouteRoute,
 } as any)
+const SiteBolosBombomRoute = SiteBolosBombomRouteImport.update({
+  id: '/bolos-bombom',
+  path: '/bolos-bombom',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/bolos-bombom': typeof SiteBolosBombomRoute
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/bolos-bombom': typeof SiteBolosBombomRoute
   '/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/bolos-de-pote': typeof SiteBolosDePoteRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
+  '/_site/bolos-bombom': typeof SiteBolosBombomRoute
   '/_site/bolos-caseiros': typeof SiteBolosCaseirosRoute
   '/_site/bolos-de-festa': typeof SiteBolosDeFestaRoute
   '/_site/bolos-de-pote': typeof SiteBolosDePoteRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/bolos-bombom'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/bolos-bombom'
     | '/bolos-caseiros'
     | '/bolos-de-festa'
     | '/bolos-de-pote'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/_auth/login'
     | '/_auth/register'
+    | '/_site/bolos-bombom'
     | '/_site/bolos-caseiros'
     | '/_site/bolos-de-festa'
     | '/_site/bolos-de-pote'
@@ -327,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteBolosCaseirosRouteImport
       parentRoute: typeof SiteRouteRoute
     }
+    '/_site/bolos-bombom': {
+      id: '/_site/bolos-bombom'
+      path: '/bolos-bombom'
+      fullPath: '/bolos-bombom'
+      preLoaderRoute: typeof SiteBolosBombomRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
     '/_auth/register': {
       id: '/_auth/register'
       path: '/register'
@@ -368,6 +387,7 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface SiteRouteRouteChildren {
+  SiteBolosBombomRoute: typeof SiteBolosBombomRoute
   SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
   SiteBolosDeFestaRoute: typeof SiteBolosDeFestaRoute
   SiteBolosDePoteRoute: typeof SiteBolosDePoteRoute
@@ -378,6 +398,7 @@ interface SiteRouteRouteChildren {
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
+  SiteBolosBombomRoute: SiteBolosBombomRoute,
   SiteBolosCaseirosRoute: SiteBolosCaseirosRoute,
   SiteBolosDeFestaRoute: SiteBolosDeFestaRoute,
   SiteBolosDePoteRoute: SiteBolosDePoteRoute,

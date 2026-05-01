@@ -4,48 +4,29 @@ export const bolosCaseiros = {
   description: "Perfeito para acompanhar seu café.",
   menu: [
     {
-      name: 'Queridinhos Michelita 💜',
-      description: 'Os sabores mais amados e pedidos, que conquistaram o coração dos nossos clientes.',
-      items: [
-        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
-        { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher. Aprox. 1,6kg", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
-        { name: "Milho cremoso", description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
-        { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
-      ]
-    },
-    {
       name: 'Todos os sabores',
       description: 'Experimente todos os nossos bolos caseiros, criados com carinho e ingredientes de qualidade.',
       items: [
-        { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
-        { name: "Cenoura", description: "O clássico de sempre. Massa macia e leve que conquista à primeira mordida.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
-        { name: "Cenoura com brigadeiro", description: "O clássico, agora com camada generosa de brigadeiro artesanal Michelita por cima.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-cenoura-com-brigadeiro.jpeg' },
-        { name: "Cenoura com gotas de chocolate", description: "Massa leve de cenoura com gotas de chocolate.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-cenoura-com-gotas-de-chocolate.jpeg' },
-        { name: "Chocolate", description: "Um abraço de chocolate em cada pedaço.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
-        { name: "Chocolate com brigadeiro", description: "Dobro de chocolate: massa suculenta coberta com brigadeiro artesanal Michelita cremoso.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-chocolate-com-brigadeiro.jpeg' },
-        { name: "Chocolate com gotas de chocolate", description: "Para os apaixonados por chocolate, com gotas espalhadas pela massa.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
-        { name: "Coco molhado", description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
-        { name: "Fubá", description: "Impossível não amar esse carinho de bolo! Com aquele gostinho de casa de vó, perfeito para seu café. Aprox. 900g", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
-        { name: "Fubá com goiabada", description: "A combinação clássica do fubá com a doçura intensa da goiabada derretida.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
-        { name: "Fubá cremoso", description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher. Aprox. 1,6kg", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
-        { name: "Iogurte", description: "Leve, úmido e incrivelmente macio, com o toque suave do iogurte na massa.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
-        { name: "Laranja", description: "Levinho e aromático, com sabor cítrico suave de laranja.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
-        { name: "Limão", description: "Macio e refrescante, com leve toque cítrico de limão.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
-        { name: "Limão com mousse", description: "Massa suave de limão com cobertura cremosa de mousse equilibrado perfeitamente.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-limao-com-mousse.jpeg' },
-        { name: "Maçã com canela", description: "Reconfortante e aromático, com pedaços de maçã e canela que perfumam a casa toda.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-maca-com-canela.jpeg' },
-        { name: "Maçã com nozes", description: "Massa úmida com pedaços de maçã e a crocância especial das nozes.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-maca-com-nozes.jpeg' },
-        { name: "Milho cremoso", description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
+        { name: "Banana com canela", highlight: true, description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
+        { name: "Cenoura", highlight: false, description: "O clássico de sempre. Massa macia e leve que conquista à primeira mordida.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-cenoura.jpeg' },
+        { name: "Cenoura com brigadeiro", highlight: false, description: "O clássico, agora com camada generosa de brigadeiro artesanal Michelita por cima.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-cenoura-com-brigadeiro.jpeg' },
+        { name: "Cenoura com gotas de chocolate", highlight: false, description: "Massa leve de cenoura com gotas de chocolate.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-cenoura-com-gotas-de-chocolate.jpeg' },
+        { name: "Chocolate", highlight: false, description: "Um abraço de chocolate em cada pedaço.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
+        { name: "Chocolate com brigadeiro", highlight: false, description: "Dobro de chocolate: massa suculenta coberta com brigadeiro artesanal Michelita cremoso.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-chocolate-com-brigadeiro.jpeg' },
+        { name: "Chocolate com gotas de chocolate", highlight: false, description: "Para os apaixonados por chocolate, com gotas espalhadas pela massa.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-chocolate.jpeg' },
+        { name: "Coco molhado", highlight: true, description: "Bolo bem molhado, muito macio e com sabor marcante de coco. Impossível comer só uma fatia.", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-coco-molhado.jpeg' },
+        { name: "Fubá", highlight: false, description: "Impossível não amar esse carinho de bolo! Com aquele gostinho de casa de vó, perfeito para seu café. Aprox. 900g", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-fuba.jpeg' },
+        { name: "Fubá com goiabada", highlight: false, description: "A combinação clássica do fubá com a doçura intensa da goiabada derretida.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-fuba-com-goiabada.jpeg' },
+        { name: "Fubá cremoso", highlight: true, description: "Você NUNCA provou um bolo de Fubá Cremoso assim! Casquinha por fora e cremoso por dentro como um bolo de colher. Aprox. 1,6kg", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-fuba-cremoso.jpeg' },
+        { name: "Iogurte", highlight: false, description: "Leve, úmido e incrivelmente macio, com o toque suave do iogurte na massa.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-iogurte.jpeg' },
+        { name: "Laranja", highlight: false, description: "Levinho e aromático, com sabor cítrico suave de laranja.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-laranja.jpeg' },
+        { name: "Limão", highlight: false, description: "Macio e refrescante, com leve toque cítrico de limão.", price: 'R$ 28,00', img: '/bolos-caseiros/michelita-limao.jpeg' },
+        { name: "Limão com mousse", highlight: false, description: "Massa suave de limão com cobertura cremosa de mousse equilibrado perfeitamente.", price: 'R$ 40,00', img: '/bolos-caseiros/michelita-limao-com-mousse.jpeg' },
+        { name: "Maçã com canela", highlight: false, description: "Reconfortante e aromático, com pedaços de maçã e canela que perfumam a casa toda.", price: 'R$ 30,00', img: '/bolos-caseiros/michelita-maca-com-canela.jpeg' },
+        { name: "Maçã com nozes", highlight: false, description: "Massa úmida com pedaços de maçã e a crocância especial das nozes.", price: 'R$ 38,00', img: '/bolos-caseiros/michelita-maca-com-nozes.jpeg' },
+        { name: "Milho cremoso", highlight: true, description: "Irresistível! Cremosidade intensa e sabor marcante. Quem ama milho, merece experimentar esse bolo! .", price: 'R$ 32,00', img: '/bolos-caseiros/michelita-milho-cremoso.jpeg' },
       ]
     },
-    // {
-    //   name: 'Adicionais',
-    //   description: '',
-    //   items: [
-    //     { name: 'Gotas de chocolate', description: '', price: 'R$ 10,00' },
-    //     { name: 'Cobertura de brigadeiro', description: '', price: 'R$ 12,00' },
-    //     { name: 'Cobertura de mousse de limão', description: '', price: 'R$ 12,00' },
-    //   ]
-    // }
   ],
 };
 
@@ -74,6 +55,8 @@ export const bolosVulcao = {
       description: '',
       items: [
         { name: "Vulcão de ninho com morango", price: 'R$ 55,00', img: '/bolos-vulcao/michelita-ninho-com-morango.jpeg' },
+        { name: "Vulcão de cenoura com brigadeiro", price: 'R$ 55,00', img: '' },
+        { name: "Vulcão de brigadeiro", price: 'R$ 55,00', img: '' },
       ]
     },
   ],
@@ -141,6 +124,26 @@ export const bolosDePote = {
         { name: "Laka oreo", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-laka-oreo.jpeg' },
         { name: "Ninho com Nutella", price: 'R$ 23,00', img: '/bolos-de-pote/michelita-ninho-com-nutella.jpeg' },
         { name: "Prestígio", price: 'R$ 23,00' },
+      ]
+    }
+  ]
+};
+
+export const bolosBombom = {
+  id: "bolos-bombom",
+  title: "Bolos bombom",
+  description: "Casquinha de chocolate nobre que esconde um recheio cremoso e irresistível.",
+  menu: [
+    {
+      name: '',
+      description: '',
+      items: [
+        { name: "Banana com chocolate", price: 'R$ 130,00' },
+        { name: "Doce de leite com morango", price: 'R$ 130,00', img: '/bolos-bombom/michelita-doce-de-leite-com-morango.jpeg' },
+        { name: "Brigadeiro", price: 'R$ 130,00', img: '/bolos-bombom/michelita-brigadeiro.jpeg' },
+        { name: "Ninho com Nutella", price: 'R$ 130,00', img: '/bolos-bombom/michelita-ninho-com-nutella.jpeg' },
+        { name: "Laka Oreo", price: 'R$ 130,00', img: '/bolos-bombom/michelita-laka-oreo.jpeg' },
+        { name: "Prestígio", price: 'R$ 130,00' },
       ]
     }
   ]
