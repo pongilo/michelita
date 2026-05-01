@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, HistoryIcon, PlusIcon, DollarSignIcon } from 'lucide-react'
+import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, PlusIcon, DollarSignIcon, CalendarIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -27,20 +27,28 @@ export const Route = createFileRoute("/app")({
 
 const navItems = [
   {
-    label: '',
+    label: 'Pedidos',
     links: [
-      { to: "/app/orders/form", icon: PlusIcon, label: "Novo Pedido" },
-      { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
-      { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
+      { to: "/app/orders/form", icon: PlusIcon, label: "Novo" },
+      { to: "/app/orders", icon: CalendarIcon, label: "Agenda" },
+      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
     ]
   },
+  // {
+  //   label: '',
+  //   links: [
+  //     { to: "/app/orders/form", icon: PlusIcon, label: "Novo Pedido" },
+  //     { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
+  //     { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
+  //   ]
+  // },
   {
     label: 'Mais',
     links: [
-      { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
+      // { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
+      { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },
-      { to: "/app/transactions", icon: ListOrderedIcon, label: "Transações" },
     ]
   }
 ] as const;

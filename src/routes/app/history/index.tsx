@@ -99,7 +99,7 @@ function OrdersPage() {
   return (
     <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
       <header className="flex items-center justify-between gap-4">
-        <AppTitle>Histórico</AppTitle>
+        <AppTitle>Histórico de pedidos</AppTitle>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setMonthOffset((o) => o - 1)}

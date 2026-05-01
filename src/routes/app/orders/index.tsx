@@ -35,8 +35,8 @@ function OrderPage() {
   return (
     <main className="bg-muted min-h-screen">
       <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
-        <header className="flex items-center justify-between gap-4 px-5">
-          <AppTitle>Pedidos</AppTitle>
+        <header className="space-y-4 px-5">
+          <AppTitle>Agenda de pedidos</AppTitle>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setDayOffset((o) => o - 1)}

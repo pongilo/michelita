@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 const getTransactionsSchema = z.object({
   organizationId: z.uuid(),
+  startAt: z.string(),
+  endAt: z.string(),
 });
 
 export type GetTransactionsProps = z.infer<typeof getTransactionsSchema>;
@@ -12,7 +14,10 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => getTransactionsSchema.parse(input))
   .handler(async ({ data }) => {
     const transactions = await prisma.transaction.findMany({
-      where: { organizationId: data.organizationId },
+      where: {
+        organizationId: data.organizationId,
+        date: { gte: new Date(data.startAt), lt: new Date(data.endAt) },
+      },
       orderBy: { date: "desc" },
       select: {
         id: true,
@@ -33,6 +38,6 @@ const getTransactionsServerFn = createServerFn({ method: "POST" })
     }));
   });
 
-export async function getTransactions({ organizationId }: GetTransactionsProps) {
-  return getTransactionsServerFn({ data: { organizationId } });
+export async function getTransactions(props: GetTransactionsProps) {
+  return getTransactionsServerFn({ data: props });
 }
