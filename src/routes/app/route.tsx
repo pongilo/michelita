@@ -34,18 +34,9 @@ const navItems = [
       { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
     ]
   },
-  // {
-  //   label: '',
-  //   links: [
-  //     { to: "/app/orders/form", icon: PlusIcon, label: "Novo Pedido" },
-  //     { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
-  //     { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
-  //   ]
-  // },
   {
     label: 'Mais',
     links: [
-      // { to: "/app/history", icon: HistoryIcon, label: "Histórico" },
       { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },
