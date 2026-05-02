@@ -58,7 +58,6 @@ const updateOrderItemsServerFn = createServerFn({ method: "POST" })
           description: item.description,
           unit_price: item.unitPrice,
           quantity: item.quantity,
-          total: Number((item.unitPrice * item.quantity).toFixed(2)),
           deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
           isDelivered: item.isDelivered ?? false,
           note: toOptionalString(item.note),
