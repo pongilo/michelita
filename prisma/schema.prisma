@@ -61,10 +61,9 @@ model Order {
 
   total Decimal @default(0) @db.Decimal(10, 2)
 
-  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer         Customer?          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  item             OrderItem[]
-  orderTransaction OrderTransaction[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  item         OrderItem[]
 
   @@map("order")
   @@schema("public")
@@ -129,22 +128,9 @@ model Transaction {
   type           TransactionType
   date           DateTime        @default(now()) @db.Timestamptz
 
-  organization     Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  category         TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  orderTransaction OrderTransaction?
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@map("transaction")
-  @@schema("public")
-}
-
-model OrderTransaction {
-  id            String @id @default(uuid()) @db.Uuid
-  orderId       String @map("order_id") @db.Uuid
-  transactionId String @unique @map("transaction_id") @db.Uuid
-
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  @@map("order_transaction")
   @@schema("public")
 }
