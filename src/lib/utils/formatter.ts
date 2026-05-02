@@ -57,3 +57,9 @@ export function parseDateAsUTC(value: string): Date {
   return new Date(value.endsWith("Z") ? value : `${value}Z`);
 }
 
+export function localDatetime() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+

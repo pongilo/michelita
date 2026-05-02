@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateOrderItems } from "@/hooks/tanstack/order/use-update-order-items";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, localDatetime } from "@/lib/utils/formatter";
 import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,20 +33,14 @@ const editItemsSchema = z.object({
 
 type EditItemsValues = z.infer<typeof editItemsSchema>;
 
-function localDatetimeNow() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
-
 function toLocalDatetimeInput(value: string | Date) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return localDatetimeNow();
+  if (Number.isNaN(date.getTime())) return localDatetime();
   return date.toISOString().slice(0, 16);
 }
 
 function emptyItem(): EditItemsValues["items"][number] {
-  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetimeNow(), isDelivered: false, note: "" };
+  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetime(), isDelivered: false, note: "" };
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────

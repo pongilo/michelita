@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateOrderItem } from "@/hooks/tanstack/order/use-update-order-item";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, localDatetime } from "@/lib/utils/formatter";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,14 +29,9 @@ type FormValues = z.infer<typeof schema>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function localDatetimeNow() {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-
 function toLocalDatetimeInput(value: string | Date) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return localDatetimeNow();
+  if (Number.isNaN(date.getTime())) return localDatetime();
   return date.toISOString().slice(0, 16);
 }
 
@@ -75,7 +70,7 @@ export function OrderDetailsItemEditModal({ open, onOpenChange, orderId, organiz
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetimeNow(), isDelivered: false, note: "" },
+    defaultValues: { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetime(), isDelivered: false, note: "" },
   });
 
   const qty = watch("quantity") || 1;

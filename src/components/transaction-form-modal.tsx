@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTransactionCategory } from "@/hooks/tanstack/transaction-category/use-create-transaction-category";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { localDatetime } from "@/lib/utils/formatter";
 
 export const TRANSACTION_TYPES = [
   { value: "PIX", label: "Pix" },
@@ -41,9 +42,7 @@ type TransactionFormContentProps = {
   onSubmit: (signedAmount: number, values: Omit<TransactionFormValues, "direction" | "amount">) => Promise<void> | void;
 };
 
-function nowDateTimeString() {
-  return new Date().toISOString().slice(0, 16);
-}
+
 
 function getDefaultValues(
   initialValues?: TransactionFormContentProps["initialValues"],
@@ -55,7 +54,7 @@ function getDefaultValues(
     direction: rawAmount < 0 ? "EXPENSE" : "INCOME",
     type: initialValues?.type ?? "PIX",
     categoryId: initialValues?.categoryId ?? null,
-    date: initialValues?.date ?? nowDateTimeString(),
+    date: initialValues?.date ?? localDatetime(),
   };
 }
 

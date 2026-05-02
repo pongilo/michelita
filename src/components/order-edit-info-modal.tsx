@@ -16,6 +16,7 @@ import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useUpdateOrderInfo } from "@/hooks/tanstack/order/use-update-order-info";
 import { LoadingState } from "./ui/loading-state";
+import { localDatetime } from "@/lib/utils/formatter";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -32,15 +33,9 @@ type FormValues = z.infer<typeof schema>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function localDatetimeNow() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
-
 function toLocalDatetimeInput(value: string | Date) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return localDatetimeNow();
+  if (Number.isNaN(date.getTime())) return localDatetime();
   return date.toISOString().slice(0, 16);
 }
 
@@ -83,7 +78,7 @@ export function OrderEditInfoModal({ open, onOpenChange, orderId, organizationId
     resolver: zodResolver(schema),
     defaultValues: {
       customerId: "",
-      orderedAt: localDatetimeNow(),
+      orderedAt: localDatetime(),
       isPaid: false,
       note: "",
       shippingFee: 0,

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
-import { currencyFormatter, formatFullDate, parseDateAsUTC } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, localDatetime, parseDateAsUTC } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
@@ -24,12 +24,6 @@ import { AppTitle } from "@/components/app-title";
 export const Route = createFileRoute("/app/orders/form")({
   component: OrderFormRoute,
 });
-
-function localDatetime() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
 
 function OrderFormRoute() {
   const { organization } = useAuth();
