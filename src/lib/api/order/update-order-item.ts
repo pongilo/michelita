@@ -41,7 +41,6 @@ const updateOrderItemServerFn = createServerFn({ method: "POST" })
           description: data.description,
           unit_price: data.unitPrice,
           quantity: data.quantity,
-          total: itemTotal,
           deliveredAt: toDateOrThrow(data.deliveredAt),
           isDelivered: data.isDelivered,
           note: data.note?.trim() || null,
