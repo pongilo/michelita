@@ -45,7 +45,6 @@ const getOrderServerFn = createServerFn({ method: "POST" })
             description: true,
             unit_price: true,
             quantity: true,
-            total: true,
             deliveredAt: true,
             isDelivered: true,
             note: true,

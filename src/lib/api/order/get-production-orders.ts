@@ -114,7 +114,6 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
             description: true,
             quantity: true,
             unit_price: true,
-            total: true,
             deliveredAt: true,
             isDelivered: true,
             note: true,
