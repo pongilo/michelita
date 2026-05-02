@@ -45,13 +45,13 @@ const updateOrderInfoServerFn = createServerFn({ method: "POST" })
 
     const existingOrder = await prisma.order.findFirst({
       where: { id: data.id, organizationId: data.organizationId },
-      select: { id: true, item: { select: { total: true } } },
+      select: { id: true, item: { select: { unit_price: true, quantity: true } } },
     });
     if (!existingOrder) {
       throw new Error("Pedido nao encontrado para a organizacao informada.");
     }
 
-    const itemTotal = existingOrder.item.reduce((sum, i) => sum + Number(i.total), 0);
+    const itemTotal = existingOrder.item.reduce((sum, i) => sum + Number(i.unit_price) * i.quantity, 0);
     const orderTotal = Number((itemTotal + (data.shippingFee ?? 0) - (data.discount ?? 0)).toFixed(2));
 
     await prisma.order.update({

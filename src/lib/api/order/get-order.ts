@@ -58,7 +58,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
       throw new Error("Pedido nao encontrado para a organizacao informada.");
     }
 
-    const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
+    const itemTotal = order.item.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
     const shippingFee = Number(order.shippingFee ?? 0);
     const discount = Number(order.discount ?? 0);
 
@@ -78,7 +78,7 @@ const getOrderServerFn = createServerFn({ method: "POST" })
         description: item.description,
         unitPrice: Number(item.unit_price),
         quantity: item.quantity,
-        total: Number(item.total),
+        total: Number((Number(item.unit_price) * item.quantity).toFixed(2)),
         deliveredAt: item.deliveredAt,
         isDelivered: item.isDelivered,
         note: item.note,

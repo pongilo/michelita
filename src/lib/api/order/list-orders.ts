@@ -40,8 +40,8 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
       select: {
         id: true,
         description: true,
+        unit_price: true,
         quantity: true,
-        total: true,
         deliveredAt: true,
         note: true,
         isDelivered: true,
@@ -89,7 +89,7 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
         id: item.id,
         description: item.description,
         quantity: item.quantity,
-        total: Number(item.total),
+        total: Number((Number(item.unit_price) * item.quantity).toFixed(2)),
         note: item.note,
         isDelivered: item.isDelivered,
       });

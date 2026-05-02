@@ -53,12 +53,12 @@ const updateOrderItemServerFn = createServerFn({ method: "POST" })
         select: {
           shippingFee: true,
           discount: true,
-          item: { select: { id: true, total: true } },
+          item: { select: { id: true, unit_price: true, quantity: true } },
         },
       });
 
       const newItemsTotal = order.item.reduce(
-        (sum, i) => sum + (i.id === data.orderItemId ? itemTotal : Number(i.total)),
+        (sum, i) => sum + (i.id === data.orderItemId ? itemTotal : Number(i.unit_price) * i.quantity),
         0,
       );
       const orderTotal = Number((newItemsTotal + Number(order.shippingFee ?? 0) - Number(order.discount ?? 0)).toFixed(2));

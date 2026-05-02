@@ -29,7 +29,7 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         total: true,
         orderedAt: true,
         customer: { select: { name: true } },
-        item: { select: { description: true, quantity: true, total: true, isDelivered: true } },
+        item: { select: { description: true, unit_price: true, quantity: true, isDelivered: true } },
       },
     });
 
@@ -43,7 +43,12 @@ const getOrdersOverviewServerFn = createServerFn({ method: "GET" })
         shippingFee: order.shippingFee !== null ? Number(order.shippingFee) : null,
         discount: order.discount !== null ? Number(order.discount) : null,
         total: Number(order.total),
-        item: order.item.map((i) => ({ ...i, total: Number(i.total) })),
+        item: order.item.map((i) => ({
+          description: i.description,
+          quantity: i.quantity,
+          isDelivered: i.isDelivered,
+          total: Number((Number(i.unit_price) * i.quantity).toFixed(2)),
+        })),
         orderedAt: order.orderedAt.toISOString(),
       })),
       stats: {

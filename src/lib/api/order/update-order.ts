@@ -90,7 +90,7 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
         id: true,
         shippingFee: true,
         discount: true,
-        item: { select: { total: true } },
+        item: { select: { unit_price: true, quantity: true } },
       },
     });
 
@@ -160,7 +160,7 @@ const updateOrderServerFn = createServerFn({ method: "POST" })
         const newItemsTotal =
           data.items !== undefined
             ? data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-            : existingOrder.item.reduce((sum, i) => sum + Number(i.total), 0);
+            : existingOrder.item.reduce((sum, i) => sum + Number(i.unit_price) * i.quantity, 0);
 
         const newShippingFee = data.shippingFee !== undefined ? (data.shippingFee ?? 0) : Number(existingOrder.shippingFee ?? 0);
         const newDiscount = data.discount !== undefined ? (data.discount ?? 0) : Number(existingOrder.discount ?? 0);

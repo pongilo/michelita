@@ -63,7 +63,7 @@ const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
           description: item.description,
           quantity: item.quantity,
           unitPrice: Number(item.unit_price),
-          total: Number(item.total),
+          total: Number((Number(item.unit_price) * item.quantity).toFixed(2)),
           deliveredAt: item.deliveredAt,
           isDelivered: item.isDelivered,
           note: item.note,

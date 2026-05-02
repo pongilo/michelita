@@ -125,7 +125,7 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
 
     const productionOrders: ProductionOrder[] = orders
     .map((order) => {
-      const itemsTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
+      const itemsTotal = order.item.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
 
       return {
         id: order.id,
@@ -138,7 +138,7 @@ const getProductionOrdersServerFn = createServerFn({ method: "POST" })
           description: item.description,
           quantity: item.quantity,
           unitPrice: Number(item.unit_price),
-          total: Number(item.total),
+          total: Number((Number(item.unit_price) * item.quantity).toFixed(2)),
           deliveredAt: item.deliveredAt,
           isDelivered: item.isDelivered,
           note: item.note,

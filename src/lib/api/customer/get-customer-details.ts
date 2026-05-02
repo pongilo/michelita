@@ -47,8 +47,8 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
             select: {
               id: true,
               description: true,
+              unit_price: true,
               quantity: true,
-              total: true,
               deliveredAt: true,
               note: true,
             },
@@ -57,7 +57,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
       });
 
     const orderSummaries = orders.map((order) => {
-      const itemTotal = order.item.reduce((sum, item) => sum + Number(item.total), 0);
+      const itemTotal = order.item.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
 
       return {
         id: order.id,
@@ -70,7 +70,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
           id: item.id,
           description: item.description,
           quantity: item.quantity,
-          total: Number(item.total),
+          total: Number((Number(item.unit_price) * item.quantity).toFixed(2)),
           deliveredAt: item.deliveredAt,
           note: item.note
         })),
