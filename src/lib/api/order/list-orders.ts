@@ -14,7 +14,7 @@ function parseReferenceDate(value: string | undefined) {
     return new Date();
   }
 
-  const parsed = new Date(`${value}T00:00:00`);
+  const parsed = new Date(`${value}T00:00:00Z`);
 
   if (Number.isNaN(parsed.getTime())) {
     throw new Error("Data de referencia invalida.");
@@ -27,9 +27,9 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => listOrdersSchema.parse(input))
   .handler(async ({ data }) => {
     const start = parseReferenceDate(data.referenceDate);
-    start.setHours(0, 0, 0, 0);
+    start.setUTCHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setDate(end.getDate() + 1);
+    end.setUTCDate(end.getUTCDate() + 1);
 
     const items = await prisma.orderItem.findMany({
       where: {

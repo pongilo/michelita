@@ -14,7 +14,7 @@ function parseProductionDate(value: string | undefined) {
     return new Date();
   }
 
-  const parsed = new Date(`${value}T00:00:00`);
+  const parsed = new Date(`${value}T00:00:00Z`);
 
   if (Number.isNaN(parsed.getTime())) {
     throw new Error("Data de referencia invalida.");
@@ -25,10 +25,10 @@ function parseProductionDate(value: string | undefined) {
 
 function getProductionDayBounds(baseDate: Date) {
   const start = new Date(baseDate);
-  start.setHours(0, 0, 0, 0);
+  start.setUTCHours(0, 0, 0, 0);
 
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 1);
 
   return {
     start,

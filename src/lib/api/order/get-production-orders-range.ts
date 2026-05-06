@@ -18,8 +18,8 @@ export type FlatProductionItem = ProductionOrderItem & {
 const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => schema.parse(input))
   .handler(async ({ data }) => {
-    const start = new Date(`${data.startDate}T00:00:00`);
-    const end = new Date(`${data.endDate}T00:00:00`);
+    const start = new Date(`${data.startDate}T00:00:00Z`);
+    const end = new Date(`${data.endDate}T00:00:00Z`);
 
     const orders = await prisma.order.findMany({
       where: {

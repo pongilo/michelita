@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { currencyFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
 import { AppTitle } from "@/components/app-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -26,10 +26,8 @@ export const Route = createFileRoute("/app/finance/")({
 type PeriodType = "day" | "week" | "month";
 
 const shortDayFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "UTC" });
-const shortRangeFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "UTC" });
 const monthFmt = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
 const groupDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeZone: "UTC" });
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", timeZone: "UTC" });
 
 const TRANSACTION_TYPE_LABELS = Object.fromEntries(TRANSACTION_TYPES.map((t) => [t.value, t.label]));
 
@@ -37,25 +35,28 @@ const PERIOD_LABELS: Record<PeriodType, string> = { day: "Hoje", week: "Semana",
 
 function getPeriodRange(period: PeriodType, offset: number): { start: Date; end: Date; label: string } {
   const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
 
   if (period === "day") {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset + 1));
+    const start = new Date(Date.UTC(y, m, d + offset));
+    const end = new Date(Date.UTC(y, m, d + offset + 1));
     const label = shortDayFmt.format(start);
     return { start, end, label: label.charAt(0).toUpperCase() + label.slice(1) };
   }
 
   if (period === "week") {
-    const day = now.getUTCDay();
+    const day = now.getDay();
     const daysToMon = day === 0 ? -6 : 1 - day;
-    const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysToMon + offset * 7));
+    const monday = new Date(Date.UTC(y, m, d + daysToMon + offset * 7));
     const sunday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 6));
     const nextMonday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 7));
-    return { start: monday, end: nextMonday, label: `${shortRangeFmt.format(monday)} – ${shortRangeFmt.format(sunday)}` };
+    return { start: monday, end: nextMonday, label: `${shortDayFmt.format(monday)} – ${shortDayFmt.format(sunday)}` };
   }
 
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset + 1, 1));
+  const start = new Date(Date.UTC(y, m + offset, 1));
+  const end = new Date(Date.UTC(y, m + offset + 1, 1));
   const label = monthFmt.format(start);
   return { start, end, label: label.charAt(0).toUpperCase() + label.slice(1) };
 }
