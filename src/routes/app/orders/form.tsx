@@ -3,7 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateOrder } from "@/hooks/tanstack/order/use-create-order";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -30,18 +29,14 @@ function OrderFormRoute() {
   const [deliveryDate, setDeliveryDate] = useState(() => localDatetime())
   const isMobile = useIsMobile();
   const [modal] = useQueryState("modal");
-
-  const { data: customersData } = useGetCustomers({
-    organizationId: organization!.id,
-  });
-  const customers = customersData?.customers ?? [];
+  const [customerIdUrl, setCustomerIdUrl] = useQueryState("customerId");
+  const [customerNameUrl, setCustomerNameUrl] = useQueryState("customerName");
   const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
 
   const methods = useForm<CreateOrderInput, unknown, CreateOrderOutput>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: {
       organizationId: organization!.id,
-      customerId: "",
       orderedAt: deliveryDate,
       isPaid: false,
       note: "",
@@ -51,7 +46,7 @@ function OrderFormRoute() {
     },
   });
 
-  const { control, register, handleSubmit, reset, setValue, watch, getValues, formState: { errors } } = methods;
+  const { control, register, handleSubmit, reset, watch, getValues, formState: { errors } } = methods;
 
   const { fields } = useFieldArray({
     control,
@@ -73,7 +68,7 @@ function OrderFormRoute() {
   async function onCreateOrder(values: CreateOrderOutput) {
     await createOrder({
       organizationId: values.organizationId,
-      customerId: values.customerId ? values.customerId : undefined,
+      customerId: customerIdUrl || undefined,
       orderedAt: values.orderedAt,
       isPaid: values.isPaid,
       note: values.note,
@@ -93,7 +88,6 @@ function OrderFormRoute() {
         const newDeliveryDate = localDatetime()
         reset({
           organizationId: organization!.id,
-          customerId: "",
           orderedAt: newDeliveryDate,
           isPaid: false,
           note: "",
@@ -101,6 +95,8 @@ function OrderFormRoute() {
           discount: 0,
           items: [],
         });
+        setCustomerIdUrl(null);
+        setCustomerNameUrl(null);
         setDeliveryDate(newDeliveryDate)
       },
       onError: (error) => {
@@ -108,8 +104,6 @@ function OrderFormRoute() {
       },
     });
   }
-
-  const selectedCustomer = customers.find(c => c.id === watch("customerId"));
 
   return (
     <FormProvider {...methods}>
@@ -182,10 +176,10 @@ function OrderFormRoute() {
             <div className="space-y-4">
               <p className="font-heading text-base font-medium">Cliente (opcional)</p>
               <p className="text-base text-muted-foreground">
-                {selectedCustomer?.name ?? "Nenhum cliente selecionado para este pedido"}
+                {customerNameUrl ?? "Nenhum cliente selecionado para este pedido"}
               </p>
-              {selectedCustomer ? (
-                <Button size="sm" variant="outline" onClick={() => setValue("customerId", "", { shouldValidate: true })}>
+              {customerIdUrl ? (
+                <Button size="sm" variant="outline" onClick={() => { setCustomerIdUrl(null); setCustomerNameUrl(null); }}>
                   Remover
                 </Button>
               ) : (

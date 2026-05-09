@@ -1,9 +1,8 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFormContext } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useQueryState } from "nuqs";
-import type { CreateOrderInput } from "@/lib/api/order/create-order";
-import { normalize } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { customerFormSchema, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -28,26 +27,43 @@ type CustomerListContentProps = {
 
 export function CustomerListContent({ organizationId, onClose }: CustomerListContentProps) {
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
+  const [, setCustomerId] = useQueryState("customerId");
+  const [, setCustomerName] = useQueryState("customerName");
+  const debouncedSearch = useDebounce(search, 300);
+  const [page, setPage] = useState(1);
   const [tab, setTab] = useState<"list" | "create">("list");
-  const { setValue } = useFormContext<CreateOrderInput>();
 
   function handleClose() {
     setTab("list");
     onClose();
   }
 
-  const { data, isLoading } = useGetCustomers({ organizationId });
-  const customers = data?.customers ?? [];
-  const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
-
-  const filteredCustomers = customers.filter((c) => {
-    const q = normalize(search);
-    return (
-      normalize(c.name).includes(q) ||
-      (c.phone ?? "").toLowerCase().includes(q) ||
-      normalize(c.address ?? "").includes(q)
-    );
+  const { data, isLoading, isFetching, isPlaceholderData } = useGetCustomers({
+    organizationId,
+    search: debouncedSearch || undefined,
+    page,
+    pageSize: 20,
   });
+
+  const [loadedCustomers, setLoadedCustomers] = useState<NonNullable<typeof data>["customers"]>([]);
+
+  useEffect(() => {
+    setPage(1);
+    setLoadedCustomers([]);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (!data || isPlaceholderData) return;
+    setLoadedCustomers(prev => {
+      if (page === 1) return data.customers;
+      const existingIds = new Set(prev.map(c => c.id));
+      return [...prev, ...data.customers.filter(c => !existingIds.has(c.id))];
+    });
+  }, [data, isPlaceholderData, page]);
+
+  const hasMore = loadedCustomers.length < (data?.total ?? 0);
+  const isLoadingMore = isFetching && loadedCustomers.length > 0;
+  const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
 
   const {
     register,
@@ -61,7 +77,8 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
 
   async function onCreateCustomer(values: CustomerFormValues) {
     const newCustomer = await createCustomer({ organizationId, ...values });
-    setValue("customerId", newCustomer.id, { shouldValidate: true });
+    setCustomerId(newCustomer.id);
+    setCustomerName(newCustomer.name);
     reset();
     handleClose();
   }
@@ -74,9 +91,9 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
       </TabsList>
       <TabsContent value="list" className="space-y-4">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, telefone ou endereço" />
-        {isLoading ? (
+        {isLoading || (isFetching && loadedCustomers.length === 0) ? (
           <LoadingState label="Carregando clientes..." />
-        ) : filteredCustomers.length === 0 ? (
+        ) : loadedCustomers.length === 0 ? (
           <EmptyState compact>
             <EmptyState.Icon>🔍</EmptyState.Icon>
             <EmptyState.Title>
@@ -85,7 +102,7 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
           </EmptyState>
         ) : (
           <ItemGroup>
-            {filteredCustomers.map((customer) => (
+            {loadedCustomers.map((customer) => (
               <Fragment key={customer.id}>
                 <Item size="xs">
                   <ItemContent>
@@ -99,7 +116,8 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
                   </ItemContent>
                   <ItemActions>
                     <Button variant="outline" size="sm" onClick={() => {
-                      setValue("customerId", customer.id, { shouldValidate: true });
+                      setCustomerId(customer.id);
+                      setCustomerName(customer.name);
                       handleClose();
                     }}>
                       Selecionar
@@ -110,6 +128,19 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
               </Fragment>
             ))}
           </ItemGroup>
+        )}
+        {hasMore && (
+          <div className="py-2 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => p + 1)}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Carregando..." : "Carregar mais"}
+            </Button>
+          </div>
         )}
       </TabsContent>
 
