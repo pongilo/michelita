@@ -36,7 +36,8 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
     onClose();
   }
 
-  const { data: customers = [], isLoading } = useGetCustomers({ organizationId });
+  const { data, isLoading } = useGetCustomers({ organizationId });
+  const customers = data?.customers ?? [];
   const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
 
   const filteredCustomers = customers.filter((c) => {

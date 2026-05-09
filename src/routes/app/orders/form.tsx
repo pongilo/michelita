@@ -31,9 +31,10 @@ function OrderFormRoute() {
   const isMobile = useIsMobile();
   const [modal] = useQueryState("modal");
 
-  const { data: customers = [] } = useGetCustomers({
+  const { data: customersData } = useGetCustomers({
     organizationId: organization!.id,
   });
+  const customers = customersData?.customers ?? [];
   const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
 
   const methods = useForm<CreateOrderInput, unknown, CreateOrderOutput>({

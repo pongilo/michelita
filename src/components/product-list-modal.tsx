@@ -61,7 +61,8 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
     onClose();
   }
 
-  const { data: products = [], isLoading } = useGetProducts({ organizationId });
+  const { data, isLoading } = useGetProducts({ organizationId });
+  const products = data?.products ?? [];
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
 
   const filteredProducts = products.filter((p) =>

@@ -64,7 +64,8 @@ export function OrderEditInfoModal({ open, onOpenChange, orderId, organizationId
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
   const { mutateAsync, isPending } = useUpdateOrderInfo({ organizationId });
-  const { data: customers = [], isLoading: isLoadingCustomers } = useGetCustomers({ organizationId });
+  const { data: customersData, isLoading: isLoadingCustomers } = useGetCustomers({ organizationId });
+  const customers = customersData?.customers ?? [];
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
 
   const {
