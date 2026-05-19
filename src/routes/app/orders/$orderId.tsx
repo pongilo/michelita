@@ -5,14 +5,18 @@ import { OrderAction } from "@/components/order-action";
 import { OrderEditInfoModal } from "@/components/order-edit-info-modal";
 import { OrderEditItemsModal } from "@/components/order-edit-items-modal";
 import { OrderDetailsItemEditModal, type EditableOrderItem } from "@/components/order-details-item-edit-modal";
+import { CustomerListContent } from "@/components/customer-list-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
+import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
 import { EditIcon, MapPinIcon, PhoneIcon, StickyNoteIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Separator } from "@/components/ui/separator";
 import { AppTitle } from "@/components/app-title";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/orders/$orderId")({
   component: OrderDetailsPage,
@@ -31,6 +35,24 @@ function OrderDetailsPage() {
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
   const [isEditItemsModalOpen, setIsEditItemsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EditableOrderItem | null>(null);
+  const [isSelectCustomerOpen, setIsSelectCustomerOpen] = useState(false);
+  const [isRemoveCustomerOpen, setIsRemoveCustomerOpen] = useState(false);
+
+  const { mutateAsync: updateOrder, isPending: isUpdatingCustomer } = useUpdateOrder({ organizationId: organization!.id });
+
+  async function handleSelectCustomer(customerId: string) {
+    await updateOrder({ id: orderId, organizationId: organization!.id, customerId }, {
+      onSuccess: () => { setIsSelectCustomerOpen(false); toast.success("Cliente vinculado com sucesso."); },
+      onError: (e) => { toast.error(e instanceof Error ? e.message : "Erro ao vincular cliente."); },
+    });
+  }
+
+  async function handleRemoveCustomer() {
+    await updateOrder({ id: orderId, organizationId: organization!.id, customerId: null }, {
+      onSuccess: () => { setIsRemoveCustomerOpen(false); toast.success("Cliente removido com sucesso."); },
+      onError: (e) => { toast.error(e instanceof Error ? e.message : "Erro ao remover cliente."); },
+    });
+  }
 
   if (isLoading) {
     return (
@@ -119,14 +141,22 @@ function OrderDetailsPage() {
                   {order.customer.note}
                 </p>
               )}
-              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
-                Ver cliente
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="/app/customers/$customerId" params={{ customerId: order.customer.id }} />}>
+                  Ver cliente
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsRemoveCustomerOpen(true)}>
+                  Remover
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
               <p className="font-heading text-base font-medium">Cliente (opcional)</p>
               <p className="text-base text-muted-foreground">Nenhum cliente selecionado para este pedido.</p>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectCustomerOpen(true)}>
+                Selecionar cliente
+              </Button>
             </div>
           )}
 
@@ -242,6 +272,40 @@ function OrderDetailsPage() {
           organizationId={organization!.id}
           item={editingItem}
         />
+
+        <Dialog open={isSelectCustomerOpen} onOpenChange={setIsSelectCustomerOpen}>
+          <DialogContent className="max-h-[80vh] flex flex-col gap-0 p-0">
+            <DialogHeader className="mb-0 p-5">
+              <DialogTitle>Selecionar cliente</DialogTitle>
+            </DialogHeader>
+            <div className="overflow-y-auto flex-1">
+              <CustomerListContent
+                organizationId={organization!.id}
+                onClose={() => setIsSelectCustomerOpen(false)}
+                onSelectCustomer={(id) => handleSelectCustomer(id)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isRemoveCustomerOpen} onOpenChange={setIsRemoveCustomerOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remover cliente</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja remover o cliente "{order.customer?.name}" deste pedido?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRemoveCustomerOpen(false)} disabled={isUpdatingCustomer}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveCustomer} disabled={isUpdatingCustomer}>
+                {isUpdatingCustomer ? "Removendo..." : "Remover"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     );
   }

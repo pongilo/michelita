@@ -23,9 +23,10 @@ import { Button } from "@/components/ui/button";
 type CustomerListContentProps = {
   organizationId: string;
   onClose: () => void;
+  onSelectCustomer?: (id: string, name: string) => void;
 };
 
-export function CustomerListContent({ organizationId, onClose }: CustomerListContentProps) {
+export function CustomerListContent({ organizationId, onClose, onSelectCustomer }: CustomerListContentProps) {
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
   const [, setCustomerId] = useQueryState("customerId");
   const [, setCustomerName] = useQueryState("customerName");
@@ -77,8 +78,12 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
 
   async function onCreateCustomer(values: CustomerFormValues) {
     const newCustomer = await createCustomer({ organizationId, ...values });
-    setCustomerId(newCustomer.id);
-    setCustomerName(newCustomer.name);
+    if (onSelectCustomer) {
+      onSelectCustomer(newCustomer.id, newCustomer.name);
+    } else {
+      setCustomerId(newCustomer.id);
+      setCustomerName(newCustomer.name);
+    }
     reset();
     handleClose();
   }
@@ -116,8 +121,12 @@ export function CustomerListContent({ organizationId, onClose }: CustomerListCon
                   </ItemContent>
                   <ItemActions>
                     <Button variant="outline" size="sm" onClick={() => {
-                      setCustomerId(customer.id);
-                      setCustomerName(customer.name);
+                      if (onSelectCustomer) {
+                        onSelectCustomer(customer.id, customer.name);
+                      } else {
+                        setCustomerId(customer.id);
+                        setCustomerName(customer.name);
+                      }
                       handleClose();
                     }}>
                       Selecionar

@@ -126,6 +126,24 @@ function CustomerDetailsPage() {
             )}
           </div>
 
+          {/* Resumo financeiro */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl border p-4 space-y-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total faturado</p>
+              <p className="font-heading text-lg font-semibold">{currencyFormatter.format(data.metrics.totalInvoiced)}</p>
+            </div>
+            <div className="rounded-2xl border p-4 space-y-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total pago</p>
+              <p className="font-heading text-lg font-semibold text-green-700">{currencyFormatter.format(data.metrics.totalPaid)}</p>
+            </div>
+            <div className={`rounded-2xl border p-4 space-y-1 ${data.metrics.totalPending > 0 ? "border-amber-300 bg-amber-400/10" : ""}`}>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">A receber</p>
+              <p className={`font-heading text-lg font-semibold ${data.metrics.totalPending > 0 ? "text-amber-700" : ""}`}>
+                {currencyFormatter.format(data.metrics.totalPending)}
+              </p>
+            </div>
+          </div>
+
           {/* Pedidos */}
           <div className="space-y-2">
             <h2 className="font-heading text-base font-medium">Pedidos ({data.metrics.totalOrders})</h2>

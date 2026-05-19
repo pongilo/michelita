@@ -79,12 +79,16 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
 
     const totalOrders = orderSummaries.length;
     const totalInvoiced = orderSummaries.reduce((sum, order) => sum + order.itemTotal, 0);
+    const totalPaid = orderSummaries.filter((o) => o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
+    const totalPending = orderSummaries.filter((o) => !o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
 
     return {
       customer,
       metrics: {
         totalOrders,
         totalInvoiced: Number(totalInvoiced.toFixed(2)),
+        totalPaid: Number(totalPaid.toFixed(2)),
+        totalPending: Number(totalPending.toFixed(2)),
         lastOrderAt: orderSummaries[0]?.orderedAt ?? null,
       },
       recentOrders: orderSummaries.slice(0, 15),

@@ -137,7 +137,7 @@ function OrderFormRoute() {
                           variant="ghost"
                           size="icon"
                           nativeButton={false}
-                          render={<Link to="." search={{ modal: "editItem", itemIndex: index }} resetScroll={false} />}
+                          render={<Link to="." search={(prev) => ({ ...prev, modal: "editItem", itemIndex: index })} resetScroll={false} />}
                         >
                           <EditIcon />
                         </Button>
@@ -147,7 +147,7 @@ function OrderFormRoute() {
                 </ItemGroup>
               )}
               <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "product" }} resetScroll={false} />}>
+                <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={(prev) => ({ ...prev, modal: "product" })} resetScroll={false} />}>
                   Adicionar
                 </Button>
               </div>
@@ -165,7 +165,7 @@ function OrderFormRoute() {
                 variant="outline"
                 size="sm"
                 nativeButton={false}
-                render={<Link to="." search={{ modal: "delivery" }} resetScroll={false} />}
+                render={<Link to="." search={(prev) => ({ ...prev, modal: "delivery" })} resetScroll={false} />}
               >
                 {orderedAt === deliveryDate ? "Agendar" : "Reagendar"}
               </Button>
@@ -188,7 +188,7 @@ function OrderFormRoute() {
                   variant="outline"
                   size="sm"
                   nativeButton={false}
-                  render={<Link to="." search={{ modal: "customer" }} resetScroll={false} />}
+                  render={<Link to="." search={(prev) => ({ ...prev, modal: "customer" })} resetScroll={false} />}
                 >
                   Selecionar
                 </Button>
@@ -201,7 +201,7 @@ function OrderFormRoute() {
             <div className="space-y-4">
               <p className="font-heading text-base font-medium">Observação (opcional)</p>
               <p className="text-base text-muted-foreground">{watchedNote || "Nenhuma observação para este pedido"}</p>
-              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={{ modal: "note" }} resetScroll={false} />}>
+              <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link to="." search={(prev) => ({ ...prev, modal: "note" })} resetScroll={false} />}>
                 {watchedNote ? "Editar" : "Adicionar"}
               </Button>
             </div>
