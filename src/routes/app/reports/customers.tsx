@@ -1,16 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useGetItemsReport } from "@/hooks/tanstack/order/use-get-items-report";
+import { useGetCustomersRanking } from "@/hooks/tanstack/customer/use-get-customers-ranking";
 import { LoadingState } from "@/components/ui/loading-state";
-import { monthFormatter } from "@/lib/utils/formatter";
+import { monthFormatter, currencyFormatter } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { AppTitle } from "@/components/app-title";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-export const Route = createFileRoute("/app/reports/")({
-  component: ItemsReportPage,
+const TOP_N = 10;
+
+export const Route = createFileRoute("/app/reports/customers")({
+  component: CustomersRankingPage,
 });
 
 function getMonthOffset(offset: number) {
@@ -25,24 +27,33 @@ function getMonthOffset(offset: number) {
   };
 }
 
-function ItemsReportPage() {
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function CustomersRankingPage() {
   const { organization } = useAuth();
   const [monthOffset, setMonthOffset] = useState(0);
   const { year, month, label } = getMonthOffset(monthOffset);
 
-  const { data, isLoading, isError, error } = useGetItemsReport({
+  const { data, isLoading, isError, error } = useGetCustomersRanking({
     organizationId: organization!.id,
     year,
     month,
   });
 
+  const top = useMemo(() => {
+    if (!data) return [];
+    return [...data]
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, TOP_N);
+  }, [data]);
+
   const isCurrentMonth = monthOffset === 0;
-  const maxQty = data?.items[0]?.quantity ?? 1;
+  const maxSpent = top[0]?.totalSpent ?? 1;
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-5 space-y-8">
+    <main className="mx-auto w-full max-w-6xl p-5 space-y-6">
       <header className="flex items-center justify-between gap-4">
-        <AppTitle>Ranking de itens</AppTitle>
+        <AppTitle>Ranking de clientes</AppTitle>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setMonthOffset((o) => o - 1)}
@@ -67,53 +78,61 @@ function ItemsReportPage() {
         </div>
       </header>
 
-      {isLoading && <LoadingState label="Carregando relatório..." />}
+      {isLoading && <LoadingState label="Carregando ranking..." />}
       {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
       {data && (
         <>
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <section>
             <Card size="sm">
               <CardHeader>
-                <CardDescription>Total de itens produzidos</CardDescription>
-                <CardTitle className="text-2xl">{data.totalItems}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card size="sm">
-              <CardHeader>
-                <CardDescription>Tipos de itens distintos</CardDescription>
-                <CardTitle className="text-2xl">{data.items.length}</CardTitle>
+                <CardDescription>Clientes ativos no mês</CardDescription>
+                <CardTitle className="text-2xl">{data.length}</CardTitle>
               </CardHeader>
             </Card>
           </section>
 
-          <section className="space-y-3">
-            {data.items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum item neste período.
-              </p>
+          <section>
+            {top.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum cliente neste período.</p>
             ) : (
               <div className="rounded-xl border border-base-200 overflow-hidden divide-y divide-base-200">
-                {data.items.map((item, index) => {
-                  const pct = Math.round((item.quantity / maxQty) * 100);
+                {top.map((customer, index) => {
+                  const pct = Math.round((customer.totalSpent / maxSpent) * 100);
+                  const medal = MEDALS[index];
                   return (
-                    <div key={item.description} className="flex items-center gap-4 px-4 py-3">
-                      <span className="text-xs text-muted-foreground w-5 shrink-0 text-right">
-                        {index + 1}
+                    <Link
+                      key={customer.id}
+                      to="/app/customers/$customerId"
+                      params={{ customerId: customer.id }}
+                      className="flex items-center gap-4 px-4 py-3 hover:bg-base-200/50 transition-colors"
+                    >
+                      <span className="w-7 shrink-0 text-center text-sm">
+                        {medal ?? (
+                          <span className="text-xs text-muted-foreground">{index + 1}</span>
+                        )}
                       </span>
                       <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="flex items-center justify-between gap-4">
-                          <p className="text-sm font-medium truncate">{item.description}</p>
-                          <span className="text-sm font-semibold shrink-0">{item.quantity}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{customer.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {customer.orderCount}{" "}
+                              {customer.orderCount === 1 ? "pedido" : "pedidos"}
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold shrink-0 text-michelita-purple">
+                            {currencyFormatter.format(customer.totalSpent)}
+                          </span>
                         </div>
                         <div className="h-1.5 rounded-full bg-base-200 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-michelita-purple"
+                            className="h-full rounded-full bg-michelita-yellow"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

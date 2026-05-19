@@ -35,10 +35,16 @@ const navItems = [
     ]
   },
   {
+    label: 'Rankings',
+    links: [
+      { to: "/app/reports", icon: BarChart2, label: "Itens" },
+      { to: "/app/reports/customers", icon: UsersRoundIcon, label: "Clientes" },
+    ]
+  },
+  {
     label: 'Mais',
     links: [
       { to: "/app/finance", icon: DollarSignIcon, label: "Financeiro" },
-      { to: "/app/reports", icon: BarChart2, label: "Relatório" },
       { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
       { to: "/app/products", icon: PackageIcon, label: "Produtos" },
     ]
