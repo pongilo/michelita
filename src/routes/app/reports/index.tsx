@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useGetItemsReport } from "@/hooks/tanstack/order/use-get-items-report";
 import { useGetCustomersRanking } from "@/hooks/tanstack/customer/use-get-customers-ranking";
 import { LoadingState } from "@/components/ui/loading-state";
-import { monthFormatter, currencyFormatter } from "@/lib/utils/formatter";
+import { monthFormatter } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { AppTitle } from "@/components/app-title";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -154,10 +154,10 @@ function CustomersTab() {
 
   const top = useMemo(() => {
     if (!data) return [];
-    return [...data].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, TOP_N);
+    return [...data].sort((a, b) => b.orderCount - a.orderCount).slice(0, TOP_N);
   }, [data]);
 
-  const maxSpent = top[0]?.totalSpent ?? 1;
+  const maxOrders = top[0]?.orderCount ?? 1;
 
   return (
     <div className="space-y-6">
@@ -187,7 +187,7 @@ function CustomersTab() {
             ) : (
               <div className="rounded-xl border border-base-200 overflow-hidden divide-y divide-base-200">
                 {top.map((customer, index) => {
-                  const pct = Math.round((customer.totalSpent / maxSpent) * 100);
+                  const pct = Math.round((customer.orderCount / maxOrders) * 100);
                   const medal = MEDALS[index];
                   return (
                     <Link
@@ -203,15 +203,10 @@ function CustomersTab() {
                       </span>
                       <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{customer.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {customer.orderCount}{" "}
-                              {customer.orderCount === 1 ? "pedido" : "pedidos"}
-                            </p>
-                          </div>
+                          <p className="text-sm font-medium truncate">{customer.name}</p>
                           <span className="text-sm font-semibold shrink-0 text-michelita-purple">
-                            {currencyFormatter.format(customer.totalSpent)}
+                            {customer.orderCount}{" "}
+                            {customer.orderCount === 1 ? "pedido" : "pedidos"}
                           </span>
                         </div>
                         <div className="h-1.5 rounded-full bg-base-200 overflow-hidden">
