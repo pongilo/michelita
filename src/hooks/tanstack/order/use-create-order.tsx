@@ -10,6 +10,9 @@ export function useCreateOrder() {
       queryClient.invalidateQueries({
         queryKey: ["orders", variables.organizationId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", variables.organizationId, "daily"],
+      });
     },
   });
 }

@@ -10,10 +10,6 @@ datasource db {
 
 model User {
   id            String         @id @db.Uuid
-  name          String?        @db.VarChar(255)
-  email         String         @db.VarChar(255)
-  createdAt     DateTime?      @map("created_at") @db.Timestamptz
-  updatedAt     DateTime?      @map("updated_at") @db.Timestamptz
   organizations Organization[]
 
   @@map("user")
@@ -21,14 +17,120 @@ model User {
 }
 
 model Organization {
-  id        String   @id @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   ownerId   String   @unique @map("owner_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner               User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customer            Customer[]
+  order               Order[]
+  product             Product[]
+  transactionCategory TransactionCategory[]
+  transaction         Transaction[]
 
   @@map("organization")
+  @@schema("public")
+}
+
+model Customer {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  phone          String?  @unique
+  address        String?
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order[]
+
+  @@map("customer")
+  @@schema("public")
+}
+
+model Order {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  customerId     String?  @map("customer_id") @db.Uuid
+  isPaid         Boolean  @default(false) @map("is_paid")
+  orderedAt      DateTime @map("ordered_at") @db.Timestamptz
+  note           String?
+  shippingFee    Decimal? @map("shipping_fee") @db.Decimal(10, 2)
+  discount       Decimal? @db.Decimal(10, 2)
+
+  total Decimal @default(0) @db.Decimal(10, 2)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  item         OrderItem[]
+
+  @@map("order")
+  @@schema("public")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @map("order_id") @db.Uuid
+  description String
+  unit_price  Decimal  @db.Decimal(10, 2)
+  quantity    Int
+  deliveredAt DateTime @map("delivered_at") @db.Timestamptz
+  isDelivered Boolean  @default(false) @map("is_delivered")
+  note        String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_item")
+  @@schema("public")
+}
+
+model Product {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  price          Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("product")
+  @@schema("public")
+}
+
+enum TransactionType {
+  PIX
+  CREDIT
+  DEBIT
+  CASH
+
+  @@schema("public")
+}
+
+model TransactionCategory {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name           String
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction[]
+
+  @@map("transaction_category")
+  @@schema("public")
+}
+
+model Transaction {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  categoryId     String?         @map("category_id") @db.Uuid
+  description    String
+  amount         Decimal         @db.Decimal(10, 2)
+  type           TransactionType
+  date           DateTime        @default(now()) @db.Timestamptz
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@map("transaction")
   @@schema("public")
 }

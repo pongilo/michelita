@@ -1,10 +1,14 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 import { useSignUp } from "@/hooks/tanstack/auth/use-sign-up";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_auth/register")({
   component: RegisterPage,
@@ -12,6 +16,7 @@ export const Route = createFileRoute("/_auth/register")({
 
 const registerSchema = z
   .object({
+    name: z.string().trim().min(1, "Informe seu nome."),
     email: z.email("Informe um e-mail valido."),
     password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
     confirmPassword: z.string(),
@@ -25,7 +30,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
   const { mutateAsync: signUp } = useSignUp();
 
   const {
@@ -36,20 +41,21 @@ function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  async function onSubmit({ email, password }: RegisterFormValues) {
-    setError("");
-
+  async function onSubmit({ name, email, password }: RegisterFormValues) {
     await signUp(
-      { email, password },
+      { name, email, password },
       {
-        onSuccess: async ({ user }) => {
-          const organization = await getOrganization({ userId: user!.id });
+        onSuccess: async ({ session }) => {
+          if (!session) {
+            await navigate({ to: "/login" });
+            return;
+          }
 
-          const to = !!organization ? "/app/dashboard" : "/organization/new";
-          await navigate({ to });
+          await queryClient.refetchQueries({ queryKey: ["auth-user"] });
+          await navigate({ to: "/app/history" });
         },
         onError: (error) => {
-          setError(error.message);
+          toast.error(error.message);
         }
       }
     );
@@ -57,68 +63,44 @@ function RegisterPage() {
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card shadow-xs card-lg bg-base-100">
-        <div className="card-body">
-          <h1 className="card-title">Criar conta</h1>
-
+      <Card className="shadow-xs">
+        <CardHeader>
+          <CardTitle>Criar conta</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <label className="space-y-1">
-              <span className="label">E-mail</span>
-              <input
-                id="email"
-                type="email"
-                {...register("email")}
-                className="input input-bordered w-full"
-              />
-              {errors.email ? (
-                <span className="text-error-content text-sm">{errors.email.message}</span>
-              ) : null}
-            </label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Nome</FieldLabel>
+                <Input id="name" type="text" {...register("name")} />
+                <FieldError>{errors.name?.message}</FieldError>
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Senha</span>
-              <input
-                id="password"
-                type="password"
-                {...register("password")}
-                className="input input-bordered w-full"
-              />
-              {errors.password ? (
-                <span className="text-error-content text-sm">{errors.password.message}</span>
-              ) : null}
-            </label>
+              <Field>
+                <FieldLabel>E-mail</FieldLabel>
+                <Input id="email" type="email" {...register("email")} />
+                <FieldError>{errors.email?.message}</FieldError>
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Confirmar senha</span>
-              <input
-                id="confirmPassword"
-                type="password"
-                {...register("confirmPassword")}
-                className="input input-bordered w-full"
-              />
-              {errors.confirmPassword ? (
-                <span className="text-error-content text-sm">
-                  {errors.confirmPassword.message}
-                </span>
-              ) : null}
-            </label>
+              <Field>
+                <FieldLabel>Senha</FieldLabel>
+                <Input id="password" type="password" {...register("password")} />
+                <FieldError>{errors.password?.message}</FieldError>
+              </Field>
 
-            {error && (
-              <div className="alert alert-error">
-                <span>{error}</span>
-              </div>
-            )}
+              <Field>
+                <FieldLabel>Confirmar senha</FieldLabel>
+                <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
+                <FieldError>{errors.confirmPassword?.message}</FieldError>
+              </Field>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary w-full"
-            >
-              {isSubmitting ? "Criando conta..." : "Criar conta"}
-            </button>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? "Criando conta..." : "Criar conta"}
+              </Button>
+            </FieldGroup>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

@@ -1,0 +1,267 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useUpdateOrderItems } from "@/hooks/tanstack/order/use-update-order-items";
+import { currencyFormatter, localDatetime } from "@/lib/utils/formatter";
+import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
+
+// ── Schema ────────────────────────────────────────────────────────────────────
+
+const editItemsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        description: z.string().trim().min(1, "Descricao do item e obrigatoria."),
+        unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
+        quantity: z.number().int().min(1, "Quantidade minima: 1."),
+        deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
+        isDelivered: z.boolean(),
+        note: z.string().trim().optional(),
+      }),
+    )
+    .min(1, "Adicione pelo menos um item."),
+});
+
+type EditItemsValues = z.infer<typeof editItemsSchema>;
+
+function toLocalDatetimeInput(value: string | Date) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return localDatetime();
+  return date.toISOString().slice(0, 16);
+}
+
+function emptyItem(): EditItemsValues["items"][number] {
+  return { description: "", unitPrice: 0, quantity: 1, deliveredAt: localDatetime(), isDelivered: false, note: "" };
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface OrderItem {
+  description: string;
+  unitPrice: number;
+  quantity: number;
+  deliveredAt: string | Date;
+  isDelivered: boolean;
+  note?: string | null;
+}
+
+interface OrderEditItemsModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  orderId: string;
+  organizationId: string;
+  items: OrderItem[];
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function OrderEditItemsModal({ open, onOpenChange, orderId, organizationId, items }: OrderEditItemsModalProps) {
+  const { mutateAsync, isPending } = useUpdateOrderItems({ organizationId });
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<EditItemsValues>({
+    resolver: zodResolver(editItemsSchema),
+    defaultValues: { items: [emptyItem()] },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+
+  const watchedItems = watch("items");
+
+  const subtotal = useMemo(
+    () => watchedItems.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0), 0),
+    [watchedItems],
+  );
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        items: items.length
+          ? items.map((item) => ({
+              description: item.description,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              deliveredAt: toLocalDatetimeInput(item.deliveredAt),
+              isDelivered: item.isDelivered,
+              note: item.note ?? "",
+            }))
+          : [emptyItem()],
+      });
+    }
+  }, [open, items, reset]);
+
+  async function handleSave(values: EditItemsValues) {
+    try {
+      await mutateAsync({
+        id: orderId,
+        organizationId,
+        items: values.items.map((item) => ({
+          description: item.description,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          deliveredAt: item.deliveredAt,
+          isDelivered: item.isDelivered,
+          note: item.note?.trim() ? item.note.trim() : undefined,
+        })),
+      });
+      onOpenChange(false);
+      toast.success("Itens do pedido atualizados.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar itens.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onOpenChange(false)}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar itens do pedido</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(handleSave)} className="space-y-6">
+          {fields.map((field, index) => {
+            const qty = Number(watchedItems[index]?.quantity) || 1;
+            const itemSubtotal = (Number(watchedItems[index]?.unitPrice) || 0) * qty;
+
+            return (
+              <div key={field.id} className="space-y-4">
+                {fields.length > 1 && (
+                  <div className="flex justify-between items-center">
+                    <p className="font-heading text-base font-medium">
+                      Item {index + 1}{" "}
+                      <span className="text-xs font-normal opacity-60">
+                        {currencyFormatter.format(itemSubtotal)}
+                      </span>
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-destructive"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2Icon />
+                    </Button>
+                  </div>
+                )}
+
+                <Field>
+                  <FieldLabel>Descrição</FieldLabel>
+                  <Input placeholder="Ex: Bolo de chocolate" {...register(`items.${index}.description`)} />
+                  <FieldError>{errors.items?.[index]?.description?.message}</FieldError>
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel>Quantidade</FieldLabel>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => setValue(`items.${index}.quantity`, Math.max(1, qty - 1))}
+                      >
+                        <MinusIcon />
+                      </Button>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                        className="text-center"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => setValue(`items.${index}.quantity`, qty + 1)}
+                      >
+                        <PlusIcon />
+                      </Button>
+                    </div>
+                    <FieldError>{errors.items?.[index]?.quantity?.message}</FieldError>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>Valor unitário</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                    />
+                    <FieldError>{errors.items?.[index]?.unitPrice?.message}</FieldError>
+                  </Field>
+                </div>
+
+                <Field>
+                  <FieldLabel>Data da entrega</FieldLabel>
+                  <Input type="datetime-local" {...register(`items.${index}.deliveredAt`)} />
+                  <FieldError>{errors.items?.[index]?.deliveredAt?.message}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Observação (opcional)</FieldLabel>
+                  <Textarea rows={3} placeholder="Escreva uma observação..." {...register(`items.${index}.note`)} />
+                </Field>
+
+                <Field orientation="horizontal">
+                  <Controller
+                    name={`items.${index}.isDelivered`}
+                    control={control}
+                    render={({ field: f }) => (
+                      <Checkbox
+                        id={`edit-isDelivered-${index}`}
+                        checked={f.value}
+                        onCheckedChange={f.onChange}
+                      />
+                    )}
+                  />
+                  <Label htmlFor={`edit-isDelivered-${index}`}>Marcar como entregue</Label>
+                </Field>
+
+                {index < fields.length - 1 && <hr className="border-border" />}
+              </div>
+            );
+          })}
+
+          <Button type="button" variant="outline" size="sm" onClick={() => append(emptyItem())}>
+            Adicionar item
+          </Button>
+
+          <div className="flex items-center py-4 border-t">
+            <div className="flex-1 space-y-1">
+              <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(subtotal)}</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Salvando..." : "Salvar itens"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,178 +1,98 @@
-import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
-import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
-import type { Database } from "@/lib/database.types";
+import { FormModal } from "@/components/form-modal";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
-const productSchema = z.object({
-  name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
-  description: z.string().optional(),
-  price: z.number().min(0, "Preco deve ser maior ou igual a zero."),
-  active: z.boolean(),
+export const productFormSchema = z.object({
+  name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do produto."),
+  price: z.number({ error: "Informe um preço válido." }).min(0, "O preço deve ser maior ou igual a zero."),
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
-type Product = Database["public"]["Tables"]["product"]["Row"];
+export type ProductFormValues = z.infer<typeof productFormSchema>;
 
 type ProductFormModalProps = {
   isOpen: boolean;
-  organizationId: string;
-  productToEdit: Product | null;
-  onSuccess: (message: string) => void;
+  mode: "create" | "edit";
+  isSubmitting: boolean;
+  initialValues?: Partial<ProductFormValues>;
   onClose: () => void;
+  onSubmit: (values: ProductFormValues) => Promise<void> | void;
 };
+
+function getDefaultValues(initialValues?: Partial<ProductFormValues>): ProductFormValues {
+  return {
+    name: initialValues?.name ?? "",
+    price: initialValues?.price ?? 0,
+  };
+}
 
 export function ProductFormModal({
   isOpen,
-  organizationId,
-  productToEdit,
-  onSuccess,
+  mode,
+  isSubmitting,
+  initialValues,
   onClose,
+  onSubmit,
 }: ProductFormModalProps) {
-  const [errorMessage, setErrorMessage] = useState("");
-  const isEditing = !!productToEdit;
-  const { mutateAsync: createProduct, isPending: isCreating } = useCreateProduct();
-  const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct({ organizationId });
-  const isSubmitting = isCreating || isUpdating;
-
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      active: true,
-    },
+    resolver: zodResolver(productFormSchema),
+    defaultValues: getDefaultValues(initialValues),
   });
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setErrorMessage("");
-
-    if (productToEdit) {
-      reset({
-        name: productToEdit.name,
-        description: productToEdit.description ?? "",
-        price: Number(productToEdit.price),
-        active: productToEdit.active,
-      });
-      return;
-    }
-
-    reset({
-      name: "",
-      description: "",
-      price: 0,
-      active: true,
-    });
-  }, [isOpen, productToEdit, reset]);
-
-  async function onSubmit(values: ProductFormValues) {
-    if (!organizationId) {
-      setErrorMessage("Organizacao nao encontrada.");
-      return;
-    }
-
-    setErrorMessage("");
-
-    try {
-      if (productToEdit) {
-        await updateProduct({
-          id: productToEdit.id,
-          name: values.name,
-          description: values.description,
-          price: values.price,
-          active: values.active,
-        });
-        onSuccess("Produto atualizado com sucesso.");
-      } else {
-        await createProduct({
-          organizationId,
-          name: values.name,
-          description: values.description,
-          price: values.price,
-          active: values.active,
-        });
-        onSuccess("Produto adicionado com sucesso.");
-      }
-
-      onClose();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao salvar produto.");
-    }
-  }
-
-  if (!isOpen) {
-    return null;
-  }
+    if (!isOpen) return;
+    reset(getDefaultValues(initialValues));
+  }, [isOpen, initialValues?.name, initialValues?.price, reset]);
 
   return (
-    <div className="modal modal-open" role="dialog" aria-modal="true">
-      <div className="modal-box">
-        <h2 className="text-lg font-semibold">{isEditing ? "Editar produto" : "Adicionar produto"}</h2>
+    <FormModal
+      isOpen={isOpen}
+      title={mode === "create" ? "Novo produto" : "Editar produto"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Nome</FieldLabel>
+            <Input type="text" placeholder="Nome do produto" {...register("name")} />
+            <FieldError>{errors.name?.message}</FieldError>
+          </Field>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 grid gap-4">
-          <label className="space-y-1">
-            <span className="label">Nome</span>
-            <input type="text" {...register("name")} className="input input-bordered w-full" />
-            {errors.name ? <span className="text-error-content text-sm">{errors.name.message}</span> : null}
-          </label>
-
-          <label className="space-y-1">
-            <span className="label">Descricao</span>
-            <textarea
-              {...register("description")}
-              className="textarea textarea-bordered w-full"
-              rows={3}
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="label">Preco</span>
-            <input
+          <Field>
+            <FieldLabel>Preço (R$)</FieldLabel>
+            <Input
               type="number"
               step="0.01"
               min="0"
+              placeholder="0,00"
               {...register("price", { valueAsNumber: true })}
-              className="input input-bordered w-full"
             />
-            {errors.price ? <span className="text-error-content text-sm">{errors.price.message}</span> : null}
-          </label>
+            <FieldError>{errors.price?.message}</FieldError>
+          </Field>
+        </FieldGroup>
 
-          <label className="label cursor-pointer justify-start gap-3">
-            <input type="checkbox" className="checkbox" {...register("active")} />
-            <span className="label-text">Produto ativo</span>
-          </label>
-
-          {errorMessage ? (
-            <div className="alert alert-error">
-              <span>{errorMessage}</span>
-            </div>
-          ) : null}
-
-          <div className="modal-action mt-2">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-              {isSubmitting ? "Salvando..." : isEditing ? "Salvar alteracoes" : "Adicionar produto"}
-            </button>
-          </div>
-        </form>
-      </div>
-      <button type="button" aria-label="fechar" className="modal-backdrop" onClick={onClose}>
-        fechar
-      </button>
-    </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Salvando..."
+              : mode === "create"
+                ? "Salvar produto"
+                : "Salvar alterações"}
+          </Button>
+        </div>
+      </form>
+    </FormModal>
   );
 }

@@ -1,81 +1,105 @@
-import { supabase } from "@/lib/supabase";
-import { prepareOrderData } from "./prepare-order-data";
-import type { SaveOrderInput } from "./types";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
-export async function createOrder(input: SaveOrderInput) {
-  const preparedOrderData = await prepareOrderData(input);
+export const orderItemSchema = z.object({
+  description: z.string().trim().min(1, "Descrição do item e obrigatória."),
+  unitPrice: z.number().min(0, "Preço unitário deve ser maior ou igual a zero."),
+  quantity: z.number().int().min(1, "Quantidade mínima: 1."),
+  deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatória."),
+  isDelivered: z.boolean().default(true),
+  note: z.string().trim().optional(),
+});
 
-  const { data: order, error: orderError } = await supabase
-    .from("order")
-    .insert({
-      customer_id: input.customerId,
-      organization_id: input.organizationId,
-      type: input.type,
-      status: input.status,
-      subtotal: preparedOrderData.subtotal,
-      delivery_fee: preparedOrderData.deliveryFee,
-      total: preparedOrderData.total,
-      delivery_datetime: preparedOrderData.deliveryDatetime,
-      delivery_address: preparedOrderData.deliveryAddress,
-    })
-    .select("id")
-    .single();
+export const createOrderSchema = z.object({
+  organizationId: z.uuid(),
+  customerId: z.union([z.uuid(), z.literal("")]).optional(),
+  orderedAt: z.string().trim().min(1, "Data do pedido é obrigatório."),
+  isPaid: z.boolean().default(false),
+  note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
+  items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item."),
+});
 
-  if (orderError) {
-    throw new Error(orderError.message);
+export type CreateOrderInput = z.input<typeof createOrderSchema>;
+export type CreateOrderOutput = z.output<typeof createOrderSchema>;
+
+function toDateOrThrow(value: string, fieldLabel: string) {
+  // datetime-local values have no timezone info — treat as UTC to match the display formatter (timeZone: "UTC")
+  const normalized = /Z|[+-]\d{2}:?\d{2}$/.test(value) ? value : value + "Z";
+  const date = new Date(normalized);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`${fieldLabel} invalida.`);
   }
 
-  for (const item of preparedOrderData.items) {
-    const { data: createdItem, error: itemError } = await supabase
-      .from("order_item")
-      .insert({
-        order_id: order.id,
-        product_id: item.productId,
-        product_name: item.productName,
-        unit_price: item.unitPrice,
-        quantity: item.quantity,
-        total: item.total,
-        note: item.note,
-        delivery_type: item.deliveryType,
-      })
-      .select("id")
-      .single();
+  return date;
+}
 
-    if (itemError) {
-      throw new Error(itemError.message);
-    }
+function toOptionalString(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
 
-    if (item.customizations.length > 0) {
-      const { error: customizationsError } = await supabase.from("order_item_customization").insert(
-        item.customizations.map((customization) => ({
-          order_item_id: createdItem.id,
-          name: customization.name,
-          value: customization.value,
-        }))
-      );
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
 
-      if (customizationsError) {
-        throw new Error(customizationsError.message);
+const createOrderServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => createOrderSchema.parse(input))
+  .handler(async ({ data }) => {
+    if (data.customerId) {
+      const customer = await prisma.customer.findFirst({
+        where: {
+          id: data.customerId,
+          organizationId: data.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!customer) {
+        throw new Error("Cliente não encontrado para a organização informada.");
       }
     }
-  }
 
-  if (preparedOrderData.payments.length > 0) {
-    const { error: paymentsError } = await supabase.from("order_payments").insert(
-      preparedOrderData.payments.map((payment) => ({
-        order_id: order.id,
-        method: payment.method,
-        amount: payment.amount,
-        status: payment.status,
-        paid_at: payment.paidAt,
-        note: payment.note,
-      }))
-    );
 
-    if (paymentsError) {
-      throw new Error(paymentsError.message);
-    }
-  }
+    const itemTotal = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const orderTotal = Number((itemTotal + (data.shippingFee ?? 0) - (data.discount ?? 0)).toFixed(2));
 
-  return order.id;
+    const order = await prisma.order.create({
+      data: {
+        organizationId: data.organizationId,
+        customerId: data.customerId ?? null,
+        orderedAt: toDateOrThrow(data.orderedAt, "Data do pedido"),
+        isPaid: data.isPaid,
+        note: toOptionalString(data.note),
+        shippingFee: data.shippingFee ?? null,
+        discount: data.discount ?? null,
+        total: orderTotal,
+        item: {
+          create: data.items.map((item) => ({
+            description: item.description,
+            unit_price: item.unitPrice,
+            quantity: item.quantity,
+            deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
+            isDelivered: item.isDelivered,
+            note: toOptionalString(item.note),
+          })),
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return order;
+  });
+
+export async function createOrder(data: CreateOrderOutput) {
+  return createOrderServerFn({
+    data,
+  });
 }

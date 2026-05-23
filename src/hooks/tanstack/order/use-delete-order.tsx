@@ -14,6 +14,9 @@ export function useDeleteOrder({ organizationId }: UseDeleteOrderProps) {
       queryClient.invalidateQueries({
         queryKey: ["orders", organizationId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", organizationId, "daily"],
+      });
     },
   });
 }

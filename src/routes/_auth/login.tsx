@@ -1,10 +1,14 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import { getOrganization } from "@/lib/api/organization/get-organization";
 import { useSignIn } from "@/hooks/tanstack/auth/use-sign-in";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_auth/login")({
   component: LoginPage,
@@ -19,7 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   const { mutateAsync: signIn } = useSignIn()
 
@@ -32,69 +36,61 @@ function LoginPage() {
   });
 
   async function onSubmit({ email, password }: LoginFormValues) {
-    setError("");
-
     await signIn({ email, password }, {
-      onSuccess: async ({ user }) => {
-        const organization = await getOrganization({ userId: user.id });
-        const to = !!organization ? "/app/dashboard" : "/organization/new";
-        await navigate({ to });
+      onSuccess: async () => {
+        await queryClient.refetchQueries({ queryKey: ["auth-user"] });
+        await navigate({ to: "/app/orders" });
       },
       onError: (error) => {
-        setError(error.message)
+        toast.error(error.message);
       }
-    })    
+    })
   }
 
   return (
     <main className="max-w-md mx-auto px-5 py-20">
-      <div className="card shadow-xs card-lg bg-base-100">
-        <div className="card-body">
-          <h1 className="card-title">Login</h1>
-
+      <Card className="shadow-xs">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <label className="space-y-1">
-              <span className="label">E-mail</span>
-              <input
-                id="email"
-                type="email"
-                {...register("email")}
-                className="input input-bordered w-full"
-              />
-              {errors.email ? (
-                <span className="text-error-content text-sm">{errors.email.message}</span>
-              ) : null}
-            </label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>E-mail</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <FieldError>{errors.email.message}</FieldError>
+                )}
+              </Field>
 
-            <label className="space-y-1">
-              <span className="label">Senha</span>
-              <input
-                id="password"
-                type="password"
-                {...register("password")}
-                className="input input-bordered w-full"
-              />
-              {errors.password ? (
-                <span className="text-error-content text-sm">{errors.password.message}</span>
-              ) : null}
-            </label>
-
-            {error ? (
-              <div className="alert alert-error">
-                <span>{error}</span>
-              </div>
-            ) : null}
-            
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary w-full"
-            >
-              {isSubmitting ? "Entrando..." : "Entrar"}
-            </button>
+              <Field>
+                <FieldLabel>Senha</FieldLabel>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <FieldError>{errors.password.message}</FieldError>
+                )}
+              </Field>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full"
+                size="lg"
+              >
+                {isSubmitting ? "Entrando..." : "Entrar"}
+              </Button>
+            </FieldGroup>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

@@ -1,31 +1,34 @@
-import { supabase } from "@/lib/supabase";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
-type UpdateProductProps = {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  active: boolean;
-};
+const updateProductSchema = z.object({
+  id: z.uuid(),
+  name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
+  price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
+});
 
-export async function updateProduct({
-  id,
-  name,
-  description,
-  price,
-  active,
-}: UpdateProductProps) {
-  const { error } = await supabase
-    .from("product")
-    .update({
-      name: name.trim(),
-      description: description?.trim() ? description.trim() : null,
-      price,
-      active,
-    })
-    .eq("id", id);
+export type UpdateProductProps = z.infer<typeof updateProductSchema>;
 
-  if (error) {
-    throw new Error(error.message);
-  }
+const updateProductServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => updateProductSchema.parse(input))
+  .handler(async ({ data }) => {
+    const product = await prisma.product.update({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        price: data.price,
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+      },
+    });
+
+    return { ...product, price: Number(product.price) };
+  });
+
+export async function updateProduct(data: UpdateProductProps) {
+  return updateProductServerFn({ data });
 }

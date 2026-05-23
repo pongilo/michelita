@@ -1,53 +1,59 @@
-import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
-import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import type { Database } from "@/lib/database.types";
+import { FormModal } from "@/components/form-modal";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
-const customerSchema = z.object({
-  name: z.string().min(2, "Informe um nome com pelo menos 2 caracteres."),
-  phone: z.string().optional(),
-  note: z.string().optional(),
+export const customerFormSchema = z.object({
+  name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do cliente."),
+  phone: z.string().trim().optional(),
+  address: z.string().trim().optional(),
+  note: z.string().trim().optional(),
 });
 
-type CustomerFormValues = z.infer<typeof customerSchema>;
-type Customer = Database["public"]["Tables"]["customer"]["Row"];
+export type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
 type CustomerFormModalProps = {
   isOpen: boolean;
-  organizationId: string;
-  customerToEdit: Customer | null;
-  onSuccess: (message: string) => void;
+  mode: "create" | "edit";
+  isSubmitting: boolean;
+  errorMessage: string;
+  successMessage: string;
+  initialValues?: Partial<CustomerFormValues>;
   onClose: () => void;
+  onSubmit: (values: CustomerFormValues) => Promise<void> | void;
 };
+
+function getDefaultValues(initialValues?: Partial<CustomerFormValues>): CustomerFormValues {
+  return {
+    name: initialValues?.name ?? "",
+    phone: initialValues?.phone ?? "",
+    address: initialValues?.address ?? "",
+    note: initialValues?.note ?? "",
+  };
+}
 
 export function CustomerFormModal({
   isOpen,
-  organizationId,
-  customerToEdit,
-  onSuccess,
+  mode,
+  isSubmitting,
+  errorMessage,
+  successMessage,
+  initialValues,
   onClose,
+  onSubmit,
 }: CustomerFormModalProps) {
-  const [errorMessage, setErrorMessage] = useState("");
-  const isEditing = !!customerToEdit;
-  const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
-  const { mutateAsync: updateCustomer, isPending: isUpdating } = useUpdateCustomer({ organizationId });
-  const isSubmitting = isCreating || isUpdating;
-
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      note: "",
-    },
+    resolver: zodResolver(customerFormSchema),
+    defaultValues: getDefaultValues(initialValues),
   });
 
   useEffect(() => {
@@ -55,102 +61,80 @@ export function CustomerFormModal({
       return;
     }
 
-    setErrorMessage("");
-
-    if (customerToEdit) {
-      reset({
-        name: customerToEdit.name,
-        phone: customerToEdit.phone ?? "",
-        note: customerToEdit.note ?? "",
-      });
-      return;
-    }
-
-    reset({
-      name: "",
-      phone: "",
-      note: "",
-    });
-  }, [isOpen, customerToEdit, reset]);
-
-  async function onSubmit(values: CustomerFormValues) {
-    if (!organizationId) {
-      setErrorMessage("Organizacao nao encontrada.");
-      return;
-    }
-
-    setErrorMessage("");
-
-    try {
-      if (customerToEdit) {
-        await updateCustomer({
-          id: customerToEdit.id,
-          name: values.name,
-          phone: values.phone,
-          note: values.note,
-        });
-        onSuccess("Cliente atualizado com sucesso.");
-      } else {
-        await createCustomer({
-          organizationId,
-          name: values.name,
-          phone: values.phone,
-          note: values.note,
-        });
-        onSuccess("Cliente adicionado com sucesso.");
-      }
-
-      onClose();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao salvar cliente.");
-    }
-  }
-
-  if (!isOpen) {
-    return null;
-  }
+    reset(getDefaultValues(initialValues));
+  }, [isOpen, initialValues?.address, initialValues?.name, initialValues?.note, initialValues?.phone, reset]);
 
   return (
-    <div className="modal modal-open" role="dialog" aria-modal="true">
-      <div className="modal-box">
-        <h2 className="text-lg font-semibold">{isEditing ? "Editar cliente" : "Adicionar cliente"}</h2>
+    <FormModal
+      isOpen={isOpen}
+      title={mode === "create" ? "Novo cliente" : "Editar cliente"}
+      onClose={onClose}
+      maxWidthClassName="max-w-3xl"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Nome</FieldLabel>
+            <Input type="text" placeholder="Nome" {...register("name")} />
+            <FieldError>{errors.name?.message}</FieldError>
+          </Field>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 grid gap-4">
-          <label className="space-y-1">
-            <span className="label">Nome</span>
-            <input type="text" {...register("name")} className="input input-bordered w-full" />
-            {errors.name ? <span className="text-error-content text-sm">{errors.name.message}</span> : null}
-          </label>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field>
+              <FieldLabel>Telefone</FieldLabel>
+              <Input type="text" placeholder="Telefone (opcional)" {...register("phone")} />
+              <FieldError>{errors.phone?.message}</FieldError>
+            </Field>
 
-          <label className="space-y-1">
-            <span className="label">Telefone</span>
-            <input type="text" {...register("phone")} className="input input-bordered w-full" />
-          </label>
+            <Field className="md:col-span-2">
+              <FieldLabel>Endereço</FieldLabel>
+              <textarea
+                placeholder="Endereço (opcional)"
+                className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+                rows={3}
+                {...register("address")}
+              />
+              <FieldError>{errors.address?.message}</FieldError>
+            </Field>
 
-          <label className="space-y-1">
-            <span className="label">Observacao</span>
-            <textarea {...register("note")} className="textarea textarea-bordered w-full" rows={3} />
-          </label>
-
-          {errorMessage ? (
-            <div className="alert alert-error">
-              <span>{errorMessage}</span>
-            </div>
-          ) : null}
-
-          <div className="modal-action mt-2">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-              {isSubmitting ? "Salvando..." : isEditing ? "Salvar alteracoes" : "Adicionar cliente"}
-            </button>
+            <Field className="md:col-span-2">
+              <FieldLabel>Observação</FieldLabel>
+              <textarea
+                placeholder="Observação (opcional)"
+                className="w-full rounded-2xl border border-input bg-input/30 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+                rows={3}
+                {...register("note")}
+              />
+              <FieldError>{errors.note?.message}</FieldError>
+            </Field>
           </div>
-        </form>
-      </div>
-      <button type="button" aria-label="fechar" className="modal-backdrop" onClick={onClose}>
-        fechar
-      </button>
-    </div>
+        </FieldGroup>
+
+        {errorMessage ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {successMessage}
+          </div>
+        ) : null}
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Salvando..."
+              : mode === "create"
+                ? "Salvar cliente"
+                : "Salvar alteracoes"}
+          </Button>
+        </div>
+      </form>
+    </FormModal>
   );
 }

@@ -31,5 +31,6 @@ Thumbs.db
 .parcel-cache/
 .vite/
 .tanstack
+.output/
 
 /generated/prisma

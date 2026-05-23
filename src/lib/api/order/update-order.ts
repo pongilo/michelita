@@ -1,92 +1,190 @@
-import { supabase } from "@/lib/supabase";
-import { prepareOrderData } from "./prepare-order-data";
-import type { SaveOrderInput } from "./types";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
-type UpdateOrderProps = SaveOrderInput & {
-  id: string;
-};
+const orderItemSchema = z.object({
+  description: z.string().trim().min(1, "Descricao do item e obrigatoria."),
+  unitPrice: z.number().min(0, "Preco unitario deve ser maior ou igual a zero."),
+  quantity: z.number().int().min(1, "Quantidade minima: 1."),
+  deliveredAt: z.string().trim().min(1, "Data de entrega do item e obrigatoria."),
+  isDelivered: z.boolean().optional(),
+  note: z.string().trim().optional(),
+});
 
-export async function updateOrder({ id, ...input }: UpdateOrderProps) {
-  const preparedOrderData = await prepareOrderData(input);
+const updateOrderSchema = z.object({
+  id: z.uuid(),
+  organizationId: z.uuid(),
+  customerId: z.uuid().nullable().optional(),
+  orderedAt: z.string().optional(),
+  isPaid: z.boolean().optional(),
+  note: z.string().trim().optional(),
+  shippingFee: z.number().min(0).nullable().optional(),
+  discount: z.number().min(0).nullable().optional(),
+  items: z.array(orderItemSchema).min(1, "Adicione pelo menos um item.").optional(),
+}).superRefine((value, ctx) => {
+  const hasDataToUpdate =
+    value.customerId !== undefined ||
+    value.orderedAt !== undefined ||
+    value.isPaid !== undefined ||
+    value.note !== undefined ||
+    value.shippingFee !== undefined ||
+    value.discount !== undefined ||
+    value.items !== undefined;
 
-  const { error: orderError } = await supabase
-    .from("order")
-    .update({
-      customer_id: input.customerId,
-      organization_id: input.organizationId,
-      type: input.type,
-      status: input.status,
-      subtotal: preparedOrderData.subtotal,
-      delivery_fee: preparedOrderData.deliveryFee,
-      total: preparedOrderData.total,
-      delivery_datetime: preparedOrderData.deliveryDatetime,
-      delivery_address: preparedOrderData.deliveryAddress,
-    })
-    .eq("id", id);
+  if (!hasDataToUpdate) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Nenhum campo foi enviado para atualizacao.",
+    });
+  }
+});
 
-  if (orderError) {
-    throw new Error(orderError.message);
+export type UpdateOrderProps = z.infer<typeof updateOrderSchema>;
+
+function toDateOrThrow(value: string, fieldLabel: string) {
+  // datetime-local values have no timezone info — treat as UTC to match the display formatter (timeZone: "UTC")
+  const normalized = /Z|[+-]\d{2}:?\d{2}$/.test(value) ? value : value + "Z";
+  const date = new Date(normalized);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`${fieldLabel} invalida.`);
   }
 
-  const { error: deletePaymentsError } = await supabase.from("order_payments").delete().eq("order_id", id);
-  if (deletePaymentsError) {
-    throw new Error(deletePaymentsError.message);
+  return date;
+}
+
+function toOptionalString(value: string | undefined) {
+  if (!value) {
+    return null;
   }
 
-  const { error: deleteItemsError } = await supabase.from("order_item").delete().eq("order_id", id);
-  if (deleteItemsError) {
-    throw new Error(deleteItemsError.message);
-  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
 
-  for (const item of preparedOrderData.items) {
-    const { data: createdItem, error: itemError } = await supabase
-      .from("order_item")
-      .insert({
-        order_id: id,
-        product_id: item.productId,
-        product_name: item.productName,
-        unit_price: item.unitPrice,
-        quantity: item.quantity,
-        total: item.total,
-        note: item.note,
-        delivery_type: item.deliveryType,
-      })
-      .select("id")
-      .single();
+const updateOrderServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => updateOrderSchema.parse(input))
+  .handler(async ({ data }) => {
+    if (data.customerId) {
+      const customer = await prisma.customer.findFirst({
+        where: {
+          id: data.customerId,
+          organizationId: data.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
 
-    if (itemError) {
-      throw new Error(itemError.message);
-    }
-
-    if (item.customizations.length > 0) {
-      const { error: customizationsError } = await supabase.from("order_item_customization").insert(
-        item.customizations.map((customization) => ({
-          order_item_id: createdItem.id,
-          name: customization.name,
-          value: customization.value,
-        }))
-      );
-
-      if (customizationsError) {
-        throw new Error(customizationsError.message);
+      if (!customer) {
+        throw new Error("Cliente nao encontrado para a organizacao informada.");
       }
     }
-  }
 
-  if (preparedOrderData.payments.length > 0) {
-    const { error: paymentsError } = await supabase.from("order_payments").insert(
-      preparedOrderData.payments.map((payment) => ({
-        order_id: id,
-        method: payment.method,
-        amount: payment.amount,
-        status: payment.status,
-        paid_at: payment.paidAt,
-        note: payment.note,
-      }))
-    );
+    const existingOrder = await prisma.order.findFirst({
+      where: {
+        id: data.id,
+        organizationId: data.organizationId,
+      },
+      select: {
+        id: true,
+        shippingFee: true,
+        discount: true,
+        item: { select: { unit_price: true, quantity: true } },
+      },
+    });
 
-    if (paymentsError) {
-      throw new Error(paymentsError.message);
+    if (!existingOrder) {
+      throw new Error("Pedido nao encontrado para a organizacao informada.");
     }
-  }
+
+    const updateData: {
+      customerId?: string | null;
+      orderedAt?: Date;
+      isPaid?: boolean;
+      note?: string | null;
+      shippingFee?: number | null;
+      discount?: number | null;
+      total?: number;
+    } = {};
+
+    if (data.customerId !== undefined) {
+      updateData.customerId = data.customerId ?? null;
+    }
+
+    if (data.orderedAt !== undefined) {
+      updateData.orderedAt = toDateOrThrow(data.orderedAt, "Data do pedido");
+    }
+
+    if (data.isPaid !== undefined) {
+      updateData.isPaid = data.isPaid;
+    }
+
+    if (data.note !== undefined) {
+      updateData.note = toOptionalString(data.note);
+    }
+
+    if (data.shippingFee !== undefined) {
+      updateData.shippingFee = data.shippingFee;
+    }
+
+    if (data.discount !== undefined) {
+      updateData.discount = data.discount;
+    }
+
+    const affectsTotal = data.shippingFee !== undefined || data.discount !== undefined || data.items !== undefined;
+
+    await prisma.$transaction(async (transaction) => {
+      if (data.items !== undefined) {
+        await transaction.orderItem.deleteMany({
+          where: {
+            orderId: data.id,
+          },
+        });
+
+        await transaction.orderItem.createMany({
+          data: data.items.map((item) => ({
+            orderId: data.id,
+            description: item.description,
+            unit_price: item.unitPrice,
+            quantity: item.quantity,
+            total: Number((item.unitPrice * item.quantity).toFixed(2)),
+            deliveredAt: toDateOrThrow(item.deliveredAt, "Data de entrega do item"),
+            isDelivered: item.isDelivered ?? false,
+            note: toOptionalString(item.note),
+          })),
+        });
+      }
+
+      if (affectsTotal) {
+        const newItemsTotal =
+          data.items !== undefined
+            ? data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+            : existingOrder.item.reduce((sum, i) => sum + Number(i.unit_price) * i.quantity, 0);
+
+        const newShippingFee = data.shippingFee !== undefined ? (data.shippingFee ?? 0) : Number(existingOrder.shippingFee ?? 0);
+        const newDiscount = data.discount !== undefined ? (data.discount ?? 0) : Number(existingOrder.discount ?? 0);
+
+        updateData.total = Number((newItemsTotal + newShippingFee - newDiscount).toFixed(2));
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await transaction.order.update({
+          where: {
+            id: data.id,
+          },
+          data: updateData,
+        });
+      }
+    });
+
+    return {
+      id: data.id,
+    };
+  });
+
+export async function updateOrder(data: UpdateOrderProps) {
+  return updateOrderServerFn({
+    data,
+  });
 }
