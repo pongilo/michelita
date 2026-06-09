@@ -1,0 +1,5 @@
+@reference "@/styles.css";
+
+body {
+  @apply bg-michelita-purple min-h-screen;
+}

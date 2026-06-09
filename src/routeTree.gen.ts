@@ -15,13 +15,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppAccountRouteImport } from './routes/app/account'
-import { Route as SiteDocinhosRouteImport } from './routes/_site/docinhos'
-import { Route as SiteBolosVulcaoRouteImport } from './routes/_site/bolos-vulcao'
-import { Route as SiteBolosFitRouteImport } from './routes/_site/bolos-fit'
-import { Route as SiteBolosDePoteRouteImport } from './routes/_site/bolos-de-pote'
-import { Route as SiteBolosDeFestaRouteImport } from './routes/_site/bolos-de-festa'
-import { Route as SiteBolosCaseirosRouteImport } from './routes/_site/bolos-caseiros'
-import { Route as SiteBolosBombomRouteImport } from './routes/_site/bolos-bombom'
+import { Route as SiteItemIdRouteImport } from './routes/_site/$itemId'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
@@ -63,39 +57,9 @@ const AppAccountRoute = AppAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const SiteDocinhosRoute = SiteDocinhosRouteImport.update({
-  id: '/docinhos',
-  path: '/docinhos',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosVulcaoRoute = SiteBolosVulcaoRouteImport.update({
-  id: '/bolos-vulcao',
-  path: '/bolos-vulcao',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosFitRoute = SiteBolosFitRouteImport.update({
-  id: '/bolos-fit',
-  path: '/bolos-fit',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosDePoteRoute = SiteBolosDePoteRouteImport.update({
-  id: '/bolos-de-pote',
-  path: '/bolos-de-pote',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosDeFestaRoute = SiteBolosDeFestaRouteImport.update({
-  id: '/bolos-de-festa',
-  path: '/bolos-de-festa',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosCaseirosRoute = SiteBolosCaseirosRouteImport.update({
-  id: '/bolos-caseiros',
-  path: '/bolos-caseiros',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteBolosBombomRoute = SiteBolosBombomRouteImport.update({
-  id: '/bolos-bombom',
-  path: '/bolos-bombom',
+const SiteItemIdRoute = SiteItemIdRouteImport.update({
+  id: '/$itemId',
+  path: '/$itemId',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
@@ -164,13 +128,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
-  '/bolos-bombom': typeof SiteBolosBombomRoute
-  '/bolos-caseiros': typeof SiteBolosCaseirosRoute
-  '/bolos-de-festa': typeof SiteBolosDeFestaRoute
-  '/bolos-de-pote': typeof SiteBolosDePoteRoute
-  '/bolos-fit': typeof SiteBolosFitRoute
-  '/bolos-vulcao': typeof SiteBolosVulcaoRoute
-  '/docinhos': typeof SiteDocinhosRoute
+  '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/settings': typeof AppSettingsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
@@ -189,13 +147,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
-  '/bolos-bombom': typeof SiteBolosBombomRoute
-  '/bolos-caseiros': typeof SiteBolosCaseirosRoute
-  '/bolos-de-festa': typeof SiteBolosDeFestaRoute
-  '/bolos-de-pote': typeof SiteBolosDePoteRoute
-  '/bolos-fit': typeof SiteBolosFitRoute
-  '/bolos-vulcao': typeof SiteBolosVulcaoRoute
-  '/docinhos': typeof SiteDocinhosRoute
+  '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/settings': typeof AppSettingsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
@@ -216,13 +168,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
-  '/_site/bolos-bombom': typeof SiteBolosBombomRoute
-  '/_site/bolos-caseiros': typeof SiteBolosCaseirosRoute
-  '/_site/bolos-de-festa': typeof SiteBolosDeFestaRoute
-  '/_site/bolos-de-pote': typeof SiteBolosDePoteRoute
-  '/_site/bolos-fit': typeof SiteBolosFitRoute
-  '/_site/bolos-vulcao': typeof SiteBolosVulcaoRoute
-  '/_site/docinhos': typeof SiteDocinhosRoute
+  '/_site/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/settings': typeof AppSettingsRoute
   '/_site/': typeof SiteIndexRoute
@@ -244,13 +190,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
-    | '/bolos-bombom'
-    | '/bolos-caseiros'
-    | '/bolos-de-festa'
-    | '/bolos-de-pote'
-    | '/bolos-fit'
-    | '/bolos-vulcao'
-    | '/docinhos'
+    | '/$itemId'
     | '/app/account'
     | '/app/settings'
     | '/organization/new'
@@ -269,13 +209,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
-    | '/bolos-bombom'
-    | '/bolos-caseiros'
-    | '/bolos-de-festa'
-    | '/bolos-de-pote'
-    | '/bolos-fit'
-    | '/bolos-vulcao'
-    | '/docinhos'
+    | '/$itemId'
     | '/app/account'
     | '/app/settings'
     | '/organization/new'
@@ -295,13 +229,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/_auth/login'
     | '/_auth/register'
-    | '/_site/bolos-bombom'
-    | '/_site/bolos-caseiros'
-    | '/_site/bolos-de-festa'
-    | '/_site/bolos-de-pote'
-    | '/_site/bolos-fit'
-    | '/_site/bolos-vulcao'
-    | '/_site/docinhos'
+    | '/_site/$itemId'
     | '/app/account'
     | '/app/settings'
     | '/_site/'
@@ -367,53 +295,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_site/docinhos': {
-      id: '/_site/docinhos'
-      path: '/docinhos'
-      fullPath: '/docinhos'
-      preLoaderRoute: typeof SiteDocinhosRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-vulcao': {
-      id: '/_site/bolos-vulcao'
-      path: '/bolos-vulcao'
-      fullPath: '/bolos-vulcao'
-      preLoaderRoute: typeof SiteBolosVulcaoRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-fit': {
-      id: '/_site/bolos-fit'
-      path: '/bolos-fit'
-      fullPath: '/bolos-fit'
-      preLoaderRoute: typeof SiteBolosFitRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-de-pote': {
-      id: '/_site/bolos-de-pote'
-      path: '/bolos-de-pote'
-      fullPath: '/bolos-de-pote'
-      preLoaderRoute: typeof SiteBolosDePoteRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-de-festa': {
-      id: '/_site/bolos-de-festa'
-      path: '/bolos-de-festa'
-      fullPath: '/bolos-de-festa'
-      preLoaderRoute: typeof SiteBolosDeFestaRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-caseiros': {
-      id: '/_site/bolos-caseiros'
-      path: '/bolos-caseiros'
-      fullPath: '/bolos-caseiros'
-      preLoaderRoute: typeof SiteBolosCaseirosRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/bolos-bombom': {
-      id: '/_site/bolos-bombom'
-      path: '/bolos-bombom'
-      fullPath: '/bolos-bombom'
-      preLoaderRoute: typeof SiteBolosBombomRouteImport
+    '/_site/$itemId': {
+      id: '/_site/$itemId'
+      path: '/$itemId'
+      fullPath: '/$itemId'
+      preLoaderRoute: typeof SiteItemIdRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/_auth/register': {
@@ -520,24 +406,12 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface SiteRouteRouteChildren {
-  SiteBolosBombomRoute: typeof SiteBolosBombomRoute
-  SiteBolosCaseirosRoute: typeof SiteBolosCaseirosRoute
-  SiteBolosDeFestaRoute: typeof SiteBolosDeFestaRoute
-  SiteBolosDePoteRoute: typeof SiteBolosDePoteRoute
-  SiteBolosFitRoute: typeof SiteBolosFitRoute
-  SiteBolosVulcaoRoute: typeof SiteBolosVulcaoRoute
-  SiteDocinhosRoute: typeof SiteDocinhosRoute
+  SiteItemIdRoute: typeof SiteItemIdRoute
   SiteIndexRoute: typeof SiteIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
-  SiteBolosBombomRoute: SiteBolosBombomRoute,
-  SiteBolosCaseirosRoute: SiteBolosCaseirosRoute,
-  SiteBolosDeFestaRoute: SiteBolosDeFestaRoute,
-  SiteBolosDePoteRoute: SiteBolosDePoteRoute,
-  SiteBolosFitRoute: SiteBolosFitRoute,
-  SiteBolosVulcaoRoute: SiteBolosVulcaoRoute,
-  SiteDocinhosRoute: SiteDocinhosRoute,
+  SiteItemIdRoute: SiteItemIdRoute,
   SiteIndexRoute: SiteIndexRoute,
 }
 
