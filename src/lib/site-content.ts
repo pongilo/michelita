@@ -5,9 +5,9 @@ export const content = [
     items: [
       {
         id: "bolos-caseiros",
-        name: "Bolos caseiros",
-        description: "17 sabores",
-        price: "A partir de 28",
+        name: "Bolos Caseiros",
+        description: "Deliciosas opções de sabores",
+        price: "Ver",
         img: "",
         items: [
           { name: "Banana com canela", description: "Massa fofinha com o aroma irresistível da canela e pedaços de banana em cada fatia. Aprox. 1,1kg", price: '30', img: '/bolos-caseiros/michelita-banana-com-canela.jpeg' },
@@ -34,8 +34,8 @@ export const content = [
       {
         id: "bolos-vulcao",
         name: "Bolos Vulcão",
-        description: "3 sabores",
-        price: "55",
+        description: "Explosão de sabor e cremosidade!",
+        price: "Ver",
         img: "",
         items: [
           { name: "Vulcão de ninho com morango", description: "", price: "55", img: "" },
@@ -49,11 +49,11 @@ export const content = [
     id: "paes",
     title: "Pães",
     items: [
-      { id: "pao-tradicional", name: "Pão tradicional", description: "", price: "20", img: "" },
-      { id: "pao-de-batata", name: "Pão de batata - 4 unidades", description: "", price: "15", img: "" },
-      { id: "pao-de-batata", name: "Pão de batata - 6 unidades", description: "", price: "20", img: "" },
-      { id: "bauru", name: "Bauru", description: "Até 3 pessoas", price: "38", img: "" },
-      { id: "baguete", name: "Baguete", description: "Até 5 pessoas", price: "50", img: "" },
+      { id: "pao-caseiro", name: "Pão Caseiro", description: "", price: "20", img: "" },
+      { id: "pao-de-batata", name: "Pão de Batata", description: "Pacote com 4 unidades", price: "15", img: "" },
+      { id: "pao-de-batata", name: "Pão de batata", description: "Pacote com 6 unidades", price: "20", img: "" },
+      { id: "bauru", name: "Pão recheado", description: "Bauru (presunto, queijo e tomate) | Frango com catupiry. Serve até 3 pessoas", price: "38", img: "" },
+      { id: "baguete", name: "Baguete", description: "Bauru (presunto, queijo e tomate) | Frango com catupiry. Serve até 5 pessoas", price: "50", img: "" },
     ],
   },
   {
@@ -62,13 +62,14 @@ export const content = [
     items: [
       { 
         id: "bolos-de-pote", 
-        name: "Bolos de pote", 
+        name: "Bolos de Pote", 
         description: "Confira os sabores do dia", 
         price: "20", 
         img: "" ,
       },
-      { id: "brownie", name: "Brownie recheado", description: "Confira os sabores do dia", price: "15", img: "" },
-      { id: "arroz-doce", name: "Arroz Doce", description: "", price: "15", img: "" },
+      { id: "brownie", name: "Brownie Recheado", description: "Confira os sabores do dia", price: "15", img: "" },
+      { id: "arroz-doce", name: "Arroz Doce", description: "Seu doce junino favorito, o ano todo", price: "15", img: "" },
+      { id: "dona-vera", name: "Dona Vera", description: "Pão em formato de canudinho recheado. Confira os sabores do dia", price: "6", img: "" },
     ],
   },
   {
@@ -77,9 +78,9 @@ export const content = [
     items: [
       {
         id: "bolos-de-festa",
-        name: "Bolos de festa",
-        description: "",
-        price: "A partir de 85 / kg",
+        name: "Bolos de Festa",
+        description: "Bolos para comemorações e festas.",
+        price: "Ver",
         img: "",
         items: [
           { name: "Brigadeiro", price: '85 / kg' },
@@ -110,31 +111,31 @@ export const content = [
       {
         id: "docinhos-de-festa",
         name: "Docinhos de festa",
-        description: "",
-        price: "A partir de 90 / 100un.",
+        description: "Perfeito para acompanhar o seu bolo.",
+        price: "Ver",
         img: "",
         items: [
-          { id: "brigadeiro", name: "Brigadeiro", description: "", price: "95 / 100un.", img: "" },
-          { id: "beijinho", name: "Beijinho", description: "", price: "80 / 100un.", img: "" },
-          { id: "brigadeiro-branco", name: "Brigadeiro Branco", description: "", price: "100 / 100un.", img: "" },
-          { id: "bicho-de-pe", name: "Bicho de pé", description: "", price: "90 / 100un.", img: "" },
-          { id: "ninho-com-nutella", name: "Ninho c/ Nutella", description: "", price: "102 / 100un.", img: "" },
+          { id: "brigadeiro", name: "Brigadeiro", description: "100 unidades", price: "95", img: "" },
+          { id: "beijinho", name: "Beijinho", description: "100 unidades", price: "80", img: "" },
+          { id: "brigadeiro-branco", name: "Brigadeiro Branco", description: "100 unidades", price: "100", img: "" },
+          { id: "bicho-de-pe", name: "Bicho de pé", description: "100 unidades", price: "90", img: "" },
+          { id: "ninho-com-nutella", name: "Ninho c/ Nutella", description: "100 unidades", price: "102", img: "" },
         ]
       },
       {
         id: "mini-salgados",
         name: "Mini salgados",
         description: "Coxinha, esfihas, bolinhas de queijo e mais.",
-        price: "A partir de 99 / 100un.",
+        price: "Ver",
         img: "",
         items: [
-          { id: "bolinha-de-queijo", name: "Bolinha de queijo", description: "", price: "99 / 100un.", img: "" },
-          { id: "coxinha", name: "Coxinha", description: "", price: "99 / 100un.", img: "" },
-          { id: "doguinho", name: "Doguinho", description: "", price: "99 / 100un.", img: "" },
-          { id: "enroladinho", name: "Enroladinho Presento e queijo", description: "", price: "119 / 100un.", img: "" },
-          { id: "mini-pao-de-batata", name: "Mini Pão de Batata", description: "", price: "119 / 100un.", img: "" },
-          { id: "esfiha-carne", name: "Esfiha Carne", description: "", price: "129 / 100un.", img: "" },
-          { id: "esfiha-frango", name: "Esfiha Frango", description: "", price: "129 / 100un.", img: "" },
+          { id: "bolinha-de-queijo", name: "Bolinha de queijo", description: "100 unidades", price: "99", img: "" },
+          { id: "coxinha", name: "Coxinha", description: "100 unidades", price: "99", img: "" },
+          { id: "doguinho", name: "Doguinho", description: "100 unidades", price: "99", img: "" },
+          { id: "enroladinho", name: "Enroladinho Presento e queijo", description: "100 unidades", price: "119", img: "" },
+          { id: "mini-pao-de-batata", name: "Mini Pão de Batata", description: "100 unidades", price: "119", img: "" },
+          { id: "esfiha-carne", name: "Esfiha Carne", description: "100 unidades", price: "129", img: "" },
+          { id: "esfiha-frango", name: "Esfiha Frango", description: "100 unidades", price: "129", img: "" },
         ]
       }
     ],
