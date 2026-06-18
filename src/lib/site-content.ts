@@ -115,11 +115,11 @@ export const content = [
         price: "Ver",
         img: "",
         items: [
-          { id: "brigadeiro", name: "Brigadeiro", description: "100 unidades", price: "95", img: "" },
-          { id: "beijinho", name: "Beijinho", description: "100 unidades", price: "80", img: "" },
-          { id: "brigadeiro-branco", name: "Brigadeiro Branco", description: "100 unidades", price: "100", img: "" },
-          { id: "bicho-de-pe", name: "Bicho de pé", description: "100 unidades", price: "90", img: "" },
-          { id: "ninho-com-nutella", name: "Ninho c/ Nutella", description: "100 unidades", price: "102", img: "" },
+          { id: "brigadeiro", name: "Brigadeiro", description: "100 unidades", price: "100", img: "" },
+          { id: "beijinho", name: "Beijinho", description: "100 unidades", price: "100", img: "" },
+          { id: "brigadeiro-branco", name: "Brigadeiro Branco", description: "100 unidades", price: "115", img: "" },
+          { id: "bicho-de-pe", name: "Bicho de pé", description: "100 unidades", price: "100", img: "" },
+          { id: "ninho-com-nutella", name: "Ninho c/ Nutella", description: "100 unidades", price: "125", img: "" },
         ]
       },
       {
