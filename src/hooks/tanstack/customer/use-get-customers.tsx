@@ -3,16 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 
 type UseGetCustomersProps = {
   organizationId: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
 };
 
-export function useGetCustomers({ organizationId, search, page = 1, pageSize = 20 }: UseGetCustomersProps) {
+export function useGetCustomers({ organizationId }: UseGetCustomersProps) {
   return useQuery({
-    queryKey: ["customers", organizationId, search, page, pageSize],
-    queryFn: async () => getCustomers({ organizationId, search, page, pageSize }),
+    queryKey: ["customers", organizationId],
+    queryFn: async () => getCustomers({ organizationId }),
     enabled: !!organizationId,
-    placeholderData: (prev) => prev,
   });
 }

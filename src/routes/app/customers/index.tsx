@@ -9,49 +9,39 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
-import { useState } from "react";
-import { useQueryState, parseAsInteger } from "nuqs";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useMemo, useState } from "react";
+import { normalize } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/customers/")({
   component: CustomersPage,
 });
 
-const PAGE_SIZE = 20;
-
 function CustomersPage() {
   const { organization } = useAuth();
   const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 400);
-  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    isFetching,
-  } = useGetCustomers({
+  const { data, isLoading, isError, error } = useGetCustomers({
     organizationId: organization!.id,
-    search: debouncedSearch || undefined,
-    page,
-    pageSize: PAGE_SIZE,
   });
 
-  const customers = data?.customers ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const allCustomers = data?.customers ?? [];
+  const total = allCustomers.length;
+
+  const customers = useMemo(() => {
+    const search = normalize(searchInput.trim());
+    if (!search) return allCustomers;
+    return allCustomers.filter((customer) =>
+      [customer.name, customer.phone, customer.address].some((field) =>
+        field && normalize(field).includes(search)
+      )
+    );
+  }, [allCustomers, searchInput]);
 
   const { mutateAsync: createCustomer, isPending: isCreatingCustomer } = useCreateCustomer();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  function handleSearchChange(value: string) {
-    setSearchInput(value);
-    setPage(1);
-  }
 
   async function onSubmit(values: CustomerFormValues) {
     try {
@@ -86,7 +76,7 @@ function CustomersPage() {
     );
   }
 
-  if (total === 0 && !debouncedSearch) {
+  if (total === 0 && !searchInput) {
     return (
       <EmptyState>
         <EmptyState.Icon>👥</EmptyState.Icon>
@@ -129,22 +119,22 @@ function CustomersPage() {
         <div className="flex gap-2 flex-wrap mb-5">
           <SearchInput
             value={searchInput}
-            onChange={handleSearchChange}
+            onChange={setSearchInput}
             placeholder="Nome, telefone ou endereço"
           />
         </div>
       </header>
 
-      {customers.length === 0 && debouncedSearch && (
+      {customers.length === 0 && searchInput && (
         <EmptyState compact>
           <EmptyState.Icon>🔍</EmptyState.Icon>
           <EmptyState.Title>Nenhum cliente encontrado</EmptyState.Title>
-          <EmptyState.Description>Nenhum resultado para "{debouncedSearch}"</EmptyState.Description>
+          <EmptyState.Description>Nenhum resultado para "{searchInput}"</EmptyState.Description>
         </EmptyState>
       )}
 
       {customers.length > 0 && (
-        <div className={isFetching ? "opacity-60 transition-opacity" : ""}>
+        <div>
           <ItemGroup>
             {customers.map((customer) => (
               <Item
@@ -169,32 +159,6 @@ function CustomersPage() {
               </Item>
             ))}
           </ItemGroup>
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-muted-foreground">
-            Página {page} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       )}
 

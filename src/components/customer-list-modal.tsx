@@ -1,8 +1,7 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useQueryState } from "nuqs";
-import { useDebounce } from "@/hooks/use-debounce";
 import { useGetCustomers } from "@/hooks/tanstack/customer/use-get-customers";
 import { useCreateCustomer } from "@/hooks/tanstack/customer/use-create-customer";
 import { customerFormSchema, type CustomerFormValues } from "@/components/customer-form-modal";
@@ -19,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { normalize } from "@/lib/utils";
 
 type CustomerListContentProps = {
   organizationId: string;
@@ -30,8 +30,6 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
   const [, setCustomerId] = useQueryState("customerId");
   const [, setCustomerName] = useQueryState("customerName");
-  const debouncedSearch = useDebounce(search, 300);
-  const [page, setPage] = useState(1);
   const [tab, setTab] = useState<"list" | "create">("list");
 
   function handleClose() {
@@ -39,31 +37,19 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
     onClose();
   }
 
-  const { data, isLoading, isFetching, isPlaceholderData } = useGetCustomers({
-    organizationId,
-    search: debouncedSearch || undefined,
-    page,
-    pageSize: 20,
-  });
+  const { data, isLoading } = useGetCustomers({ organizationId });
 
-  const [loadedCustomers, setLoadedCustomers] = useState<NonNullable<typeof data>["customers"]>([]);
+  const customers = useMemo(() => {
+    const allCustomers = data?.customers ?? [];
+    const term = normalize(search.trim());
+    if (!term) return allCustomers;
+    return allCustomers.filter((customer) =>
+      [customer.name, customer.phone, customer.address].some((field) =>
+        field && normalize(field).includes(term)
+      )
+    );
+  }, [data, search]);
 
-  useEffect(() => {
-    setPage(1);
-    setLoadedCustomers([]);
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    if (!data || isPlaceholderData) return;
-    setLoadedCustomers(prev => {
-      if (page === 1) return data.customers;
-      const existingIds = new Set(prev.map(c => c.id));
-      return [...prev, ...data.customers.filter(c => !existingIds.has(c.id))];
-    });
-  }, [data, isPlaceholderData, page]);
-
-  const hasMore = loadedCustomers.length < (data?.total ?? 0);
-  const isLoadingMore = isFetching && loadedCustomers.length > 0;
   const { mutateAsync: createCustomer, isPending: isCreating } = useCreateCustomer();
 
   const {
@@ -96,9 +82,9 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
       </TabsList>
       <TabsContent value="list" className="space-y-4">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, telefone ou endereço" />
-        {isLoading || (isFetching && loadedCustomers.length === 0) ? (
+        {isLoading ? (
           <LoadingState label="Carregando clientes..." />
-        ) : loadedCustomers.length === 0 ? (
+        ) : customers.length === 0 ? (
           <EmptyState compact>
             <EmptyState.Icon>🔍</EmptyState.Icon>
             <EmptyState.Title>
@@ -107,7 +93,7 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
           </EmptyState>
         ) : (
           <ItemGroup>
-            {loadedCustomers.map((customer) => (
+            {customers.map((customer) => (
               <Fragment key={customer.id}>
                 <Item size="xs">
                   <ItemContent>
@@ -137,19 +123,6 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
               </Fragment>
             ))}
           </ItemGroup>
-        )}
-        {hasMore && (
-          <div className="py-2 flex justify-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => p + 1)}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? "Carregando..." : "Carregar mais"}
-            </Button>
-          </div>
         )}
       </TabsContent>
 

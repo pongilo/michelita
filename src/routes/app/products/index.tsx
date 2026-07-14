@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { EditIcon, PlusIcon, Trash2Icon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
-import { useQueryState, parseAsInteger } from "nuqs";
-import { useDebounce } from "@/hooks/use-debounce";
+import { normalize } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/products/")({
   component: ProductsPage,
@@ -28,24 +27,22 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 type Product = { id: string; name: string; price: number };
 
-const PAGE_SIZE = 20;
-
 function ProductsPage() {
   const { organization } = useAuth();
   const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 400);
-  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
 
-  const { data, isLoading, isError, error, isFetching } = useGetProducts({
+  const { data, isLoading, isError, error } = useGetProducts({
     organizationId: organization!.id,
-    search: debouncedSearch || undefined,
-    page,
-    pageSize: PAGE_SIZE,
   });
 
-  const products = data?.products ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const allProducts = data?.products ?? [];
+  const total = allProducts.length;
+
+  const products = useMemo(() => {
+    const search = normalize(searchInput.trim());
+    if (!search) return allProducts;
+    return allProducts.filter((product) => normalize(product.name).includes(search));
+  }, [allProducts, searchInput]);
 
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
@@ -59,11 +56,6 @@ function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const isSubmitting = isCreatingProduct || isUpdatingProduct;
-
-  function handleSearchChange(value: string) {
-    setSearchInput(value);
-    setPage(1);
-  }
 
   async function onSubmit(values: ProductFormValues) {
     try {
@@ -125,7 +117,7 @@ function ProductsPage() {
     );
   }
 
-  if (total === 0 && !debouncedSearch) {
+  if (total === 0 && !searchInput) {
     return (
       <>
         <EmptyState>
@@ -166,19 +158,19 @@ function ProductsPage() {
             <PlusIcon />
           </Button>
         </div>
-        <SearchInput value={searchInput} onChange={handleSearchChange} placeholder="Buscar produto" />
+        <SearchInput value={searchInput} onChange={setSearchInput} placeholder="Buscar produto" />
       </header>
 
-      {products.length === 0 && debouncedSearch && (
+      {products.length === 0 && searchInput && (
         <EmptyState compact>
           <EmptyState.Icon>🔍</EmptyState.Icon>
           <EmptyState.Title>Nenhum produto encontrado</EmptyState.Title>
-          <EmptyState.Description>Nenhum resultado para "{debouncedSearch}"</EmptyState.Description>
+          <EmptyState.Description>Nenhum resultado para "{searchInput}"</EmptyState.Description>
         </EmptyState>
       )}
 
       {products.length > 0 && (
-        <div className={isFetching ? "opacity-60 transition-opacity" : ""}>
+        <div>
           <ItemGroup>
             {products.map((product) => (
               <Item key={product.id} variant="outline">
@@ -207,32 +199,6 @@ function ProductsPage() {
               </Item>
             ))}
           </ItemGroup>
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-muted-foreground">
-            Página {page} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       )}
 

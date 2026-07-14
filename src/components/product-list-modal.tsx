@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFieldArray, useFormContext, useForm, Controller } from "react-hook-form";
 import { useQueryState } from "nuqs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { CreateOrderInput } from "@/lib/api/order/create-order";
-import { useDebounce } from "@/hooks/use-debounce";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import {
@@ -24,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { currencyFormatter } from "@/lib/utils/formatter";
+import { normalize } from "@/lib/utils";
 import { MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,8 +45,6 @@ type CustomItemForm = z.infer<typeof customItemSchema>;
 
 export function ProductListContent({ organizationId, deliveryDate, onClose }: ProductListContentProps) {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
-  const [page, setPage] = useState(1);
   const { control, setValue, watch } = useFormContext<CreateOrderInput>();
 
   const { fields: items, append: appendItem, remove: removeItem } = useFieldArray({ control, name: "items" });
@@ -63,31 +61,15 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
     onClose();
   }
 
-  const { data, isLoading, isFetching, isPlaceholderData } = useGetProducts({
-    organizationId,
-    search: debouncedSearch || undefined,
-    page,
-    pageSize: 20,
-  });
+  const { data, isLoading } = useGetProducts({ organizationId });
 
-  const [loadedProducts, setLoadedProducts] = useState<NonNullable<typeof data>["products"]>([]);
+  const loadedProducts = useMemo(() => {
+    const allProducts = data?.products ?? [];
+    const term = normalize(search.trim());
+    if (!term) return allProducts;
+    return allProducts.filter((product) => normalize(product.name).includes(term));
+  }, [data, search]);
 
-  useEffect(() => {
-    setPage(1);
-    setLoadedProducts([]);
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    if (!data || isPlaceholderData) return;
-    setLoadedProducts(prev => {
-      if (page === 1) return data.products;
-      const existingIds = new Set(prev.map(p => p.id));
-      return [...prev, ...data.products.filter(p => !existingIds.has(p.id))];
-    });
-  }, [data, isPlaceholderData, page]);
-
-  const hasMore = loadedProducts.length < (data?.total ?? 0);
-  const isLoadingMore = isFetching && loadedProducts.length > 0;
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
 
   const customForm = useForm<CustomItemForm>({
@@ -146,7 +128,7 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
           placeholder="Buscar produto..."
         />
 
-        {isLoading || (isFetching && loadedProducts.length === 0) ? (
+        {isLoading ? (
           <LoadingState label="Carregando produtos..." />
         ) : loadedProducts.length === 0 ? (
           <EmptyState compact>
@@ -227,19 +209,6 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
               );
             })}
           </ItemGroup>
-        )}
-        {hasMore && (
-          <div className="py-3 flex justify-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => p + 1)}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? "Carregando..." : "Carregar mais"}
-            </Button>
-          </div>
         )}
         <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
           <div className="flex-1 space-y-1">
