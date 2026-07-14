@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { MapPinIcon, MoreVerticalIcon, StickyNoteIcon, User2Icon } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { timeFormatter, currencyFormatter } from "@/lib/utils/formatter";
+import { timeFormatter, currencyFormatter, toExactDatetime } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -153,7 +153,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
         <p className="text-xs uppercase font-medium text-blue-900 flex items-center gap-1.5">
           <span>
             {allDelivered ? "Entregue às " : "Entregar às "}
-            {timeFormatter.format(new Date(group.deliveredAt))}
+            {timeFormatter.format(toExactDatetime(group.deliveredAt))}
           </span>
           <span className="size-1 rounded-full bg-blue-900"></span>
           <span>{currencyFormatter.format(group.order.total)}</span>

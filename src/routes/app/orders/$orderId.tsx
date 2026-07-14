@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useGetOrder } from "@/hooks/tanstack/order/use-get-order";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
-import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, fullDateFormatter, toDateOnly, toExactDatetime } from "@/lib/utils/formatter";
 import { EditIcon, MapPinIcon, PhoneIcon, StickyNoteIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Separator } from "@/components/ui/separator";
@@ -86,7 +86,7 @@ function OrderDetailsPage() {
                 {order.isPaid ? "Pago" : "Pendente"}
               </Badge>
             </div>
-            <p className="text-muted-foreground text-base">{formatFullDate(order.orderedAt)}</p>
+            <p className="text-muted-foreground text-base">{formatFullDate(toExactDatetime(order.orderedAt))}</p>
           </div>
           <OrderAction orderId={orderId} organizationId={organization!.id} onDeleteOrderSuccess={() => navigate({ to: "/app/orders" })}>
             <OrderAction.Trigger />
@@ -169,7 +169,7 @@ function OrderDetailsPage() {
             <div className="space-y-6">
               {Object.entries(
                 order.item.reduce<Record<string, typeof order.item>>((groups, item) => {
-                  const key = new Date(item.deliveredAt).toISOString().slice(0, 10);
+                  const key = toDateOnly(item.deliveredAt);
                   (groups[key] ??= []).push(item);
                   return groups;
                 }, {})
@@ -179,7 +179,7 @@ function OrderDetailsPage() {
                   return (
                     <div key={dateKey} className="space-y-2">
                       <p className="text-xs uppercase font-medium text-blue-900">
-                        {formatFullDate(new Date(dateKey + "T12:00:00"))}
+                        {fullDateFormatter.format(toExactDatetime(items[0].deliveredAt))}
                       </p>
                       {items.map((item) => (
                         <div key={item.id} className="flex items-start gap-3 py-1">

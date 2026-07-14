@@ -9,7 +9,7 @@ import { CustomerFormModal, type CustomerFormValues } from "@/components/custome
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import { currencyFormatter, formatFullDate } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, toExactDatetime } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +155,7 @@ function CustomerDetailsPage() {
                   <Item key={order.id} variant="outline" className="items-start" render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}>
                     <ItemContent>
                       <div className="flex justify-between items-center">
-                        <ItemTitle>{formatFullDate(new Date(order.orderedAt))}</ItemTitle>
+                        <ItemTitle>{formatFullDate(toExactDatetime(order.orderedAt))}</ItemTitle>
                         <div className="flex gap-1 items-center">
                           {currencyFormatter.format(order.itemTotal)}
                           <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>

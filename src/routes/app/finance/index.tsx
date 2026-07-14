@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
-import { currencyFormatter, timeFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, timeFormatter, toExactDatetime } from "@/lib/utils/formatter";
 import { AppTitle } from "@/components/app-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ type PeriodType = "day" | "week" | "month";
 
 const shortDayFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "UTC" });
 const monthFmt = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
-const groupDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeZone: "UTC" });
+const groupDateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" });
 
 const TRANSACTION_TYPE_LABELS = Object.fromEntries(TRANSACTION_TYPES.map((t) => [t.value, t.label]));
 
@@ -389,7 +389,7 @@ function FinancePage() {
                   ).map(([dateKey, group]) => (
                     <div key={dateKey} className="mb-6">
                       <h3 className="mb-2 text-sm font-medium capitalize text-muted-foreground">
-                        {groupDateFormatter.format(new Date(`${dateKey}T00:00:00Z`))}
+                        {groupDateFormatter.format(toExactDatetime(dateKey))}
                       </h3>
                       <ItemGroup>
                         {group.map((transaction) => (
@@ -409,7 +409,7 @@ function FinancePage() {
                                 {TRANSACTION_TYPE_LABELS[transaction.type] ?? transaction.type}
                                 {transaction.category ? ` · ${transaction.category.name}` : ""}
                                 {" · "}
-                                {timeFormatter.format(new Date(transaction.date))}
+                                {timeFormatter.format(toExactDatetime(transaction.date))}
                               </ItemDescription>
                             </ItemContent>
                             <ItemActions>

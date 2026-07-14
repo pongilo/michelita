@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import { CreateOrderInput, CreateOrderOutput, createOrderSchema } from "@/lib/api/order/create-order";
-import { currencyFormatter, formatFullDate, localDatetime, parseDateAsUTC } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, localDatetime, toExactDatetime } from "@/lib/utils/formatter";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
@@ -129,7 +129,7 @@ function OrderFormRoute() {
                         <ItemTitle>{item.description}</ItemTitle>
                         <ItemDescription>{item.quantity} x {currencyFormatter.format((item.unitPrice || 0))} = {currencyFormatter.format(item.quantity * (item.unitPrice || 0))}</ItemDescription>
                         {item.note && <ItemDescription>Observação: {item.note}</ItemDescription>}
-                        {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {item.deliveredAt}</ItemDescription>}
+                        {deliveryDate !== item.deliveredAt && <ItemDescription>Entregar: {formatFullDate(toExactDatetime(item.deliveredAt))}</ItemDescription>}
                       </ItemContent>
                       <ItemActions>
                         <Button
@@ -158,7 +158,7 @@ function OrderFormRoute() {
             <div className="space-y-4">
               <p className="font-heading text-base font-medium">{deliveryDate === orderedAt ? "Entregue" : "Entregar"}</p>
               <p className="text-base text-muted-foreground">
-                {formatFullDate(parseDateAsUTC(deliveryDate))}
+                {formatFullDate(toExactDatetime(deliveryDate))}
               </p>
               <Button
                 type="button"
