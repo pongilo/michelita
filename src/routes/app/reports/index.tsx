@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useGetItemsReport } from "@/hooks/tanstack/order/use-get-items-report";
 import { useGetCustomersRanking } from "@/hooks/tanstack/customer/use-get-customers-ranking";
 import { LoadingState } from "@/components/ui/loading-state";
-import { monthFormatter } from "@/lib/utils/formatter";
+import { monthFormatter, toExactDatetime } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { AppTitle } from "@/components/app-title";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -17,13 +17,13 @@ export const Route = createFileRoute("/app/reports/")({
 
 function getMonthOffset(offset: number) {
   const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth() + 1 + offset;
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1 + offset;
   const normalized = new Date(Date.UTC(year, month - 1, 1));
   return {
     year: normalized.getUTCFullYear(),
     month: normalized.getUTCMonth() + 1,
-    label: monthFormatter.format(normalized),
+    label: monthFormatter.format(toExactDatetime(normalized)),
   };
 }
 

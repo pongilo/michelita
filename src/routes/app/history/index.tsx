@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useGetOrdersOverview } from "@/hooks/tanstack/order/use-get-orders-overview";
 import { LoadingState } from "@/components/ui/loading-state";
-import { currencyFormatter, formatDayLabel, monthFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, formatDayLabel, monthFormatter, toExactDatetime } from "@/lib/utils/formatter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppTitle } from "@/components/app-title";
@@ -48,10 +48,10 @@ function getDayLabel(date: string) {
   const yesterday = new Date(Date.UTC(...(today.split("-").map(Number) as [number, number, number])));
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
-  const formatted = formatDayLabel(new Date(date + "T00:00:00Z"));
+  const formatted = formatDayLabel(toExactDatetime(date));
   if (date === today) return `Hoje, ${formatted}`;
   if (date === yesterdayStr) return `Ontem, ${formatted}`;
-  return formatDayLabel(new Date(date + "T00:00:00Z"));
+  return formatted;
 }
 
 function groupOrdersByDay(orders: Order[]): { date: string; orders: Order[] }[] {
@@ -77,7 +77,7 @@ function OrdersPage() {
     endAt: end,
   });
 
-  const monthLabel = monthFormatter.format(start);
+  const monthLabel = monthFormatter.format(toExactDatetime(start));
   const isCurrentMonth = monthOffset === 0;
 
   const orders = (data?.orders ?? []) as Order[];

@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import type { ProductionOrder, ProductionOrderItem } from "./get-production-orders";
 
 const schema = z.object({
   organizationId: z.uuid(),
@@ -11,8 +10,26 @@ const schema = z.object({
 
 export type GetProductionOrdersRangeProps = z.infer<typeof schema>;
 
-export type FlatProductionItem = ProductionOrderItem & {
-  order: Pick<ProductionOrder, "id" | "isPaid" | "orderedAt" | "note" | "customer">;
+export type FlatProductionItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  deliveredAt: Date;
+  isDelivered: boolean;
+  note: string | null;
+  order: {
+    id: string;
+    isPaid: boolean;
+    orderedAt: Date;
+    note: string | null;
+    customer: {
+      id: string;
+      name: string;
+      phone: string | null;
+    } | null;
+  };
 };
 
 const getProductionOrdersRangeServerFn = createServerFn({ method: "POST" })
