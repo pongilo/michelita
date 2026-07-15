@@ -3,15 +3,34 @@ import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { formatDayLabel, toExactDatetime } from "@/lib/utils/formatter";
+import { toExactDatetime, formatFullDayLabel } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { OrderItem } from "@/components/order-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppTitle } from "@/components/app-title";
 
-function getDayPeriod(base: Date, offset: number) {
-  const date = new Date(Date.UTC(base.getFullYear(), base.getMonth(), base.getDate() + offset));
+function normalizeDate(date: Date) {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
+function addDaysUTC(date: Date, days: number) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
+}
+
+function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+// Builds the Sun-Sat week (as YYYY-MM-DD keys) containing `today`, shifted by `weekOffset` weeks.
+function getWeekRange(today: Date, weekOffset: number) {
+  const anchor = addDaysUTC(normalizeDate(today), weekOffset * 7);
+  const weekStart = addDaysUTC(anchor, -anchor.getUTCDay());
+  const dateKeys = Array.from({ length: 7 }, (_, i) => toDateKey(addDaysUTC(weekStart, i)));
+  return {
+    dateKeys,
+    startDate: dateKeys[0],
+    endDate: toDateKey(addDaysUTC(weekStart, 7)),
+  };
 }
 
 export const Route = createFileRoute("/app/orders/")({
@@ -20,52 +39,56 @@ export const Route = createFileRoute("/app/orders/")({
 
 function OrderPage() {
   const { organization } = useAuth();
-  const [dayOffset, setDayOffset] = useState(0);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   // "today" is only ever set on the client, so the reference date always reflects
   // the browser's local date instead of the server's clock/timezone during SSR.
   const [today, setToday] = useState<Date | null>(null);
 
   useEffect(() => {
-    setToday(new Date());
+    const now = new Date();
+    setToday(now);
+    setSelectedDayIndex(now.getDay());
   }, []);
 
-  const referenceDate = today ? getDayPeriod(today, dayOffset) : null;
+  const { dateKeys: weekDateKeys, startDate, endDate } = today
+    ? getWeekRange(today, weekOffset)
+    : { dateKeys: [] as string[], startDate: "", endDate: "" };
+
+  const referenceDate = selectedDayIndex !== null ? weekDateKeys[selectedDayIndex] ?? null : null;
 
   const { data, isLoading, isError, error } = useListOrders({
     organizationId: organization!.id,
-    referenceDate: referenceDate ?? "",
-    enabled: !!referenceDate,
+    startDate,
+    endDate,
+    enabled: !!startDate && !!endDate,
   });
 
-  const inProgressGroups = data?.groups.filter((g) => !g.items.every((i) => i.isDelivered)) ?? [];
-  const finishedGroups = data?.groups.filter((g) => g.items.every((i) => i.isDelivered)) ?? [];
+  const dayGroups = data?.days.find((d) => d.date === referenceDate)?.groups ?? [];
+  const inProgressGroups = dayGroups.filter((g) => !g.items.every((i) => i.isDelivered));
+  const finishedGroups = dayGroups.filter((g) => g.items.every((i) => i.isDelivered));
+
+  const goToAdjacentDay = (delta: number) => {
+    setSelectedDayIndex((prevIndex) => {
+      if (prevIndex === null) return prevIndex;
+      const newIndex = prevIndex + delta;
+      if (newIndex < 0) {
+        setWeekOffset((w) => w - 1);
+        return newIndex + 7;
+      }
+      if (newIndex > 6) {
+        setWeekOffset((w) => w + 1);
+        return newIndex - 7;
+      }
+      return newIndex;
+    });
+  };
 
   return (
     <main className="bg-muted min-h-screen">
       <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
-        <header className="space-y-4 px-5">
+        <header className="px-5">
           <AppTitle>Agenda de pedidos</AppTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setDayOffset((o) => o - 1)}
-              aria-label="Dia anterior"
-              variant="ghost"
-              size="icon"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="text-sm font-medium capitalize text-center text-nowrap">
-              {referenceDate && formatDayLabel(toExactDatetime(referenceDate))}
-            </span>
-            <Button
-              onClick={() => setDayOffset((o) => o + 1)}
-              aria-label="Próximo dia"
-              variant="ghost"
-              size="icon"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
         </header>
 
         {(isLoading || !referenceDate) && (
@@ -80,6 +103,29 @@ function OrderPage() {
 
         {data && (
           <Tabs defaultValue="inProgress" className="w-full">
+            {referenceDate && (
+              <div className="flex items-center gap-1 px-5">
+                <Button
+                  onClick={() => goToAdjacentDay(-1)}
+                  aria-label="Dia anterior"
+                  variant="ghost"
+                  size="icon-sm"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <h2 className="text-sm font-medium capitalize text-muted-foreground">
+                  {formatFullDayLabel(toExactDatetime(referenceDate))}
+                </h2>
+                <Button
+                  onClick={() => goToAdjacentDay(1)}
+                  aria-label="Próximo dia"
+                  variant="ghost"
+                  size="icon-sm"
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            )}
             <TabsList className="px-5">
               <TabsTrigger value="inProgress">
                 Em andamento

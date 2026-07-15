@@ -4,32 +4,17 @@ import { prisma } from "@/lib/prisma";
 
 const listOrdersSchema = z.object({
   organizationId: z.uuid(),
-  referenceDate: z.string().optional(),
+  startDate: z.string(),
+  endDate: z.string(),
 });
 
 export type ListOrdersProps = z.infer<typeof listOrdersSchema>;
 
-function parseReferenceDate(value: string | undefined) {
-  if (!value) {
-    return new Date();
-  }
-
-  const parsed = new Date(`${value}T00:00:00Z`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error("Data de referencia invalida.");
-  }
-
-  return parsed;
-}
-
 const listOrdersServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => listOrdersSchema.parse(input))
   .handler(async ({ data }) => {
-    const start = parseReferenceDate(data.referenceDate);
-    start.setUTCHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setUTCDate(end.getUTCDate() + 1);
+    const start = new Date(`${data.startDate}T00:00:00Z`);
+    const end = new Date(`${data.endDate}T00:00:00Z`);
 
     const items = await prisma.orderItem.findMany({
       where: {
@@ -69,8 +54,12 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
       items: OrderGroupItem[];
     };
 
-    const groupMap = new Map<string, OrderGroup>();
+    const dayMap = new Map<string, Map<string, OrderGroup>>();
     for (const item of items) {
+      const dayKey = item.deliveredAt.toISOString().slice(0, 10);
+      const groupMap = dayMap.get(dayKey) ?? new Map<string, OrderGroup>();
+      dayMap.set(dayKey, groupMap);
+
       const key = `${item.order.id}_${item.deliveredAt?.toISOString() ?? "sem-data"}`;
       if (!groupMap.has(key)) {
         groupMap.set(key, {
@@ -95,13 +84,12 @@ const listOrdersServerFn = createServerFn({ method: "POST" })
       });
     }
 
-    const groups = Array.from(groupMap.values());
+    const days = Array.from(dayMap.entries()).map(([date, groupMap]) => ({
+      date,
+      groups: Array.from(groupMap.values()),
+    }));
 
-    return {
-      referenceDate: start.toISOString(),
-      itemCount: items.length,
-      groups,
-    };
+    return { days };
   });
 
 export async function listOrders(data: ListOrdersProps) {

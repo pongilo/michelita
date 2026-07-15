@@ -22,12 +22,32 @@ export const shortDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
 });
 
+export const weekdayShortFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "short",
+});
+
+export const weekdayNarrowFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "narrow",
+});
+
 export const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
 });
 
 export function formatDayLabel(date: Date) {
   const formatted = dayLabelFormatter.format(date);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+export const fullDayLabelFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
+export function formatFullDayLabel(date: Date) {
+  const formatted = fullDayLabelFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 

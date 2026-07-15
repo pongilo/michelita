@@ -3,15 +3,16 @@ import { listOrders } from "@/lib/api/order/list-orders";
 
 type UseListOrdersProps = {
   organizationId: string;
-  referenceDate: string;
+  startDate: string;
+  endDate: string;
   enabled?: boolean;
 };
 
-export function useListOrders({ organizationId, referenceDate, enabled = true }: UseListOrdersProps) {
+export function useListOrders({ organizationId, startDate, endDate, enabled = true }: UseListOrdersProps) {
   return useQuery({
-    queryKey: ["orders", organizationId, "daily", referenceDate],
-    queryFn: async () => listOrders({ organizationId, referenceDate }),
-    enabled: enabled && !!organizationId && !!referenceDate,
+    queryKey: ["orders", organizationId, "range", startDate, endDate],
+    queryFn: async () => listOrders({ organizationId, startDate, endDate }),
+    enabled: enabled && !!organizationId && !!startDate && !!endDate,
     refetchInterval: 60_000,
   });
 }

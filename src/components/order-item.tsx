@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
 
-type Group = NonNullable<ReturnType<typeof useListOrders>["data"]>["groups"][number];
+type Group = NonNullable<ReturnType<typeof useListOrders>["data"]>["days"][number]["groups"][number];
 
 export function OrderItem({ group, organizationId }: { group: Group; organizationId: string }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
