@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { formatDayLabel } from "@/lib/utils/formatter";
+import { formatDayLabel, toExactDatetime } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { OrderItem } from "@/components/order-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppTitle } from "@/components/app-title";
 
-function getDayPeriod(offset: number) {
-  const now = new Date();
-  const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset));
+function getDayPeriod(base: Date, offset: number) {
+  const date = new Date(Date.UTC(base.getFullYear(), base.getMonth(), base.getDate() + offset));
   return date.toISOString().slice(0, 10);
 }
 
@@ -22,11 +21,20 @@ export const Route = createFileRoute("/app/orders/")({
 function OrderPage() {
   const { organization } = useAuth();
   const [dayOffset, setDayOffset] = useState(0);
-  const referenceDate = getDayPeriod(dayOffset);
+  // "today" is only ever set on the client, so the reference date always reflects
+  // the browser's local date instead of the server's clock/timezone during SSR.
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
+
+  const referenceDate = today ? getDayPeriod(today, dayOffset) : null;
 
   const { data, isLoading, isError, error } = useListOrders({
     organizationId: organization!.id,
-    referenceDate,
+    referenceDate: referenceDate ?? "",
+    enabled: !!referenceDate,
   });
 
   const inProgressGroups = data?.groups.filter((g) => !g.items.every((i) => i.isDelivered)) ?? [];
@@ -47,7 +55,7 @@ function OrderPage() {
               <ChevronLeft className="size-4" />
             </Button>
             <span className="text-sm font-medium capitalize text-center text-nowrap">
-              {formatDayLabel(new Date(referenceDate + "T00:00:00Z"))}
+              {referenceDate && formatDayLabel(toExactDatetime(referenceDate))}
             </span>
             <Button
               onClick={() => setDayOffset((o) => o + 1)}
@@ -60,7 +68,7 @@ function OrderPage() {
           </div>
         </header>
 
-        {isLoading && (
+        {(isLoading || !referenceDate) && (
           <div className="p-5 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="animate-spin size-4 rounded-full border-2 border-current border-t-transparent" />
             Carregando pedidos...
