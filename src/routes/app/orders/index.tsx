@@ -1,13 +1,62 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CopyIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { toExactDatetime, formatFullDayLabel } from "@/lib/utils/formatter";
+import { toExactDatetime, formatFullDayLabel, timeFormatter, currencyFormatter } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import { OrderItem } from "@/components/order-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppTitle } from "@/components/app-title";
+
+type DayGroups = NonNullable<ReturnType<typeof useListOrders>["data"]>["days"][number]["groups"];
+
+// Builds a WhatsApp-friendly (asterisk/underscore markdown) summary of a day's deliveries.
+function buildDeliveriesText(referenceDate: string, groups: DayGroups) {
+  const header = `*Agenda de pedidos*\n_${formatFullDayLabel(toExactDatetime(referenceDate))}_`;
+
+  if (groups.length === 0) return header;
+
+  const body = groups
+    .map((group) => {
+      const time = timeFormatter.format(toExactDatetime(group.deliveredAt));
+      const status = group.order.isPaid ? "Pago" : "Pendente";
+      const deliveredTag = group.items.every((i) => i.isDelivered) ? " (Entregue)" : "";
+      const lines = [
+        `*${time} • ${currencyFormatter.format(group.order.total)} (${status})${deliveredTag}*`,
+      ];
+
+      if (group.order.note) {
+        lines.push(`Obs.: ${group.order.note}`);
+      }
+
+      for (const item of group.items) {
+        const qty = item.quantity > 1 ? `${item.quantity}x ` : "";
+        lines.push(`- ${qty}${item.description}`);
+        if (item.note) {
+          lines.push(`  Obs.: ${item.note}`);
+        }
+      }
+
+      if (group.order.customer?.name) {
+        lines.push(`*Cliente:* ${group.order.customer.name}`);
+      }
+      
+      if (group.order.customer?.note) {
+        lines.push(`_Obs.: ${group.order.customer.note}_`);
+      }
+
+      if (group.order.customer?.address) {
+        lines.push(`*Endereço:* ${group.order.customer.address}`);
+      }
+
+      return lines.join("\n");
+    })
+    .join("\n\n");
+
+  return `${header}\n\n${body}`;
+}
 
 function normalizeDate(date: Date) {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -68,6 +117,12 @@ function OrderPage() {
   const inProgressGroups = dayGroups.filter((g) => !g.items.every((i) => i.isDelivered));
   const finishedGroups = dayGroups.filter((g) => g.items.every((i) => i.isDelivered));
 
+  const handleCopyDeliveries = () => {
+    if (!referenceDate) return;
+    navigator.clipboard.writeText(buildDeliveriesText(referenceDate, dayGroups));
+    toast.success("Entregas copiadas.");
+  };
+
   const goToAdjacentDay = (delta: number) => {
     setSelectedDayIndex((prevIndex) => {
       if (prevIndex === null) return prevIndex;
@@ -87,8 +142,17 @@ function OrderPage() {
   return (
     <main className="bg-muted min-h-screen">
       <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
-        <header className="px-5">
-          <AppTitle>Agenda de pedidos</AppTitle>
+        <header className="px-5 flex items-center justify-between gap-2">
+          <AppTitle>Agenda</AppTitle>
+          <Button
+            onClick={handleCopyDeliveries}
+            variant="outline"
+            size="sm"
+            disabled={!referenceDate || dayGroups.length === 0}
+          >
+            <CopyIcon />
+            Copiar
+          </Button>
         </header>
 
         {(isLoading || !referenceDate) && (
