@@ -22,7 +22,6 @@ import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
 import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
-import { Route as AppFinanceIndexRouteImport } from './routes/app/finance/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
@@ -92,11 +91,6 @@ const AppHistoryIndexRoute = AppHistoryIndexRouteImport.update({
   path: '/history/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppFinanceIndexRoute = AppFinanceIndexRouteImport.update({
-  id: '/finance/',
-  path: '/finance/',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -136,7 +130,6 @@ export interface FileRoutesByFullPath {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/finance/': typeof AppFinanceIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
@@ -155,7 +148,6 @@ export interface FileRoutesByTo {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers': typeof AppCustomersIndexRoute
-  '/app/finance': typeof AppFinanceIndexRoute
   '/app/history': typeof AppHistoryIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
@@ -177,7 +169,6 @@ export interface FileRoutesById {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/finance/': typeof AppFinanceIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
@@ -198,7 +189,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
-    | '/app/finance/'
     | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
@@ -217,7 +207,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers'
-    | '/app/finance'
     | '/app/history'
     | '/app/orders'
     | '/app/products'
@@ -238,7 +227,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/customers/'
-    | '/app/finance/'
     | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
@@ -344,13 +332,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHistoryIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/finance/': {
-      id: '/app/finance/'
-      path: '/finance'
-      fullPath: '/app/finance/'
-      preLoaderRoute: typeof AppFinanceIndexRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/customers/': {
       id: '/app/customers/'
       path: '/customers'
@@ -426,7 +407,6 @@ interface AppRouteRouteChildren {
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
-  AppFinanceIndexRoute: typeof AppFinanceIndexRoute
   AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
@@ -440,7 +420,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
-  AppFinanceIndexRoute: AppFinanceIndexRoute,
   AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,

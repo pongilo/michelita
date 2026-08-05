@@ -22,12 +22,10 @@ model Organization {
   ownerId   String   @unique @map("owner_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  owner               User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  customer            Customer[]
-  order               Order[]
-  product             Product[]
-  transactionCategory TransactionCategory[]
-  transaction         Transaction[]
+  owner    User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customer Customer[]
+  order    Order[]
+  product  Product[]
 
   @@map("organization")
   @@schema("public")
@@ -95,42 +93,5 @@ model Product {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("product")
-  @@schema("public")
-}
-
-enum TransactionType {
-  PIX
-  CREDIT
-  DEBIT
-  CASH
-
-  @@schema("public")
-}
-
-model TransactionCategory {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  name           String
-
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction  Transaction[]
-
-  @@map("transaction_category")
-  @@schema("public")
-}
-
-model Transaction {
-  id             String          @id @default(uuid()) @db.Uuid
-  organizationId String          @map("organization_id") @db.Uuid
-  categoryId     String?         @map("category_id") @db.Uuid
-  description    String
-  amount         Decimal         @db.Decimal(10, 2)
-  type           TransactionType
-  date           DateTime        @default(now()) @db.Timestamptz
-
-  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  category     TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  @@map("transaction")
   @@schema("public")
 }
