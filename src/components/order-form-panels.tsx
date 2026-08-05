@@ -20,7 +20,7 @@ type OrderFormPanelsProps = {
 function MobilePanel({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
   return (
     <main className="flex flex-col">
-      <div className="flex-none flex items-center gap-1 sticky top-0 bg-white z-20 p-3 border-b">
+      <div className="flex-none flex items-center gap-1 sticky top-0 bg-white z-20 px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] border-b">
         <Button type="button" variant="ghost" size="icon-lg" onClick={onBack}>
           <ChevronLeft />
         </Button>

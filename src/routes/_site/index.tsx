@@ -16,7 +16,7 @@ function HomePage() {
 
   return (
     <>
-      <nav className="flex gap-1.5 z-20 overflow-x-auto p-5 sticky top-0 max-w-7xl mx-auto bg-michelita-purple">
+      <nav className="flex gap-1.5 z-20 overflow-x-auto px-5 pb-5 sticky top-0 max-w-7xl mx-auto bg-michelita-purple pt-[calc(1.25rem+env(safe-area-inset-top))]">
         {menu.map(({ name, id }) => (
           <a
             key={id}
