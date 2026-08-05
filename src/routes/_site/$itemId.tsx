@@ -15,7 +15,7 @@ function ItemDetailPage() {
 
   return (
     <>
-      <div className="flex items-center px-3 gap-3 sticky top-0 bg-michelita-purple z-10 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+      <div className="flex items-center px-3 pt-3 gap-3 sticky top-0 bg-michelita-purple z-10">
         <Link
           to="/"
           className="flex items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 active:bg-white/20 duration-150 text-michelita-yellow font-body font-semibold text-sm"

@@ -141,7 +141,7 @@ function OrderPage() {
 
   return (
     <main className="bg-muted min-h-screen">
-      <div className="mx-auto w-full max-w-6xl space-y-4 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))]">
+      <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
         <header className="px-5 flex items-center justify-between gap-2">
           <AppTitle>Agenda</AppTitle>
           <Button

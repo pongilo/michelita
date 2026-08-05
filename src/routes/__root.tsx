@@ -26,7 +26,7 @@ export const Route = createRootRoute({
       },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+        content: 'width=device-width, initial-scale=1',
       },
       { title: 'Michelita Confeitaria | Bolos Artesanais em Americana' },
       { name: 'description', content: 'Confira nossos sabores e encomende bolos caseiros, vulcão, de pote e personalizados para aniversários, festas e ocasiões especiais.' },
