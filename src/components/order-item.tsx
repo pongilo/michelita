@@ -1,5 +1,4 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { MapPinIcon, MoreVerticalIcon, StickyNoteIcon, User2Icon } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { timeFormatter, currencyFormatter, toExactDatetime } from "@/lib/utils/formatter";
@@ -11,23 +10,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { useBulkUpdateOrderItemsDelivery } from "@/hooks/tanstack/order/use-bulk-update-order-items-delivery";
 import { useUpdateOrder } from "@/hooks/tanstack/order/use-update-order";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Separator } from "@/components/ui/separator";
 
 type Group = NonNullable<ReturnType<typeof useListOrders>["data"]>["days"][number]["groups"][number];
 
 export function OrderItem({ group, organizationId }: { group: Group; organizationId: string }) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -43,7 +33,6 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
         onSuccess: () => {
           toast.success("Itens marcados como entregues.");
           queryClient.invalidateQueries({ queryKey: ["orders", organizationId] });
-          setDrawerOpen(false);
         },
         onError: (err: unknown) => toast.error(err instanceof Error ? err.message : "Erro ao marcar como entregue."),
       },
@@ -56,7 +45,6 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
       {
         onSuccess: () => {
           toast.success("Pedido marcado como pago.");
-          setDrawerOpen(false);
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao atualizar pedido."),
       },
@@ -76,77 +64,36 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
     if (!group.order.customer?.address) return;
     navigator.clipboard.writeText(group.order.customer.address);
     toast.success("Endereço copiado.");
-    setDrawerOpen(false);
   };
 
   return (
     <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
       <div className="absolute top-3 right-3">
-        {isMobile ? (
-          <Drawer direction="bottom" open={drawerOpen} onOpenChange={setDrawerOpen}>
-            <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <MoreVerticalIcon />
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <div className="py-4 space-y-2">
-                {!allDelivered && (
-                  <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
-                    Marcar como entregue
-                  </Button>
-                )}
-                {!group.order.isPaid && (
-                  <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleMarkPaid} disabled={isMarkingPaid}>
-                    Marcar como pago
-                  </Button>
-                )}
-                {(!allDelivered || !group.order.isPaid) && (
-                  <div className="px-4 py-2">
-                    <Separator />
-                  </div>
-                )}
-                <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewOrder}>
-                  Ver pedido
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleViewCustomer}>
-                  Ver cliente
-                </Button>
-                {group.order.customer?.address && (
-                  <Button variant="ghost" className="w-full justify-start" size="lg" onClick={handleCopyAddress}>
-                    Copiar endereço
-                  </Button>
-                )}
-              </div>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-              <MoreVerticalIcon />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {!allDelivered && (
-                <DropdownMenuItem onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
-                  Marcar como entregue
-                </DropdownMenuItem>
-              )}
-              {!group.order.isPaid && (
-                <DropdownMenuItem onClick={handleMarkPaid} disabled={isMarkingPaid}>
-                  Marcar como pago
-                </DropdownMenuItem>
-              )}
-              {(!allDelivered || !group.order.isPaid) && (
-                <DropdownMenuSeparator />
-              )}
-              <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleViewCustomer}>Ver cliente</DropdownMenuItem>
-              {group.order.customer?.address && (
-                <DropdownMenuItem onClick={handleCopyAddress}>Copiar endereço</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+            <MoreVerticalIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {!allDelivered && (
+              <DropdownMenuItem onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
+                Marcar como entregue
+              </DropdownMenuItem>
+            )}
+            {!group.order.isPaid && (
+              <DropdownMenuItem onClick={handleMarkPaid} disabled={isMarkingPaid}>
+                Marcar como pago
+              </DropdownMenuItem>
+            )}
+            {(!allDelivered || !group.order.isPaid) && (
+              <DropdownMenuSeparator />
+            )}
+            <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleViewCustomer}>Ver cliente</DropdownMenuItem>
+            {group.order.customer?.address && (
+              <DropdownMenuItem onClick={handleCopyAddress}>Copiar endereço</DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="space-y-0.5">
