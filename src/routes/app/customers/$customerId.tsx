@@ -56,6 +56,17 @@ function CustomerDetailsPage() {
     if (selectedMonth === ALL_MONTHS) return data.orders;
     return data.orders.filter((order) => monthKey(toExactDatetime(order.orderedAt)) === selectedMonth);
   }, [data, selectedMonth]);
+
+  const filteredMetrics = useMemo(() => {
+    const totalInvoiced = filteredOrders.reduce((sum, order) => sum + order.itemTotal, 0);
+    const totalPaid = filteredOrders.filter((o) => o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
+    const totalPending = filteredOrders.filter((o) => !o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
+    return {
+      totalInvoiced: Number(totalInvoiced.toFixed(2)),
+      totalPaid: Number(totalPaid.toFixed(2)),
+      totalPending: Number(totalPending.toFixed(2)),
+    };
+  }, [filteredOrders]);
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization!.id,
   });
@@ -157,16 +168,16 @@ function CustomerDetailsPage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-2xl border p-4 space-y-1">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total faturado</p>
-              <p className="font-heading text-lg font-semibold">{currencyFormatter.format(data.metrics.totalInvoiced)}</p>
+              <p className="font-heading text-lg font-semibold">{currencyFormatter.format(filteredMetrics.totalInvoiced)}</p>
             </div>
             <div className="rounded-2xl border p-4 space-y-1">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total pago</p>
-              <p className="font-heading text-lg font-semibold text-green-700">{currencyFormatter.format(data.metrics.totalPaid)}</p>
+              <p className="font-heading text-lg font-semibold text-green-700">{currencyFormatter.format(filteredMetrics.totalPaid)}</p>
             </div>
-            <div className={`rounded-2xl border p-4 space-y-1 ${data.metrics.totalPending > 0 ? "border-amber-300 bg-amber-400/10" : ""}`}>
+            <div className={`rounded-2xl border p-4 space-y-1 ${filteredMetrics.totalPending > 0 ? "border-amber-300 bg-amber-400/10" : ""}`}>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">A receber</p>
-              <p className={`font-heading text-lg font-semibold ${data.metrics.totalPending > 0 ? "text-amber-700" : ""}`}>
-                {currencyFormatter.format(data.metrics.totalPending)}
+              <p className={`font-heading text-lg font-semibold ${filteredMetrics.totalPending > 0 ? "text-amber-700" : ""}`}>
+                {currencyFormatter.format(filteredMetrics.totalPending)}
               </p>
             </div>
           </div>
