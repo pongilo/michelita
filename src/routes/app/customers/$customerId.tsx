@@ -31,7 +31,7 @@ function CustomerDetailsPage() {
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(new Date()));
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
     organizationId: organization!.id,
@@ -39,9 +39,10 @@ function CustomerDetailsPage() {
   });
 
   const monthOptions = useMemo(() => {
-    if (!data) return [];
     const labels = new Map<string, string>();
-    for (const order of data.orders) {
+    const now = new Date();
+    labels.set(monthKey(now), formatMonthYearLabel(now));
+    for (const order of data?.orders ?? []) {
       const date = toExactDatetime(order.orderedAt);
       const key = monthKey(date);
       if (!labels.has(key)) labels.set(key, formatMonthYearLabel(date));
@@ -186,7 +187,7 @@ function CustomerDetailsPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-heading text-base font-medium">Pedidos ({filteredOrders.length})</h2>
-              {monthOptions.length > 0 && (
+              {data.orders.length > 0 && (
                 <Select value={selectedMonth} onValueChange={(v) => v && setSelectedMonth(v)}>
                   <SelectTrigger size="sm">
                     <SelectValue>
