@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { MapPinIcon, MoreVerticalIcon, StickyNoteIcon, User2Icon } from "lucide-react";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
-import { timeFormatter, currencyFormatter, toExactDatetime } from "@/lib/utils/formatter";
+import { timeFormatter, currencyFormatter, toExactDatetime, formatWeekdayDateTime } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,47 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 type Group = NonNullable<ReturnType<typeof useListOrders>["data"]>["days"][number]["groups"][number];
+
+// Builds a WhatsApp-friendly (asterisk/underscore markdown) summary of a single order.
+function buildOrderSummaryText(group: Group) {
+  const lines = [
+    '*PEDIDO*',
+    `*Para:* ${formatWeekdayDateTime(toExactDatetime(group.deliveredAt))}`,
+  ];
+
+  if (group.order.customer?.address) {
+    lines.push(`*Endereço*: ${group.order.customer.address}`);
+  }
+
+  if (group.order.note) {
+    lines.push(`_Obs.: ${group.order.note}_`);
+  }
+
+  lines.push("");
+
+  for (const item of group.items) {
+    const qty = item.quantity > 1 ? `*${item.quantity}x* ` : "";
+    lines.push(`- ${qty}${item.description}: ${currencyFormatter.format(item.total)}`);
+    if (item.note) {
+      lines.push(`  _Obs.: ${item.note}_`);
+    }
+  }
+
+  if (group.order.shippingFee || group.order.discount) {
+    lines.push("");
+    if (group.order.shippingFee) {
+      lines.push(`+ Taxa de entrega: ${currencyFormatter.format(group.order.shippingFee)}`);
+    }
+    if (group.order.discount) {
+      lines.push(`- Desconto: ${currencyFormatter.format(group.order.discount)}`);
+    }
+  } else {
+    lines.push("");
+  }
+  lines.push(`*Total:* ${currencyFormatter.format(group.order.total)}`);
+
+  return lines.join("\n");
+}
 
 export function OrderItem({ group, organizationId }: { group: Group; organizationId: string }) {
   const navigate = useNavigate();
@@ -66,6 +107,11 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
     toast.success("Endereço copiado.");
   };
 
+  const handleCopyOrderSummary = () => {
+    navigator.clipboard.writeText(buildOrderSummaryText(group));
+    toast.success("Resumo do pedido copiado.");
+  };
+
   return (
     <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
       <div className="absolute top-3 right-3">
@@ -92,6 +138,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
             {group.order.customer?.address && (
               <DropdownMenuItem onClick={handleCopyAddress}>Copiar endereço</DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={handleCopyOrderSummary}>Copiar resumo do pedido</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -75,6 +75,19 @@ export function formatFullDate(date: Date) {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+export const weekdayLongFormatter = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+});
+
+// e.g. "Segunda-feira, 10/08 às 14:32"
+export function formatWeekdayDateTime(date: Date) {
+  const weekday = weekdayLongFormatter.format(date);
+  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${capitalized}, ${day}/${month} às ${timeFormatter.format(date)}`;
+}
+
 // Takes the raw date and time apart from a stored datetime (Date or ISO string) and
 // rebuilds a Date from those exact digits, dropping any "Z"/offset — so formatting it
 // with a plain (non-UTC) formatter shows precisely what's in the database, with no
