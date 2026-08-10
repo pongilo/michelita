@@ -1,19 +1,26 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Item, ItemContent, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import { currencyFormatter, formatFullDate, toExactDatetime } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, formatMonthYearLabel, toExactDatetime } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { AppTitle } from "@/components/app-title";
+
+const ALL_MONTHS = "all";
+
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export const Route = createFileRoute("/app/customers/$customerId")({
   component: CustomerDetailsPage,
@@ -24,11 +31,31 @@ function CustomerDetailsPage() {
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS);
 
   const { data, isLoading, isError, error } = useGetCustomerDetails({
     organizationId: organization!.id,
     customerId,
   });
+
+  const monthOptions = useMemo(() => {
+    if (!data) return [];
+    const labels = new Map<string, string>();
+    for (const order of data.orders) {
+      const date = toExactDatetime(order.orderedAt);
+      const key = monthKey(date);
+      if (!labels.has(key)) labels.set(key, formatMonthYearLabel(date));
+    }
+    return Array.from(labels.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([value, label]) => ({ value, label }));
+  }, [data]);
+
+  const filteredOrders = useMemo(() => {
+    if (!data) return [];
+    if (selectedMonth === ALL_MONTHS) return data.orders;
+    return data.orders.filter((order) => monthKey(toExactDatetime(order.orderedAt)) === selectedMonth);
+  }, [data, selectedMonth]);
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization!.id,
   });
@@ -146,12 +173,35 @@ function CustomerDetailsPage() {
 
           {/* Pedidos */}
           <div className="space-y-2">
-            <h2 className="font-heading text-base font-medium">Pedidos ({data.metrics.totalOrders})</h2>
-            {data.recentOrders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-heading text-base font-medium">Pedidos ({filteredOrders.length})</h2>
+              {monthOptions.length > 0 && (
+                <Select value={selectedMonth} onValueChange={(v) => v && setSelectedMonth(v)}>
+                  <SelectTrigger size="sm">
+                    <SelectValue>
+                      {selectedMonth === ALL_MONTHS
+                        ? "Todos os meses"
+                        : monthOptions.find((o) => o.value === selectedMonth)?.label}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_MONTHS}>Todos os meses</SelectItem>
+                    {monthOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            {filteredOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {data.orders.length === 0 ? "Este cliente ainda não possui pedidos." : "Nenhum pedido neste período."}
+              </p>
             ) : (
               <div className="space-y-2">
-                {data.recentOrders.map((order) => (
+                {filteredOrders.map((order) => (
                   <Item key={order.id} variant="outline" className="items-start" render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}>
                     <ItemContent>
                       <div className="flex justify-between items-center">

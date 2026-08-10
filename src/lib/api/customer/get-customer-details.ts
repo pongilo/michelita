@@ -91,7 +91,7 @@ const getCustomerDetailsServerFn = createServerFn({ method: "POST" })
         totalPending: Number(totalPending.toFixed(2)),
         lastOrderAt: orderSummaries[0]?.orderedAt ?? null,
       },
-      recentOrders: orderSummaries.slice(0, 15),
+      orders: orderSummaries,
     };
   });
 

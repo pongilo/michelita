@@ -34,6 +34,16 @@ export const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
 });
 
+export const monthYearFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+});
+
+export function formatMonthYearLabel(date: Date) {
+  const formatted = monthYearFormatter.format(date);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
 export function formatDayLabel(date: Date) {
   const formatted = dayLabelFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
