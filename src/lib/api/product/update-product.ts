@@ -6,6 +6,7 @@ const updateProductSchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
+  categoryId: z.uuid().optional(),
 });
 
 export type UpdateProductProps = z.infer<typeof updateProductSchema>;
@@ -18,11 +19,13 @@ const updateProductServerFn = createServerFn({ method: "POST" })
       data: {
         name: data.name,
         price: data.price,
+        categoryId: data.categoryId ?? null,
       },
       select: {
         id: true,
         name: true,
         price: true,
+        categoryId: true,
       },
     });
 

@@ -1,13 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { EditIcon, FolderIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
+import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,13 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-type Product = { id: string; name: string; price: number };
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  categoryId: string | null;
+  category: { id: string; name: string } | null;
+};
 
 function ProductsPage() {
   const { organization } = useAuth();
@@ -34,6 +41,11 @@ function ProductsPage() {
   const { data, isLoading, isError, error } = useGetProducts({
     organizationId: organization!.id,
   });
+
+  const { data: categoriesData } = useGetProductCategories({
+    organizationId: organization!.id,
+  });
+  const categories = categoriesData?.categories ?? [];
 
   const allProducts = data?.products ?? [];
   const total = allProducts.length;
@@ -60,13 +72,19 @@ function ProductsPage() {
   async function onSubmit(values: ProductFormValues) {
     try {
       if (editingProduct) {
-        await updateProduct({ id: editingProduct.id, name: values.name, price: values.price });
+        await updateProduct({
+          id: editingProduct.id,
+          name: values.name,
+          price: values.price,
+          categoryId: values.categoryId,
+        });
         toast.success("Produto atualizado com sucesso.");
       } else {
         await createProduct({
           organizationId: organization!.id,
           name: values.name,
           price: values.price,
+          categoryId: values.categoryId,
         });
         toast.success("Produto criado com sucesso.");
       }
@@ -137,6 +155,7 @@ function ProductsPage() {
           isOpen={isFormOpen}
           mode="create"
           isSubmitting={isSubmitting}
+          categories={categories}
           onClose={handleClose}
           onSubmit={onSubmit}
         />
@@ -154,9 +173,20 @@ function ProductsPage() {
               ({total} {total === 1 ? "produto cadastrado" : "produtos cadastrados"})
             </p>
           </div>
-          <Button size="icon-sm" onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}>
-            <PlusIcon />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link to="/app/products/categories" />}
+            >
+              <FolderIcon />
+              Categorias
+            </Button>
+            <Button size="icon-sm" onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}>
+              <PlusIcon />
+            </Button>
+          </div>
         </div>
         <SearchInput value={searchInput} onChange={setSearchInput} placeholder="Buscar produto" />
       </header>
@@ -176,7 +206,10 @@ function ProductsPage() {
               <Item key={product.id} variant="outline">
                 <ItemContent>
                   <ItemTitle>{product.name}</ItemTitle>
-                  <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                  <ItemDescription>
+                    {currencyFormatter.format(product.price)}
+                    {product.category && ` · ${product.category.name}`}
+                  </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <Button
@@ -206,7 +239,12 @@ function ProductsPage() {
         isOpen={isFormOpen}
         mode={editingProduct ? "edit" : "create"}
         isSubmitting={isSubmitting}
-        initialValues={editingProduct ? { name: editingProduct.name, price: editingProduct.price } : undefined}
+        categories={categories}
+        initialValues={
+          editingProduct
+            ? { name: editingProduct.name, price: editingProduct.price, categoryId: editingProduct.categoryId ?? undefined }
+            : undefined
+        }
         onClose={handleClose}
         onSubmit={onSubmit}
       />

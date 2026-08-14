@@ -23,6 +23,7 @@ import { Route as AppProductsIndexRouteImport } from './routes/app/products/inde
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
 import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
+import { Route as AppProductsCategoriesRouteImport } from './routes/app/products/categories'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppCustomersCustomerIdRouteImport } from './routes/app/customers/$customerId'
@@ -96,6 +97,11 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppProductsCategoriesRoute = AppProductsCategoriesRouteImport.update({
+  id: '/products/categories',
+  path: '/products/categories',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppOrdersFormRoute = AppOrdersFormRouteImport.update({
   id: '/orders/form',
   path: '/orders/form',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
+  '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers/': typeof AppCustomersIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
+  '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers': typeof AppCustomersIndexRoute
   '/app/history': typeof AppHistoryIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
+  '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers/': typeof AppCustomersIndexRoute
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
     | '/app/orders/form'
+    | '/app/products/categories'
     | '/app/customers/'
     | '/app/history/'
     | '/app/orders/'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
     | '/app/orders/form'
+    | '/app/products/categories'
     | '/app/customers'
     | '/app/history'
     | '/app/orders'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
     | '/app/orders/form'
+    | '/app/products/categories'
     | '/app/customers/'
     | '/app/history/'
     | '/app/orders/'
@@ -339,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/products/categories': {
+      id: '/app/products/categories'
+      path: '/products/categories'
+      fullPath: '/app/products/categories'
+      preLoaderRoute: typeof AppProductsCategoriesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/orders/form': {
       id: '/app/orders/form'
       path: '/orders/form'
@@ -406,6 +425,7 @@ interface AppRouteRouteChildren {
   AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
+  AppProductsCategoriesRoute: typeof AppProductsCategoriesRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
   AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
@@ -419,6 +439,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
+  AppProductsCategoriesRoute: AppProductsCategoriesRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
   AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,

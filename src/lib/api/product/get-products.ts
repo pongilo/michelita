@@ -16,11 +16,17 @@ const getProductsServerFn = createServerFn({ method: "POST" })
     const products = await prisma.product.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, price: true },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        categoryId: true,
+        category: { select: { id: true, name: true } },
+      },
     });
 
     return {
-      products: products.map((p: { id: string; name: string; price: { toNumber: () => number } | number }) => ({ ...p, price: Number(p.price) })),
+      products: products.map((p) => ({ ...p, price: Number(p.price) })),
     };
   });
 
