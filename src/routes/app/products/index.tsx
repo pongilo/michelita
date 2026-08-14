@@ -26,12 +26,20 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+const NO_CATEGORY_KEY = "sem-categoria";
+
 type Product = {
   id: string;
   name: string;
   price: number;
   categoryId: string | null;
   category: { id: string; name: string } | null;
+};
+
+type CategoryGroup = {
+  key: string;
+  name: string;
+  products: Product[];
 };
 
 function ProductsPage() {
@@ -50,11 +58,31 @@ function ProductsPage() {
   const allProducts = data?.products ?? [];
   const total = allProducts.length;
 
-  const products = useMemo(() => {
-    const search = normalize(searchInput.trim());
+  const search = normalize(searchInput.trim());
+  const filteredProducts = useMemo(() => {
     if (!search) return allProducts;
     return allProducts.filter((product) => normalize(product.name).includes(search));
-  }, [allProducts, searchInput]);
+  }, [allProducts, search]);
+
+  const groups = useMemo<CategoryGroup[]>(() => {
+    const byCategory = new Map<string, Product[]>();
+    for (const product of filteredProducts) {
+      const key = product.categoryId ?? NO_CATEGORY_KEY;
+      const list = byCategory.get(key) ?? [];
+      list.push(product);
+      byCategory.set(key, list);
+    }
+
+    const result: CategoryGroup[] = categories.map((category) => ({
+      key: category.id,
+      name: category.name,
+      products: byCategory.get(category.id) ?? [],
+    }));
+
+    result.push({ key: NO_CATEGORY_KEY, name: "Sem categoria", products: byCategory.get(NO_CATEGORY_KEY) ?? [] });
+
+    return search ? result.filter((group) => group.products.length > 0) : result;
+  }, [filteredProducts, categories, search]);
 
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
@@ -191,7 +219,7 @@ function ProductsPage() {
         <SearchInput value={searchInput} onChange={setSearchInput} placeholder="Buscar produto" />
       </header>
 
-      {products.length === 0 && searchInput && (
+      {groups.length === 0 && searchInput && (
         <EmptyState compact>
           <EmptyState.Icon>🔍</EmptyState.Icon>
           <EmptyState.Title>Nenhum produto encontrado</EmptyState.Title>
@@ -199,39 +227,49 @@ function ProductsPage() {
         </EmptyState>
       )}
 
-      {products.length > 0 && (
-        <div>
-          <ItemGroup>
-            {products.map((product) => (
-              <Item key={product.id} variant="outline">
-                <ItemContent>
-                  <ItemTitle>{product.name}</ItemTitle>
-                  <ItemDescription>
-                    {currencyFormatter.format(product.price)}
-                    {product.category && ` · ${product.category.name}`}
-                  </ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => handleStartEdit(product)}
-                    disabled={isDeletingProduct}
-                  >
-                    <EditIcon />
-                  </Button>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(product.id, product.name)}
-                    disabled={isDeletingProduct}
-                  >
-                    <Trash2Icon />
-                  </Button>
-                </ItemActions>
-              </Item>
-            ))}
-          </ItemGroup>
+      {groups.length > 0 && (
+        <div className="space-y-5">
+          {groups.map((group) => (
+            <section key={group.key}>
+              <div className="flex items-center justify-between px-1 mb-2">
+                <h3 className="font-heading text-sm text-foreground">{group.name}</h3>
+                <span className="text-xs text-muted-foreground">{group.products.length}</span>
+              </div>
+
+              {group.products.length === 0 ? (
+                <p className="px-1 text-xs text-muted-foreground">Nenhum produto nesta categoria.</p>
+              ) : (
+                <ItemGroup>
+                  {group.products.map((product) => (
+                    <Item key={product.id} variant="outline">
+                      <ItemContent>
+                        <ItemTitle>{product.name}</ItemTitle>
+                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleStartEdit(product)}
+                          disabled={isDeletingProduct}
+                        >
+                          <EditIcon />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(product.id, product.name)}
+                          disabled={isDeletingProduct}
+                        >
+                          <Trash2Icon />
+                        </Button>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              )}
+            </section>
+          ))}
         </div>
       )}
 

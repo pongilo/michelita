@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { ArrowLeftIcon, EditIcon, GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, EditIcon, GripVerticalIcon, PackagePlusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Reorder, useDragControls } from "motion/react";
 import { CategoryFormModal, type CategoryFormValues } from "@/components/category-form-modal";
+import { CategoryProductsModal } from "@/components/category-products-modal";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 import { useCreateProductCategory } from "@/hooks/tanstack/product-category/use-create-product-category";
 import { useUpdateProductCategory } from "@/hooks/tanstack/product-category/use-update-product-category";
@@ -26,6 +27,7 @@ function SortableCategoryItem({
   category,
   onEdit,
   onDelete,
+  onManageProducts,
   onDragStart,
   onDragEnd,
   disabled,
@@ -33,6 +35,7 @@ function SortableCategoryItem({
   category: Category;
   onEdit: () => void;
   onDelete: () => void;
+  onManageProducts: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   disabled: boolean;
@@ -66,6 +69,9 @@ function SortableCategoryItem({
         {category.description && <ItemDescription>{category.description}</ItemDescription>}
       </ItemContent>
       <ItemActions>
+        <Button size="icon-sm" variant="ghost" onClick={onManageProducts} disabled={disabled} aria-label="Adicionar produtos">
+          <PackagePlusIcon />
+        </Button>
         <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={disabled}>
           <EditIcon />
         </Button>
@@ -112,6 +118,7 @@ function CategoriesPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [productsModalCategory, setProductsModalCategory] = useState<Category | null>(null);
 
   const isSubmitting = isCreatingCategory || isUpdatingCategory;
 
@@ -240,6 +247,7 @@ function CategoriesPage() {
                 category={category}
                 onEdit={() => handleStartEdit(category)}
                 onDelete={() => handleDelete(category.id, category.name)}
+                onManageProducts={() => setProductsModalCategory(category)}
                 onDragStart={() => { isDraggingRef.current = true; }}
                 onDragEnd={handleDragEnd}
                 disabled={isDeletingCategory}
@@ -260,6 +268,13 @@ function CategoriesPage() {
         }
         onClose={handleClose}
         onSubmit={onSubmit}
+      />
+
+      <CategoryProductsModal
+        isOpen={productsModalCategory !== null}
+        category={productsModalCategory}
+        organizationId={organization!.id}
+        onClose={() => setProductsModalCategory(null)}
       />
     </main>
   );
