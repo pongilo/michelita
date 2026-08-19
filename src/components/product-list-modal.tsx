@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { CreateOrderInput } from "@/lib/api/order/create-order";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
+import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,8 @@ const customItemSchema = z.object({
 
 type CustomItemForm = z.infer<typeof customItemSchema>;
 
+const NO_CATEGORY_KEY = "sem-categoria";
+
 export function ProductListContent({ organizationId, deliveryDate, onClose }: ProductListContentProps) {
   const [search, setSearch] = useState("");
   const { control, setValue, watch } = useFormContext<CreateOrderInput>();
@@ -62,13 +65,35 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
   }
 
   const { data, isLoading } = useGetProducts({ organizationId });
+  const { data: categoriesData } = useGetProductCategories({ organizationId });
+  const categories = categoriesData?.categories ?? [];
 
-  const loadedProducts = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const allProducts = data?.products ?? [];
     const term = normalize(search.trim());
     if (!term) return allProducts;
     return allProducts.filter((product) => normalize(product.name).includes(term));
   }, [data, search]);
+
+  const productGroups = useMemo(() => {
+    const byCategory = new Map<string, typeof filteredProducts>();
+    for (const product of filteredProducts) {
+      const key = product.categoryId ?? NO_CATEGORY_KEY;
+      const list = byCategory.get(key) ?? [];
+      list.push(product);
+      byCategory.set(key, list);
+    }
+
+    const result = categories.map((category) => ({
+      key: category.id,
+      name: category.name,
+      products: byCategory.get(category.id) ?? [],
+    }));
+
+    result.push({ key: NO_CATEGORY_KEY, name: "Sem categoria", products: byCategory.get(NO_CATEGORY_KEY) ?? [] });
+
+    return result.filter((group) => group.products.length > 0);
+  }, [filteredProducts, categories]);
 
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
 
@@ -130,7 +155,7 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
 
         {isLoading ? (
           <LoadingState label="Carregando produtos..." />
-        ) : loadedProducts.length === 0 ? (
+        ) : productGroups.length === 0 ? (
           <EmptyState compact>
             <EmptyState.Icon>🔍</EmptyState.Icon>
             <EmptyState.Title>
@@ -138,77 +163,91 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
             </EmptyState.Title>
           </EmptyState>
         ) : (
-          <ItemGroup>
-            {loadedProducts.map((product, i) => {
-              const itemIndex = itemsWatched.findIndex((item) => item.description === product.name);
-              const inCart = itemIndex !== -1;
+          <div className="space-y-4">
+            {productGroups.map((group) => (
+              <div key={group.key}>
+                <h3 className="px-1 mb-1 font-heading text-xs text-muted-foreground">{group.name}</h3>
+                <ItemGroup>
+                  {group.products.map((product, i) => {
+                    const itemIndex = itemsWatched.findIndex((item) => item.description === product.name);
+                    const inCart = itemIndex !== -1;
 
-              return (
-                <div key={product.id}>
-                  <Item size="xs">
-                    <ItemContent>
-                      <ItemTitle>{product.name}</ItemTitle>
-                      {inCart ? (
-                        <ItemDescription>{itemsWatched[itemIndex].quantity} x {currencyFormatter.format(product.price)} = {currencyFormatter.format(itemsWatched[itemIndex].quantity * product.price)}</ItemDescription>
-                      ) : (
-                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
-                      )}
-                    </ItemContent>
-                    <ItemActions className="flex items-center gap-1">
-                      {inCart && (
-                        <>
-                          {itemsWatched[itemIndex].quantity === 1 ? (
+                    return (
+                      <div key={product.id}>
+                        <Item size="xs">
+                          <ItemContent>
+                            <ItemTitle>
+                              {product.name}
+                              {!product.isActive && (
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal text-muted-foreground">
+                                  Fora do catálogo
+                                </span>
+                              )}
+                            </ItemTitle>
+                            <ItemDescription>
+                              {inCart
+                                ? `${itemsWatched[itemIndex].quantity} x ${currencyFormatter.format(product.price)} = ${currencyFormatter.format(itemsWatched[itemIndex].quantity * product.price)}`
+                                : currencyFormatter.format(product.price)}
+                            </ItemDescription>
+                          </ItemContent>
+                          <ItemActions className="flex items-center gap-1">
+                            {inCart && (
+                              <>
+                                {itemsWatched[itemIndex].quantity === 1 ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => removeItem(itemIndex)}
+                                  >
+                                    <Trash2Icon />
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity - 1)}
+                                  >
+                                    <MinusIcon />
+                                  </Button>
+                                )}
+                                <span className="w-6 text-center text-sm font-medium tabular-nums">
+                                  {itemsWatched[itemIndex].quantity}
+                                </span>
+                              </>
+                            )}
                             <Button
                               type="button"
                               variant="outline"
                               size="icon-sm"
-                              onClick={() => removeItem(itemIndex)}
+                              onClick={() => {
+                                if (inCart) {
+                                  setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity + 1);
+                                } else {
+                                  appendItem({
+                                    description: product.name,
+                                    unitPrice: product.price,
+                                    quantity: 1,
+                                    deliveredAt: deliveryDate,
+                                    note: "",
+                                    isDelivered: false,
+                                  });
+                                }
+                              }}
                             >
-                              <Trash2Icon />
+                              <PlusIcon />
                             </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity - 1)}
-                            >
-                              <MinusIcon />
-                            </Button>
-                          )}
-                          <span className="w-6 text-center text-sm font-medium tabular-nums">
-                            {itemsWatched[itemIndex].quantity}
-                          </span>
-                        </>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => {
-                          if (inCart) {
-                            setValue(`items.${itemIndex}.quantity`, itemsWatched[itemIndex].quantity + 1);
-                          } else {
-                            appendItem({
-                              description: product.name,
-                              unitPrice: product.price,
-                              quantity: 1,
-                              deliveredAt: deliveryDate,
-                              note: "",
-                              isDelivered: false,
-                            });
-                          }
-                        }}
-                      >
-                        <PlusIcon />
-                      </Button>
-                    </ItemActions>
-                  </Item>
-                  {i < loadedProducts.length - 1 && <ItemSeparator />}
-                </div>
-              );
-            })}
-          </ItemGroup>
+                          </ItemActions>
+                        </Item>
+                        {i < group.products.length - 1 && <ItemSeparator />}
+                      </div>
+                    );
+                  })}
+                </ItemGroup>
+              </div>
+            ))}
+          </div>
         )}
         <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
           <div className="flex-1 space-y-1">
