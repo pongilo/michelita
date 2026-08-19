@@ -15,7 +15,7 @@ const getProductsServerFn = createServerFn({ method: "POST" })
 
     const products = await prisma.product.findMany({
       where: { organizationId },
-      orderBy: { name: "asc" },
+      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
       select: {
         id: true,
         name: true,

@@ -2,20 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
-const reorderProductCategoriesSchema = z.object({
+const reorderProductsSchema = z.object({
   organizationId: z.uuid(),
   orderedIds: z.array(z.uuid()).min(1),
 });
 
-export type ReorderProductCategoriesProps = z.infer<typeof reorderProductCategoriesSchema>;
+export type ReorderProductsProps = z.infer<typeof reorderProductsSchema>;
 
-const reorderProductCategoriesServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => reorderProductCategoriesSchema.parse(input))
+const reorderProductsServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => reorderProductsSchema.parse(input))
   .handler(async ({ data }) => {
     await prisma.$transaction(
       async (tx) => {
         for (const [index, id] of data.orderedIds.entries()) {
-          await tx.productCategory.updateMany({
+          await tx.product.updateMany({
             where: { id, organizationId: data.organizationId },
             data: { displayOrder: index },
           });
@@ -27,6 +27,6 @@ const reorderProductCategoriesServerFn = createServerFn({ method: "POST" })
     return { orderedIds: data.orderedIds };
   });
 
-export async function reorderProductCategories(data: ReorderProductCategoriesProps) {
-  return reorderProductCategoriesServerFn({ data });
+export async function reorderProducts(data: ReorderProductsProps) {
+  return reorderProductsServerFn({ data });
 }

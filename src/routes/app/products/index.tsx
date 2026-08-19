@@ -1,18 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { EditIcon, FolderIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { EditIcon, FolderIcon, GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { Reorder, useDragControls } from "motion/react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
+import { useReorderProducts } from "@/hooks/tanstack/product/use-reorder-products";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
 import { normalize } from "@/lib/utils";
@@ -41,6 +43,65 @@ type CategoryGroup = {
   name: string;
   products: Product[];
 };
+
+function SortableProductItem({
+  product,
+  draggable,
+  onEdit,
+  onDelete,
+  onDragStart,
+  onDragEnd,
+  disabled,
+}: {
+  product: Product;
+  draggable: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  disabled: boolean;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Item
+      variant="outline"
+      className="bg-background"
+      render={
+        <Reorder.Item
+          value={product}
+          dragListener={false}
+          dragControls={dragControls}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+        />
+      }
+    >
+      {draggable && (
+        <button
+          type="button"
+          className="flex-none cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+          onPointerDown={(event) => dragControls.start(event)}
+          aria-label="Arrastar para reordenar"
+        >
+          <GripVerticalIcon className="size-4" />
+        </button>
+      )}
+      <ItemContent>
+        <ItemTitle>{product.name}</ItemTitle>
+        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={disabled}>
+          <EditIcon />
+        </Button>
+        <Button size="icon-sm" variant="ghost" onClick={onDelete} disabled={disabled}>
+          <Trash2Icon />
+        </Button>
+      </ItemActions>
+    </Item>
+  );
+}
 
 function ProductsPage() {
   const { organization } = useAuth();
@@ -84,11 +145,27 @@ function ProductsPage() {
     return search ? result.filter((group) => group.products.length > 0) : result;
   }, [filteredProducts, categories, search]);
 
+  const [localGroups, setLocalGroups] = useState<CategoryGroup[]>([]);
+  const localGroupsRef = useRef<CategoryGroup[]>([]);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    localGroupsRef.current = localGroups;
+  }, [localGroups]);
+
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    setLocalGroups(groups);
+  }, [groups]);
+
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
     organizationId: organization!.id,
   });
   const { mutateAsync: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct({
+    organizationId: organization!.id,
+  });
+  const { mutateAsync: reorderProducts } = useReorderProducts({
     organizationId: organization!.id,
   });
 
@@ -144,6 +221,21 @@ function ProductsPage() {
       toast.success("Produto excluído com sucesso.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir produto.");
+    }
+  }
+
+  async function handleGroupDragEnd(groupKey: string) {
+    isDraggingRef.current = false;
+    const group = localGroupsRef.current.find((g) => g.key === groupKey);
+    if (!group) return;
+
+    try {
+      await reorderProducts({
+        organizationId: organization!.id,
+        orderedIds: group.products.map((product) => product.id),
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao reordenar produtos.");
     }
   }
 
@@ -227,9 +319,15 @@ function ProductsPage() {
         </EmptyState>
       )}
 
-      {groups.length > 0 && (
+      {localGroups.length > 0 && (
         <div className="space-y-5">
-          {groups.map((group) => (
+          {!search && (
+            <p className="text-xs text-muted-foreground -mt-3">
+              Arraste pelo ícone para reordenar os produtos dentro de cada categoria.
+            </p>
+          )}
+
+          {localGroups.map((group) => (
             <section key={group.key}>
               <div className="flex items-center justify-between px-1 mb-2">
                 <h3 className="font-heading text-sm text-foreground">{group.name}</h3>
@@ -239,34 +337,30 @@ function ProductsPage() {
               {group.products.length === 0 ? (
                 <p className="px-1 text-xs text-muted-foreground">Nenhum produto nesta categoria.</p>
               ) : (
-                <ItemGroup>
+                <Reorder.Group
+                  as="div"
+                  axis="y"
+                  values={group.products}
+                  onReorder={(newProducts) => {
+                    setLocalGroups((prev) =>
+                      prev.map((g) => (g.key === group.key ? { ...g, products: newProducts } : g)),
+                    );
+                  }}
+                  className="flex w-full flex-col gap-2.5"
+                >
                   {group.products.map((product) => (
-                    <Item key={product.id} variant="outline">
-                      <ItemContent>
-                        <ItemTitle>{product.name}</ItemTitle>
-                        <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleStartEdit(product)}
-                          disabled={isDeletingProduct}
-                        >
-                          <EditIcon />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(product.id, product.name)}
-                          disabled={isDeletingProduct}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </ItemActions>
-                    </Item>
+                    <SortableProductItem
+                      key={product.id}
+                      product={product}
+                      draggable={!search}
+                      onEdit={() => handleStartEdit(product)}
+                      onDelete={() => handleDelete(product.id, product.name)}
+                      onDragStart={() => { isDraggingRef.current = true; }}
+                      onDragEnd={() => handleGroupDragEnd(group.key)}
+                      disabled={isDeletingProduct}
+                    />
                   ))}
-                </ItemGroup>
+                </Reorder.Group>
               )}
             </section>
           ))}

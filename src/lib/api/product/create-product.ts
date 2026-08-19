@@ -14,12 +14,19 @@ export type CreateProductProps = z.infer<typeof createProductSchema>;
 const createProductServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createProductSchema.parse(input))
   .handler(async ({ data }) => {
+    const categoryId = data.categoryId ?? null;
+
+    const existingCount = await prisma.product.count({
+      where: { organizationId: data.organizationId, categoryId },
+    });
+
     const product = await prisma.product.create({
       data: {
         organizationId: data.organizationId,
         name: data.name,
         price: data.price,
-        categoryId: data.categoryId ?? null,
+        categoryId,
+        displayOrder: existingCount,
       },
       select: {
         id: true,
