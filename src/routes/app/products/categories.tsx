@@ -21,7 +21,13 @@ export const Route = createFileRoute("/app/products/categories")({
   component: CategoriesPage,
 });
 
-type Category = { id: string; name: string; description: string | null; displayOrder: number };
+type Category = {
+  id: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  displayLimit: number | null;
+};
 
 function SortableCategoryItem({
   category,
@@ -67,6 +73,9 @@ function SortableCategoryItem({
       <ItemContent>
         <ItemTitle>{category.name}</ItemTitle>
         {category.description && <ItemDescription>{category.description}</ItemDescription>}
+        {category.displayLimit && (
+          <ItemDescription>Mostra {category.displayLimit} produto(s) no cardápio</ItemDescription>
+        )}
       </ItemContent>
       <ItemActions>
         <Button size="icon-sm" variant="ghost" onClick={onManageProducts} disabled={disabled} aria-label="Adicionar produtos">
@@ -263,7 +272,11 @@ function CategoriesPage() {
         isSubmitting={isSubmitting}
         initialValues={
           editingCategory
-            ? { name: editingCategory.name, description: editingCategory.description ?? "" }
+            ? {
+                name: editingCategory.name,
+                description: editingCategory.description ?? "",
+                displayLimit: editingCategory.displayLimit ?? undefined,
+              }
             : undefined
         }
         onClose={handleClose}

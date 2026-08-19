@@ -6,6 +6,7 @@ const updateProductCategorySchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
   description: z.string().trim().optional(),
+  displayLimit: z.number().int().min(1).optional(),
 });
 
 export type UpdateProductCategoryProps = z.infer<typeof updateProductCategorySchema>;
@@ -27,12 +28,14 @@ const updateProductCategoryServerFn = createServerFn({ method: "POST" })
       data: {
         name: data.name,
         description: toOptionalString(data.description),
+        displayLimit: data.displayLimit ?? null,
       },
       select: {
         id: true,
         name: true,
         description: true,
         displayOrder: true,
+        displayLimit: true,
       },
     });
 

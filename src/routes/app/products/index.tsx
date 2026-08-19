@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { EditIcon, FolderIcon, GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -45,6 +45,7 @@ type CategoryGroup = {
   key: string;
   name: string;
   products: Product[];
+  displayLimit: number | null;
 };
 
 function SortableProductItem({
@@ -156,9 +157,15 @@ function ProductsPage() {
       key: category.id,
       name: category.name,
       products: byCategory.get(category.id) ?? [],
+      displayLimit: category.displayLimit ?? null,
     }));
 
-    result.push({ key: NO_CATEGORY_KEY, name: "Sem categoria", products: byCategory.get(NO_CATEGORY_KEY) ?? [] });
+    result.push({
+      key: NO_CATEGORY_KEY,
+      name: "Sem categoria",
+      products: byCategory.get(NO_CATEGORY_KEY) ?? [],
+      displayLimit: null,
+    });
 
     return search ? result.filter((group) => group.products.length > 0) : result;
   }, [filteredProducts, categories, search]);
@@ -382,18 +389,28 @@ function ProductsPage() {
                   }}
                   className="flex w-full flex-col gap-2.5"
                 >
-                  {group.products.map((product) => (
-                    <SortableProductItem
-                      key={product.id}
-                      product={product}
-                      draggable={!search}
-                      onEdit={() => handleStartEdit(product)}
-                      onDelete={() => handleDelete(product.id, product.name)}
-                      onToggleActive={() => handleToggleActive(product)}
-                      onDragStart={() => { isDraggingRef.current = true; }}
-                      onDragEnd={() => handleGroupDragEnd(group.key)}
-                      disabled={isDeletingProduct || isTogglingActive}
-                    />
+                  {group.products.map((product, index) => (
+                    <Fragment key={product.id}>
+                      <SortableProductItem
+                        product={product}
+                        draggable={!search}
+                        onEdit={() => handleStartEdit(product)}
+                        onDelete={() => handleDelete(product.id, product.name)}
+                        onToggleActive={() => handleToggleActive(product)}
+                        onDragStart={() => { isDraggingRef.current = true; }}
+                        onDragEnd={() => handleGroupDragEnd(group.key)}
+                        disabled={isDeletingProduct || isTogglingActive}
+                      />
+                      {group.displayLimit === index + 1 && index + 1 < group.products.length && (
+                        <div className="flex items-center gap-2 px-1 py-0.5">
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-[10px] text-muted-foreground">
+                            Abaixo, estarão no ver mais do cardápio
+                          </span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                      )}
+                    </Fragment>
                   ))}
                 </Reorder.Group>
               )}

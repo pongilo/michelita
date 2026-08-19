@@ -107,6 +107,7 @@ model ProductCategory {
   name           String
   description    String?
   displayOrder   Int     @default(0) @map("display_order")
+  displayLimit   Int?    @map("display_limit")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   product      Product[]

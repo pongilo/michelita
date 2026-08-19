@@ -6,6 +6,7 @@ const createProductCategorySchema = z.object({
   organizationId: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
   description: z.string().trim().optional(),
+  displayLimit: z.number().int().min(1).optional(),
 });
 
 export type CreateProductCategoryProps = z.infer<typeof createProductCategorySchema>;
@@ -32,12 +33,14 @@ const createProductCategoryServerFn = createServerFn({ method: "POST" })
         name: data.name,
         description: toOptionalString(data.description),
         displayOrder: existingCount,
+        displayLimit: data.displayLimit ?? null,
       },
       select: {
         id: true,
         name: true,
         description: true,
         displayOrder: true,
+        displayLimit: true,
       },
     });
 
