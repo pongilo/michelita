@@ -21,6 +21,7 @@ const getProductsServerFn = createServerFn({ method: "POST" })
         name: true,
         price: true,
         categoryId: true,
+        isActive: true,
         category: { select: { id: true, name: true } },
       },
     });

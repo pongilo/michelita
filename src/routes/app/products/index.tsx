@@ -10,14 +10,16 @@ import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
 import { useReorderProducts } from "@/hooks/tanstack/product/use-reorder-products";
+import { useToggleProductActive } from "@/hooks/tanstack/product/use-toggle-product-active";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
 import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Switch } from "@/components/ui/switch";
 import { AppTitle } from "@/components/app-title";
-import { normalize } from "@/lib/utils";
+import { cn, normalize } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/products/")({
   component: ProductsPage,
@@ -35,6 +37,7 @@ type Product = {
   name: string;
   price: number;
   categoryId: string | null;
+  isActive: boolean;
   category: { id: string; name: string } | null;
 };
 
@@ -49,6 +52,7 @@ function SortableProductItem({
   draggable,
   onEdit,
   onDelete,
+  onToggleActive,
   onDragStart,
   onDragEnd,
   disabled,
@@ -57,6 +61,7 @@ function SortableProductItem({
   draggable: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleActive: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   disabled: boolean;
@@ -66,7 +71,7 @@ function SortableProductItem({
   return (
     <Item
       variant="outline"
-      className="bg-background"
+      className={cn("bg-background", !product.isActive && "opacity-60")}
       render={
         <Reorder.Item
           value={product}
@@ -88,10 +93,23 @@ function SortableProductItem({
         </button>
       )}
       <ItemContent>
-        <ItemTitle>{product.name}</ItemTitle>
+        <ItemTitle>
+          {product.name}
+          {!product.isActive && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal text-muted-foreground">
+              Inativo
+            </span>
+          )}
+        </ItemTitle>
         <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
       </ItemContent>
       <ItemActions>
+        <Switch
+          checked={product.isActive}
+          onCheckedChange={onToggleActive}
+          disabled={disabled}
+          aria-label={product.isActive ? "Desativar produto" : "Ativar produto"}
+        />
         <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={disabled}>
           <EditIcon />
         </Button>
@@ -168,6 +186,9 @@ function ProductsPage() {
   const { mutateAsync: reorderProducts } = useReorderProducts({
     organizationId: organization!.id,
   });
+  const { mutateAsync: toggleProductActive, isPending: isTogglingActive } = useToggleProductActive({
+    organizationId: organization!.id,
+  });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -221,6 +242,19 @@ function ProductsPage() {
       toast.success("Produto excluído com sucesso.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir produto.");
+    }
+  }
+
+  async function handleToggleActive(product: Product) {
+    try {
+      await toggleProductActive({
+        id: product.id,
+        organizationId: organization!.id,
+        isActive: !product.isActive,
+      });
+      toast.success(product.isActive ? "Produto desativado do cardápio." : "Produto ativado no cardápio.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar produto.");
     }
   }
 
@@ -355,9 +389,10 @@ function ProductsPage() {
                       draggable={!search}
                       onEdit={() => handleStartEdit(product)}
                       onDelete={() => handleDelete(product.id, product.name)}
+                      onToggleActive={() => handleToggleActive(product)}
                       onDragStart={() => { isDraggingRef.current = true; }}
                       onDragEnd={() => handleGroupDragEnd(group.key)}
-                      disabled={isDeletingProduct}
+                      disabled={isDeletingProduct || isTogglingActive}
                     />
                   ))}
                 </Reorder.Group>
