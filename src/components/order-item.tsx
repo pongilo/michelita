@@ -135,10 +135,11 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
             )}
             <DropdownMenuItem onClick={handleViewOrder}>Ver pedido</DropdownMenuItem>
             <DropdownMenuItem onClick={handleViewCustomer}>Ver cliente</DropdownMenuItem>
+            <DropdownMenuSeparator />
             {group.order.customer?.address && (
               <DropdownMenuItem onClick={handleCopyAddress}>Copiar endereço</DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={handleCopyOrderSummary}>Copiar resumo do pedido</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyOrderSummary}>Copiar pedido</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
