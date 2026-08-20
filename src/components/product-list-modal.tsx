@@ -249,7 +249,7 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
             ))}
           </div>
         )}
-        <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
+        <div className="flex items-center pt-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t sticky bottom-0 bg-white z-20">
           <div className="flex-1 space-y-1">
             <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
             <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
@@ -338,7 +338,7 @@ export function ProductListContent({ organizationId, deliveryDate, onClose }: Pr
               <Label htmlFor="addToCatalog">Adicionar ao catálogo de produtos</Label>
             </Field>
           </div>
-          <div className="flex items-center py-5 border-t sticky bottom-0 bg-white z-20">
+          <div className="flex items-center pt-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t sticky bottom-0 bg-white z-20">
             <div className="flex-1 space-y-1">
               <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(customProductTotal)}</p>
             </div>

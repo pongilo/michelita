@@ -255,7 +255,7 @@ function OrderFormRoute() {
               </Field>
             </FieldGroup>
 
-            <div className="flex items-center sticky bottom-0 bg-background py-2">
+            <div className="flex items-center sticky bottom-0 bg-background pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
               <div className="flex-1 space-y-1">
                 <p className="text-base font-heading text-foreground">Total: {currencyFormatter.format(total)}</p>
                 <p className="text-sm font-heading text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>

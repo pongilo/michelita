@@ -164,7 +164,7 @@ export function CustomerListContent({ organizationId, onClose, onSelectCustomer 
             </Field>
           </FieldGroup>
 
-          <div className="flex justify-end gap-2 sticky bottom-0">
+          <div className="flex justify-end gap-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sticky bottom-0 bg-background">
             <Button type="button" variant="ghost" onClick={() => { reset(); setTab("list"); }}>
               Cancelar
             </Button>

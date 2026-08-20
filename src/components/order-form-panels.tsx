@@ -26,7 +26,7 @@ function MobilePanel({ title, onBack, children }: { title: string; onBack: () =>
         </Button>
         <h2 className="text-xl font-heading">{title}</h2>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         {children}
       </div>
     </main>
