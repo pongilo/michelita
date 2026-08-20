@@ -58,7 +58,7 @@ function AppBar({ orgName }: { orgName: string }) {
 
 function BottomTabBar() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
       {bottomTabItems.map((item) => (
         <Link
           key={item.to}
@@ -86,7 +86,7 @@ function PrivateLayout() {
   return (
     <div className="flex min-h-svh flex-col">
       {!hideChrome && <AppBar orgName={organization.name} />}
-      <div className={cn("flex-1", !hideChrome && "pb-16 md:pb-0")}>
+      <div className={cn("flex-1", !hideChrome && "pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0")}>
         <Outlet />
       </div>
       {!hideChrome && <BottomTabBar />}
