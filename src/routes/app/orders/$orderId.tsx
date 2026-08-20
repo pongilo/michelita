@@ -78,7 +78,7 @@ function OrderDetailsPage() {
       <main className="mx-auto w-full max-w-4xl p-5">
 
         {/* Header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-6 flex flex-nowrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <AppTitle>Pedido #{order.id.slice(0, 8)}</AppTitle>
@@ -86,7 +86,7 @@ function OrderDetailsPage() {
                 {order.isPaid ? "Pago" : "Pendente"}
               </Badge>
             </div>
-            <p className="text-muted-foreground text-base">{formatFullDate(toExactDatetime(order.orderedAt))}</p>
+            <p className="text-muted-foreground text-base">Feito em {formatFullDate(toExactDatetime(order.orderedAt))}</p>
           </div>
           <OrderAction orderId={orderId} organizationId={organization!.id} onDeleteOrderSuccess={() => navigate({ to: "/app/orders" })}>
             <OrderAction.Trigger />

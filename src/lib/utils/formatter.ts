@@ -44,6 +44,24 @@ export function formatMonthYearLabel(date: Date) {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+// e.g. "17 a 23 de agosto de 2026" or, spanning two months, "28 de julho a 03 de agosto de 2026".
+// `endDateKeyExclusive` is the day after the week ends (matches the range used to query data).
+export function formatWeekRangeLabel(startDateKey: string, endDateKeyExclusive: string) {
+  const start = new Date(`${startDateKey}T00:00:00Z`);
+  const end = new Date(`${endDateKeyExclusive}T00:00:00Z`);
+  end.setUTCDate(end.getUTCDate() - 1);
+
+  const startDay = String(start.getUTCDate()).padStart(2, "0");
+  const endDay = String(end.getUTCDate()).padStart(2, "0");
+  const sameMonth = start.getUTCMonth() === end.getUTCMonth() && start.getUTCFullYear() === end.getUTCFullYear();
+
+  const label = sameMonth
+    ? `${startDay} a ${endDay} de ${monthYearFormatter.format(end)}`
+    : `${startDay} de ${monthFormatter.format(start)} a ${endDay} de ${monthYearFormatter.format(end)}`;
+
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function formatDayLabel(date: Date) {
   const formatted = dayLabelFormatter.format(date);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
