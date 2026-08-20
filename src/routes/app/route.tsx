@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate, Outlet, useNavigate } from "@tanstack/
 import { signOut } from "@/lib/api/auth/sign-out";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, ListOrderedIcon, PlusIcon, CalendarIcon } from 'lucide-react'
+import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, PlusIcon, ListOrderedIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarGroupContent,
-  SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,21 +25,10 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
-  {
-    label: 'Pedidos',
-    links: [
-      { to: "/app/orders/form", icon: PlusIcon, label: "Novo" },
-      { to: "/app/orders", icon: CalendarIcon, label: "Agenda" },
-      { to: "/app/history", icon: ListOrderedIcon, label: "Histórico" },
-    ]
-  },
-  {
-    label: 'Mais',
-    links: [
-      { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
-      { to: "/app/products", icon: PackageIcon, label: "Produtos" },
-    ]
-  }
+  { to: "/app/orders/form", icon: PlusIcon, label: "Novo" },
+  { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
+  { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
+  { to: "/app/products", icon: PackageIcon, label: "Produtos" },
 ] as const;
 
 function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userName: string; onSignOut: () => void }) {
@@ -96,29 +84,26 @@ function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userNam
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {navItems.map((item, itemIndex) => (
-          <SidebarGroup key={`group-${itemIndex}`}>
-            {item.label && <SidebarGroupLabel>{item.label}</SidebarGroupLabel>}
-            <SidebarGroupContent>
-              {item.links.map((link) => (
-                <SidebarMenuItem key={link.to}>
-                  <SidebarMenuButton render={
-                    <Link
-                      to={link.to}
-                      activeOptions={{ exact: true }}
-                      className="font-medium"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      <link.icon className="size-4" />
-                      <span>{link.label}</span>
-                    </Link>
-                  }>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            {navItems.map((item) => (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton render={
+                  <Link
+                    to={item.to}
+                    activeOptions={{ exact: true }}
+                    className="font-medium"
+                    onClick={() => setOpenMobile(false)}
+                  >
+                    <item.icon className="size-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                }>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );

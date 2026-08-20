@@ -20,7 +20,6 @@ import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
-import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
 import { Route as AppProductsCategoriesRouteImport } from './routes/app/products/categories'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
@@ -81,11 +80,6 @@ const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
   path: '/orders/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppHistoryIndexRoute = AppHistoryIndexRouteImport.update({
-  id: '/history/',
-  path: '/history/',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -131,7 +125,6 @@ export interface FileRoutesByFullPath {
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
@@ -149,7 +142,6 @@ export interface FileRoutesByTo {
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers': typeof AppCustomersIndexRoute
-  '/app/history': typeof AppHistoryIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -170,7 +162,6 @@ export interface FileRoutesById {
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/categories': typeof AppProductsCategoriesRoute
   '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
@@ -190,7 +181,6 @@ export interface FileRouteTypes {
     | '/app/orders/form'
     | '/app/products/categories'
     | '/app/customers/'
-    | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
   fileRoutesByTo: FileRoutesByTo
@@ -208,7 +198,6 @@ export interface FileRouteTypes {
     | '/app/orders/form'
     | '/app/products/categories'
     | '/app/customers'
-    | '/app/history'
     | '/app/orders'
     | '/app/products'
   id:
@@ -228,7 +217,6 @@ export interface FileRouteTypes {
     | '/app/orders/form'
     | '/app/products/categories'
     | '/app/customers/'
-    | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
   fileRoutesById: FileRoutesById
@@ -318,13 +306,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrdersIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/history/': {
-      id: '/app/history/'
-      path: '/history'
-      fullPath: '/app/history/'
-      preLoaderRoute: typeof AppHistoryIndexRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/customers/': {
       id: '/app/customers/'
       path: '/customers'
@@ -408,7 +389,6 @@ interface AppRouteRouteChildren {
   AppOrdersFormRoute: typeof AppOrdersFormRoute
   AppProductsCategoriesRoute: typeof AppProductsCategoriesRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
-  AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
 }
@@ -421,7 +401,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrdersFormRoute: AppOrdersFormRoute,
   AppProductsCategoriesRoute: AppProductsCategoriesRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
-  AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
 }
