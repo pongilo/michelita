@@ -18,7 +18,6 @@ import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteItemIdRouteImport } from './routes/_site/$itemId'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
 import { Route as AppHistoryIndexRouteImport } from './routes/app/history/index'
@@ -71,11 +70,6 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
-} as any)
-const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
-  id: '/reports/',
-  path: '/reports/',
-  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
@@ -140,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
-  '/app/reports/': typeof AppReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
@@ -159,7 +152,6 @@ export interface FileRoutesByTo {
   '/app/history': typeof AppHistoryIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
-  '/app/reports': typeof AppReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -181,7 +173,6 @@ export interface FileRoutesById {
   '/app/history/': typeof AppHistoryIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
-  '/app/reports/': typeof AppReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -202,7 +193,6 @@ export interface FileRouteTypes {
     | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
-    | '/app/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,7 +211,6 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/orders'
     | '/app/products'
-    | '/app/reports'
   id:
     | '__root__'
     | '/_auth'
@@ -242,7 +231,6 @@ export interface FileRouteTypes {
     | '/app/history/'
     | '/app/orders/'
     | '/app/products/'
-    | '/app/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -315,13 +303,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
-    }
-    '/app/reports/': {
-      id: '/app/reports/'
-      path: '/reports'
-      fullPath: '/app/reports/'
-      preLoaderRoute: typeof AppReportsIndexRouteImport
-      parentRoute: typeof AppRouteRoute
     }
     '/app/products/': {
       id: '/app/products/'
@@ -430,7 +411,6 @@ interface AppRouteRouteChildren {
   AppHistoryIndexRoute: typeof AppHistoryIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
-  AppReportsIndexRoute: typeof AppReportsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -444,7 +424,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppHistoryIndexRoute: AppHistoryIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
-  AppReportsIndexRoute: AppReportsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
