@@ -1,8 +1,6 @@
-import { createFileRoute, Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
-import { signOut } from "@/lib/api/auth/sign-out";
+import { createFileRoute, Link, Navigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LogOutIcon, PackageIcon, SettingsIcon, User2Icon, UsersRoundIcon, PlusIcon, ListOrderedIcon } from 'lucide-react'
+import { PackageIcon, UsersRoundIcon, PlusIcon, ListOrderedIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +15,6 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 export const Route = createFileRoute("/app")({
@@ -31,7 +28,7 @@ const navItems = [
   { to: "/app/products", icon: PackageIcon, label: "Produtos" },
 ] as const;
 
-function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userName: string; onSignOut: () => void }) {
+function AppSidebar({ orgName }: { orgName: string }) {
   const { setOpenMobile } = useSidebar();
 
   return (
@@ -39,47 +36,19 @@ function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userNam
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  />
-                }
-              >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  {orgName.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">{orgName}</span>
-                </div>
-                <ChevronsUpDown className="ml-auto" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-(--anchor-width)"
-                align="start"
-              >
-                <DropdownMenuItem render={
-                  <Link to="/app/settings" onClick={() => setOpenMobile(false)}>
-                    <SettingsIcon className="size-4" />
-                    <span>Configurações</span>
-                  </Link>
-                }/>
-                <DropdownMenuItem render={
-                  <Link to="/app/account" onClick={() => setOpenMobile(false)}>
-                    <User2Icon className="size-4" />
-                    <span>{userName}</span>
-                  </Link>
-                }/>
-                <DropdownMenuItem render={
-                  <button type="button" onClick={onSignOut} className="w-full">
-                    <LogOutIcon className="size-4 shrink-0" />
-                    <span>Sair</span>
-                  </button>
-                }/>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton
+              size="lg"
+              render={
+                <Link to="/app/account" onClick={() => setOpenMobile(false)} />
+              }
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                {orgName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-medium">{orgName}</span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -110,28 +79,15 @@ function AppSidebar({ orgName, userName, onSignOut }: { orgName: string; userNam
 }
 
 function PrivateLayout() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user, organization, isLoading } = useAuth();
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" />;
   if (!organization) return <Navigate to="/organization/new" />;
 
-  async function handleSignOut() {
-    await signOut();
-    queryClient.setQueryData(["auth-user"], { user: null });
-    queryClient.removeQueries({ queryKey: ["organization"] });
-    await navigate({ to: "/login" });
-  }
-
   return (
     <SidebarProvider>
-      <AppSidebar
-        orgName={organization.name}
-        userName={user.user_metadata.name}
-        onSignOut={handleSignOut}
-      />
+      <AppSidebar orgName={organization.name} />
       <SidebarInset>
         <div className="flex justify-between items-center p-5 max-md:hidden">
           <SidebarTrigger />

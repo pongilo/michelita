@@ -13,7 +13,6 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
-import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteItemIdRouteImport } from './routes/_site/$itemId'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
@@ -44,11 +43,6 @@ const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SiteRouteRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAccountRoute = AppAccountRouteImport.update({
   id: '/account',
@@ -118,7 +112,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
-  '/app/settings': typeof AppSettingsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -135,7 +128,6 @@ export interface FileRoutesByTo {
   '/register': typeof AuthRegisterRoute
   '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
-  '/app/settings': typeof AppSettingsRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -154,7 +146,6 @@ export interface FileRoutesById {
   '/_auth/register': typeof AuthRegisterRoute
   '/_site/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
-  '/app/settings': typeof AppSettingsRoute
   '/_site/': typeof SiteIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
@@ -174,7 +165,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/$itemId'
     | '/app/account'
-    | '/app/settings'
     | '/organization/new'
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
@@ -191,7 +181,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/$itemId'
     | '/app/account'
-    | '/app/settings'
     | '/organization/new'
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
@@ -209,7 +198,6 @@ export interface FileRouteTypes {
     | '/_auth/register'
     | '/_site/$itemId'
     | '/app/account'
-    | '/app/settings'
     | '/_site/'
     | '/_auth/organization/new'
     | '/app/customers/$customerId'
@@ -256,13 +244,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof SiteIndexRouteImport
       parentRoute: typeof SiteRouteRoute
-    }
-    '/app/settings': {
-      id: '/app/settings'
-      path: '/settings'
-      fullPath: '/app/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRouteRoute
     }
     '/app/account': {
       id: '/app/account'
@@ -383,7 +364,6 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
-  AppSettingsRoute: typeof AppSettingsRoute
   AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
@@ -395,7 +375,6 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccountRoute: AppAccountRoute,
-  AppSettingsRoute: AppSettingsRoute,
   AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,

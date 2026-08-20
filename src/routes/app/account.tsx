@@ -1,12 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
+import { LogOutIcon } from "lucide-react";
+import { signOut } from "@/lib/api/auth/sign-out";
 import { updateUser } from "@/lib/api/auth/update-user";
 import { updatePassword } from "@/lib/api/auth/update-password";
+import { updateOrganization } from "@/lib/api/organization/update-organization";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -22,6 +25,10 @@ const profileSchema = z.object({
   email: z.email("E-mail inválido."),
 });
 
+const orgSchema = z.object({
+  name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
+});
+
 const passwordSchema = z
   .object({
     password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
@@ -33,11 +40,13 @@ const passwordSchema = z
   });
 
 type ProfileValues = z.infer<typeof profileSchema>;
+type OrgValues = z.infer<typeof orgSchema>;
 type PasswordValues = z.infer<typeof passwordSchema>;
 
 function AccountPage() {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const {
     register: registerProfile,
@@ -48,6 +57,17 @@ function AccountPage() {
     defaultValues: {
       name: user!.user_metadata.name ?? "",
       email: user!.email ?? "",
+    },
+  });
+
+  const {
+    register: registerOrg,
+    handleSubmit: handleSubmitOrg,
+    formState: { errors: orgErrors, isSubmitting: isSubmittingOrg },
+  } = useForm<OrgValues>({
+    resolver: zodResolver(orgSchema),
+    defaultValues: {
+      name: organization!.name,
     },
   });
 
@@ -71,6 +91,16 @@ function AccountPage() {
     }
   }
 
+  async function onSubmitOrg(values: OrgValues) {
+    try {
+      await updateOrganization({ id: organization!.id, name: values.name });
+      toast.success("Configurações salvas com sucesso.");
+      await queryClient.invalidateQueries({ queryKey: ["organization", user!.id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar configurações.");
+    }
+  }
+
   async function onSubmitPassword(values: PasswordValues) {
     try {
       await updatePassword({ password: values.password, confirmPassword: values.confirmPassword });
@@ -81,9 +111,22 @@ function AccountPage() {
     }
   }
 
+  async function handleSignOut() {
+    await signOut();
+    queryClient.setQueryData(["auth-user"], { user: null });
+    queryClient.removeQueries({ queryKey: ["organization"] });
+    await navigate({ to: "/login" });
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl p-5">
-      <AppTitle>Minha conta</AppTitle>
+      <div className="mb-6 flex flex-nowrap items-center justify-between gap-3">
+        <AppTitle>Minha conta</AppTitle>
+        <Button type="button" variant="outline" onClick={handleSignOut}>
+          <LogOutIcon className="size-4" />
+          Sair
+        </Button>
+      </div>
 
       {/* Perfil */}
       <section className="mb-8">
@@ -107,6 +150,29 @@ function AccountPage() {
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmittingProfile}>
               {isSubmittingProfile ? "Salvando..." : "Salvar alterações"}
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      <Separator />
+
+      {/* Confeitaria */}
+      <section className="mt-8 mb-8">
+        <h2 className="text-base font-semibold mb-4">Informações da confeitaria</h2>
+
+        <form onSubmit={handleSubmitOrg(onSubmitOrg)} className="space-y-4">
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Nome da confeitaria</FieldLabel>
+              <Input type="text" {...registerOrg("name")} />
+              {orgErrors.name && <FieldError>{orgErrors.name.message}</FieldError>}
+            </Field>
+          </FieldGroup>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmittingOrg}>
+              {isSubmittingOrg ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>
         </form>
