@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, CopyIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CopyIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import {
@@ -255,18 +255,22 @@ function OrderPage() {
         <header className="px-5 flex flex-wrap items-center gap-2">
           <AppTitle>Pedidos</AppTitle>
 
-          {viewMode === "day" && (
-            <Button
-              onClick={handleCopyDeliveries}
-              variant="outline"
-              size="sm"
-              disabled={!referenceDate || dayGroups.length === 0}
-              className="ml-auto"
-            >
-              <CopyIcon />
-              Copiar
+          <div className="ml-auto flex items-center gap-2">
+            {viewMode === "day" && (
+              <Button
+                onClick={handleCopyDeliveries}
+                variant="outline"
+                size="sm"
+                disabled={!referenceDate || dayGroups.length === 0}
+              >
+                <CopyIcon />
+                Copiar
+              </Button>
+            )}
+            <Button size="icon-sm" className="md:hidden" nativeButton={false} render={<Link to="/app/orders/form" />}>
+              <PlusIcon />
             </Button>
-          )}
+          </div>
         </header>
 
         <div className="px-5 flex flex-wrap items-center gap-2">
