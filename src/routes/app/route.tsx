@@ -86,7 +86,12 @@ function PrivateLayout() {
   return (
     <div className="flex min-h-svh flex-col">
       {!hideChrome && <AppBar orgName={organization.name} />}
-      <div className={cn("flex-1", !hideChrome && "pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0")}>
+      <div
+        className={cn(
+          "flex-1 pt-[env(safe-area-inset-top)] md:pt-0",
+          !hideChrome && "pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0"
+        )}
+      >
         <Outlet />
       </div>
       {!hideChrome && <BottomTabBar />}
