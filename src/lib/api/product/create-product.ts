@@ -5,11 +5,21 @@ import { prisma } from "@/lib/prisma";
 const createProductSchema = z.object({
   organizationId: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
+  description: z.string().trim().optional(),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
   categoryId: z.uuid().optional(),
 });
 
 export type CreateProductProps = z.infer<typeof createProductSchema>;
+
+function toOptionalString(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
 
 const createProductServerFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createProductSchema.parse(input))
@@ -24,6 +34,7 @@ const createProductServerFn = createServerFn({ method: "POST" })
       data: {
         organizationId: data.organizationId,
         name: data.name,
+        description: toOptionalString(data.description),
         price: data.price,
         categoryId,
         displayOrder: existingCount,
@@ -31,6 +42,7 @@ const createProductServerFn = createServerFn({ method: "POST" })
       select: {
         id: true,
         name: true,
+        description: true,
         price: true,
         categoryId: true,
       },

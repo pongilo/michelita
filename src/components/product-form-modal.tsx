@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const NO_CATEGORY = "none";
 
 export const productFormSchema = z.object({
   name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do produto."),
+  description: z.string().trim().optional(),
   price: z.number({ error: "Informe um preço válido." }).min(0, "O preço deve ser maior ou igual a zero."),
   categoryId: z.uuid().optional(),
 });
@@ -33,6 +35,7 @@ type ProductFormModalProps = {
 function getDefaultValues(initialValues?: Partial<ProductFormValues>): ProductFormValues {
   return {
     name: initialValues?.name ?? "",
+    description: initialValues?.description ?? "",
     price: initialValues?.price ?? 0,
     categoryId: initialValues?.categoryId,
   };
@@ -61,7 +64,14 @@ export function ProductFormModal({
   useEffect(() => {
     if (!isOpen) return;
     reset(getDefaultValues(initialValues));
-  }, [isOpen, initialValues?.name, initialValues?.price, initialValues?.categoryId, reset]);
+  }, [
+    isOpen,
+    initialValues?.name,
+    initialValues?.description,
+    initialValues?.price,
+    initialValues?.categoryId,
+    reset,
+  ]);
 
   return (
     <FormModal
@@ -75,6 +85,12 @@ export function ProductFormModal({
             <FieldLabel>Nome</FieldLabel>
             <Input type="text" placeholder="Nome do produto" {...register("name")} />
             <FieldError>{errors.name?.message}</FieldError>
+          </Field>
+
+          <Field>
+            <FieldLabel>Descrição</FieldLabel>
+            <Textarea placeholder="Descrição do produto (opcional)" {...register("description")} />
+            <FieldError>{errors.description?.message}</FieldError>
           </Field>
 
           <Field>

@@ -35,6 +35,7 @@ const NO_CATEGORY_KEY = "sem-categoria";
 type Product = {
   id: string;
   name: string;
+  description: string | null;
   price: number;
   categoryId: string | null;
   isActive: boolean;
@@ -102,6 +103,7 @@ function SortableProductItem({
             </span>
           )}
         </ItemTitle>
+        {product.description && <ItemDescription>{product.description}</ItemDescription>}
         <ItemDescription>{currencyFormatter.format(product.price)}</ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -208,6 +210,7 @@ function ProductsPage() {
         await updateProduct({
           id: editingProduct.id,
           name: values.name,
+          description: values.description,
           price: values.price,
           categoryId: values.categoryId,
         });
@@ -216,6 +219,7 @@ function ProductsPage() {
         await createProduct({
           organizationId: organization!.id,
           name: values.name,
+          description: values.description,
           price: values.price,
           categoryId: values.categoryId,
         });
@@ -426,7 +430,12 @@ function ProductsPage() {
         categories={categories}
         initialValues={
           editingProduct
-            ? { name: editingProduct.name, price: editingProduct.price, categoryId: editingProduct.categoryId ?? undefined }
+            ? {
+                name: editingProduct.name,
+                description: editingProduct.description ?? undefined,
+                price: editingProduct.price,
+                categoryId: editingProduct.categoryId ?? undefined,
+              }
             : undefined
         }
         onClose={handleClose}
