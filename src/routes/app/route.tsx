@@ -88,7 +88,7 @@ function PrivateLayout() {
       {!hideChrome && <AppBar orgName={organization.name} />}
       <div
         className={cn(
-          "flex-1 pt-[env(safe-area-inset-top)] md:pt-0",
+          "flex-1 pt-[env(safe-area-inset-top)] md:pt-0 min-h-screen",
           !hideChrome && "pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0"
         )}
       >

@@ -113,7 +113,7 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
   };
 
   return (
-    <div className="relative md:rounded-md bg-background md:shadow p-5 space-y-3">
+    <div className="relative md:rounded-md bg-background md:border border-y-4 p-5 space-y-3">
       <div className="absolute top-3 right-3">
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>

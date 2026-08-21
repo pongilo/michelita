@@ -250,7 +250,7 @@ function OrderPage() {
   };
 
   return (
-    <main className="bg-muted min-h-screen">
+    <>
       <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
         <header className="px-5 flex flex-wrap items-center gap-2">
           <AppTitle>Pedidos</AppTitle>
@@ -321,27 +321,29 @@ function OrderPage() {
         )}
 
         {data && (
-          <div className="space-y-4 md:space-y-6 md:px-5">
+          <div className="md:px-5">
             {visibleDays.length === 0 ? (
               <p className="text-base text-muted-foreground p-5 text-center">
                 {emptyPeriodMessage}
               </p>
             ) : (
               visibleDays.map((day) => (
-                <div key={day.date} className="space-y-2 md:space-y-4">
+                <div key={day.date}>
                   {viewMode !== "day" && (
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 md:px-0">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky top-14 z-10">
                       {formatDayLabel(toExactDatetime(day.date))}
                     </p>
                   )}
                   {day.groups.length === 0 ? (
-                    <p className={viewMode === "day" ? "text-base text-muted-foreground p-5 text-center" : "text-sm text-muted-foreground px-5 md:px-0"}>
+                    <p className={viewMode === "day" ? "text-base text-muted-foreground p-2 max-md:p-4 text-center" : "text-sm text-muted-foreground p-2 max-md:p-4"}>
                       {viewMode === "day" ? emptyPeriodMessage : emptyDayMessage}
                     </p>
                   ) : (
-                    day.groups.map((group) => (
-                      <OrderItem key={group.key} group={group} organizationId={organization!.id} />
-                    ))
+                    <div className="md:space-y-2">
+                      {day.groups.map((group) => (
+                        <OrderItem key={group.key} group={group} organizationId={organization!.id} />
+                      ))}
+                    </div>
                   )}
                 </div>
               ))
@@ -349,6 +351,6 @@ function OrderPage() {
           </div>
         )}
       </div>
-    </main>
+    </>
   );
 }
