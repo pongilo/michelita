@@ -330,7 +330,7 @@ function OrderPage() {
               visibleDays.map((day) => (
                 <div key={day.date}>
                   {viewMode !== "day" && (
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 md:pt-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-0 z-10">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-0 z-10">
                       {formatDayLabel(toExactDatetime(day.date))}
                     </p>
                   )}
