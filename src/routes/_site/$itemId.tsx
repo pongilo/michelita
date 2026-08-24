@@ -1,17 +1,32 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { MenuList } from "@/components/menu-list";
-import { findItemById } from "@/lib/site-content";
+import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
+import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
+import { currencyFormatter } from "@/lib/utils/formatter";
+import { SITE_ORGANIZATION_ID } from "@/lib/site-organization";
 
 export const Route = createFileRoute("/_site/$itemId")({
-  beforeLoad: ({ params }) => {
-    if (!findItemById(params.itemId)) throw redirect({ to: "/" });
-  },
   component: ItemDetailPage,
 });
 
 function ItemDetailPage() {
   const { itemId } = Route.useParams();
-  const item = findItemById(itemId)!;
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetProductCategories({
+    organizationId: SITE_ORGANIZATION_ID,
+  });
+  const { data: productsData, isLoading: isLoadingProducts } = useGetProducts({
+    organizationId: SITE_ORGANIZATION_ID,
+  });
+
+  const isLoading = isLoadingCategories || isLoadingProducts;
+  const category = categoriesData?.categories.find((c) => c.slug === itemId);
+  const products = (productsData?.products ?? []).filter(
+    (product) => product.isActive && product.categoryId === category?.id,
+  );
+
+  if (!isLoading && !category) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <>
@@ -25,17 +40,24 @@ function ItemDetailPage() {
           </svg>
         </Link>
         <h2 className="font-display text-xl text-michelita-yellow py-3">
-          {item.name}
+          {category?.name}
         </h2>
       </div>
-      <MenuList>
-        {item.items.map((subItem, index) => (
-          <MenuList.Item key={subItem.name} index={index}>
-            {subItem.img && <MenuList.Item.Thumbnail src={subItem.img} alt={subItem.name} />}
-            <MenuList.Item.Info name={subItem.name} description={subItem.description} price={subItem.price} />
-          </MenuList.Item>
-        ))}
-      </MenuList>
+      {isLoading ? (
+        <p className="font-body text-white text-center py-10">Carregando produtos...</p>
+      ) : (
+        <MenuList>
+          {products.map((product, index) => (
+            <MenuList.Item key={product.id} index={index}>
+              <MenuList.Item.Info
+                name={product.name}
+                description={product.description ?? undefined}
+                price={currencyFormatter.format(product.price)}
+              />
+            </MenuList.Item>
+          ))}
+        </MenuList>
+      )}
     </>
   );
 }

@@ -33,6 +33,7 @@ const updateProductCategoryServerFn = createServerFn({ method: "POST" })
       select: {
         id: true,
         name: true,
+        slug: true,
         description: true,
         displayOrder: true,
         displayLimit: true,
