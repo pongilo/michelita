@@ -200,8 +200,8 @@ function CategoriesPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl p-5">
-      <header className="space-y-4 mb-6">
+    <main className="mx-auto w-full max-w-4xl px-5 pb-5">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 space-y-4 bg-background pt-5 mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
         <Button
           variant="ghost"
           size="sm"

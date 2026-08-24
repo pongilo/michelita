@@ -88,7 +88,7 @@ function RootComponent() {
               </NuqsAdapter>
             </TooltipProvider>
           </AuthProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
+          <ReactQueryDevtools initialIsOpen={false}  />
         </QueryClientProvider>
         <TanStackRouterDevtools />
         <Toaster />

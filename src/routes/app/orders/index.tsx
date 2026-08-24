@@ -251,8 +251,8 @@ function OrderPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-6xl space-y-4 py-5">
-        <header className="px-5 flex flex-wrap items-center gap-2">
+      <div className="mx-auto w-full max-w-6xl space-y-4 pb-24 md:pb-5">
+        <header className="sticky top-[env(safe-area-inset-top)] z-20 flex flex-wrap items-center gap-2 bg-background px-5 pt-5 md:static md:top-auto md:z-auto md:bg-transparent">
           <AppTitle>Pedidos</AppTitle>
 
           <div className="ml-auto flex items-center gap-2">
@@ -267,9 +267,6 @@ function OrderPage() {
                 Copiar
               </Button>
             )}
-            <Button size="icon-sm" className="md:hidden" nativeButton={false} render={<Link to="/app/orders/form" />}>
-              <PlusIcon />
-            </Button>
           </div>
         </header>
 
@@ -330,7 +327,7 @@ function OrderPage() {
               visibleDays.map((day) => (
                 <div key={day.date}>
                   {viewMode !== "day" && (
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-[env(safe-area-inset-top)] z-10">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10">
                       {formatDayLabel(toExactDatetime(day.date))}
                     </p>
                   )}
@@ -351,6 +348,16 @@ function OrderPage() {
           </div>
         )}
       </div>
+
+      <Button
+        size="icon"
+        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 size-14 shadow-lg md:hidden"
+        nativeButton={false}
+        render={<Link to="/app/orders/form" />}
+      >
+        <PlusIcon className="size-6" />
+        <span className="sr-only">Novo pedido</span>
+      </Button>
     </>
   );
 }

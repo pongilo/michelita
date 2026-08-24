@@ -75,10 +75,10 @@ function OrderDetailsPage() {
 
   if (order) {
     return (
-      <main className="mx-auto w-full max-w-4xl p-5">
+      <main className="mx-auto w-full max-w-4xl px-5 pb-5">
 
         {/* Header */}
-        <div className="mb-6 flex flex-nowrap items-start justify-between gap-3">
+        <div className="sticky top-[env(safe-area-inset-top)] z-20 flex flex-nowrap items-start justify-between gap-3 bg-background pt-5 mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
           <div>
             <div className="flex items-center gap-2">
               <AppTitle>Pedido #{order.id.slice(0, 8)}</AppTitle>

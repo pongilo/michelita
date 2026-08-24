@@ -103,8 +103,9 @@ function CustomersPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-5">
-      <header className="space-y-4">
+    <>
+    <main className="mx-auto w-full max-w-6xl px-5 pb-24 md:pb-5">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 space-y-4 bg-background pt-5 md:static md:top-auto md:z-auto md:bg-transparent">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">
             <AppTitle>Clientes</AppTitle>
@@ -112,7 +113,7 @@ function CustomersPage() {
               ({total} {total === 1 ? "cliente cadastrado" : "clientes cadastrados"})
             </p>
           </div>
-          <Button size="icon-sm" onClick={() => setIsCreateModalOpen(true)}>
+          <Button size="icon-sm" className="hidden md:inline-flex" onClick={() => setIsCreateModalOpen(true)}>
             <PlusIcon />
           </Button>
         </div>
@@ -172,5 +173,15 @@ function CustomersPage() {
         onSubmit={onSubmit}
       />
     </main>
+
+    <Button
+      size="icon"
+      className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 size-14 shadow-lg md:hidden"
+      onClick={() => setIsCreateModalOpen(true)}
+    >
+      <PlusIcon className="size-6" />
+      <span className="sr-only">Novo cliente</span>
+    </Button>
+    </>
   );
 }

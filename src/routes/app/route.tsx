@@ -2,7 +2,8 @@ import { createFileRoute, Link, Navigate, Outlet, useRouterState } from "@tansta
 import { useAuth } from "@/contexts/auth-context";
 import { PackageIcon, ListOrderedIcon, PlusIcon, UserRoundIcon, UsersRoundIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { MobileNavProvider, useMobileNav } from "@/contexts/mobile-nav-context";
 
 export const Route = createFileRoute("/app")({
   component: PrivateLayout,
@@ -14,7 +15,7 @@ const navItems = [
   { to: "/app/products", icon: PackageIcon, label: "Produtos" },
 ] as const;
 
-const bottomTabItems = [
+const mobileNavItems = [
   ...navItems,
   { to: "/app/account", icon: UserRoundIcon, label: "Conta" },
 ] as const;
@@ -56,21 +57,37 @@ function AppBar({ orgName }: { orgName: string }) {
   );
 }
 
-function BottomTabBar() {
+function MobileNavSheet({ orgName }: { orgName: string }) {
+  const { open, setOpen } = useMobileNav();
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
-      {bottomTabItems.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          activeOptions={{ exact: true }}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground data-[status=active]:text-foreground"
-        >
-          <item.icon className="size-5" />
-          <span>{item.label}</span>
-        </Link>
-      ))}
-    </nav>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="left" className="md:hidden">
+        <SheetTitle className="sr-only">Menu</SheetTitle>
+
+        <div className="flex items-center gap-2 border-b pb-4">
+          <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
+            {orgName.charAt(0).toUpperCase()}
+          </div>
+          <span className="text-sm font-medium">{orgName}</span>
+        </div>
+
+        <nav className="flex flex-col gap-1">
+          {mobileNavItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              activeOptions={{ exact: true }}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground"
+            >
+              <item.icon className="size-5" />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -84,17 +101,14 @@ function PrivateLayout() {
   if (!organization) return <Navigate to="/organization/new" />;
 
   return (
-    <div className="flex min-h-svh flex-col">
-      {!hideChrome && <AppBar orgName={organization.name} />}
-      <div
-        className={cn(
-          "flex-1 pt-[env(safe-area-inset-top)] md:pt-0 min-h-screen",
-          !hideChrome && "pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0"
-        )}
-      >
-        <Outlet />
+    <MobileNavProvider enabled={!hideChrome}>
+      <div className="flex min-h-svh flex-col">
+        {!hideChrome && <AppBar orgName={organization.name} />}
+        <div className="flex-1 pt-[env(safe-area-inset-top)] md:pt-0 min-h-screen">
+          <Outlet />
+        </div>
+        {!hideChrome && <MobileNavSheet orgName={organization.name} />}
       </div>
-      {!hideChrome && <BottomTabBar />}
-    </div>
+    </MobileNavProvider>
   );
 }
