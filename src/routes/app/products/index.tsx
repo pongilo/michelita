@@ -1,23 +1,43 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { EditIcon, FolderIcon, GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { Reorder, useDragControls } from "motion/react";
+import {
+  ArrowUpDownIcon,
+  EditIcon,
+  EllipsisVerticalIcon,
+  FolderPlusIcon,
+  PackagePlusIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
+import { CategoryFormModal, type CategoryFormValues } from "@/components/category-form-modal";
+import { CategoryProductsModal } from "@/components/category-products-modal";
+import { CategoryProductOrderModal } from "@/components/category-product-order-modal";
+import { CategoryOrderModal } from "@/components/category-order-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
-import { useReorderProducts } from "@/hooks/tanstack/product/use-reorder-products";
 import { useToggleProductActive } from "@/hooks/tanstack/product/use-toggle-product-active";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
+import { useCreateProductCategory } from "@/hooks/tanstack/product-category/use-create-product-category";
+import { useUpdateProductCategory } from "@/hooks/tanstack/product-category/use-update-product-category";
+import { useDeleteProductCategory } from "@/hooks/tanstack/product-category/use-delete-product-category";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AppTitle } from "@/components/app-title";
 import { cn, normalize } from "@/lib/utils";
 
@@ -42,6 +62,14 @@ type Product = {
   category: { id: string; name: string } | null;
 };
 
+type Category = {
+  id: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  displayLimit: number | null;
+};
+
 type CategoryGroup = {
   key: string;
   name: string;
@@ -49,51 +77,21 @@ type CategoryGroup = {
   displayLimit: number | null;
 };
 
-function SortableProductItem({
+function ProductListItem({
   product,
-  draggable,
   onEdit,
   onDelete,
   onToggleActive,
-  onDragStart,
-  onDragEnd,
   disabled,
 }: {
   product: Product;
-  draggable: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
   disabled: boolean;
 }) {
-  const dragControls = useDragControls();
-
   return (
-    <Item
-      variant="outline"
-      className={cn("bg-background", !product.isActive && "opacity-60")}
-      render={
-        <Reorder.Item
-          value={product}
-          dragListener={false}
-          dragControls={dragControls}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-        />
-      }
-    >
-      {draggable && (
-        <button
-          type="button"
-          className="flex-none cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-          onPointerDown={(event) => dragControls.start(event)}
-          aria-label="Arrastar para reordenar"
-        >
-          <GripVerticalIcon className="size-4" />
-        </button>
-      )}
+    <Item variant="outline" className={cn("bg-background", !product.isActive && "opacity-60")}>
       <ItemContent>
         <ItemTitle>
           {product.name}
@@ -121,6 +119,177 @@ function SortableProductItem({
         </Button>
       </ItemActions>
     </Item>
+  );
+}
+
+function CategorySectionHeader({
+  name,
+  count,
+  onManageProducts,
+  onOrganizeProducts,
+  onOrganizeCategories,
+  onEdit,
+  onDelete,
+  disabled,
+}: {
+  name: string;
+  count: number;
+  onManageProducts?: () => void;
+  onOrganizeProducts?: () => void;
+  onOrganizeCategories?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  disabled?: boolean;
+}) {
+  const showMenu = onManageProducts || onOrganizeProducts || onOrganizeCategories || onEdit || onDelete;
+
+  return (
+    <div className="flex items-center justify-between gap-2 px-1 mb-2">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <h3 className="truncate font-heading text-sm text-foreground">{name}</h3>
+        <span className="flex-none text-xs text-muted-foreground">{count}</span>
+      </div>
+      {showMenu && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+            disabled={disabled}
+            aria-label={`Ações da categoria ${name}`}
+          >
+            <EllipsisVerticalIcon className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onManageProducts && (
+              <DropdownMenuItem onClick={onManageProducts}>
+                <PackagePlusIcon />
+                Adicionar produtos
+              </DropdownMenuItem>
+            )}
+            {onEdit && (
+              <DropdownMenuItem onClick={onEdit}>
+                <EditIcon />
+                Editar categoria
+              </DropdownMenuItem>
+            )}
+            {onOrganizeProducts && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onOrganizeProducts}>
+                  <ArrowUpDownIcon />
+                  Organizar produtos
+                </DropdownMenuItem>
+              </>
+            )}
+            {onOrganizeCategories && (
+              <DropdownMenuItem onClick={onOrganizeCategories}>
+                <ArrowUpDownIcon />
+                Organizar categorias
+              </DropdownMenuItem>
+            )}
+            {onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                  <Trash2Icon />
+                  Excluir categoria
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
+function CategoryProductsList({
+  group,
+  onEditProduct,
+  onDeleteProduct,
+  onToggleActive,
+  disabled,
+}: {
+  group: CategoryGroup;
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (product: Product) => void;
+  onToggleActive: (product: Product) => void;
+  disabled: boolean;
+}) {
+  if (group.products.length === 0) {
+    return <p className="px-1 text-xs text-muted-foreground">Nenhum produto nesta categoria.</p>;
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2.5">
+      {group.products.map((product, index) => (
+        <div key={product.id}>
+          <ProductListItem
+            product={product}
+            onEdit={() => onEditProduct(product)}
+            onDelete={() => onDeleteProduct(product)}
+            onToggleActive={() => onToggleActive(product)}
+            disabled={disabled}
+          />
+          {group.displayLimit === index + 1 && index + 1 < group.products.length && (
+            <div className="flex items-center gap-2 px-1 py-0.5 mt-2.5">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[10px] text-muted-foreground">
+                Abaixo, estarão no ver mais do cardápio
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CategorySection({
+  group,
+  onEditCategory,
+  onDeleteCategory,
+  onManageProducts,
+  onOrganizeProducts,
+  onOrganizeCategories,
+  categoryActionsDisabled,
+  onEditProduct,
+  onDeleteProduct,
+  onToggleActiveProduct,
+  productActionsDisabled,
+}: {
+  group: CategoryGroup;
+  onEditCategory?: () => void;
+  onDeleteCategory?: () => void;
+  onManageProducts?: () => void;
+  onOrganizeProducts?: () => void;
+  onOrganizeCategories?: () => void;
+  categoryActionsDisabled?: boolean;
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (product: Product) => void;
+  onToggleActiveProduct: (product: Product) => void;
+  productActionsDisabled: boolean;
+}) {
+  return (
+    <section>
+      <CategorySectionHeader
+        name={group.name}
+        count={group.products.length}
+        onManageProducts={onManageProducts}
+        onOrganizeProducts={onOrganizeProducts}
+        onOrganizeCategories={onOrganizeCategories}
+        onEdit={onEditCategory}
+        onDelete={onDeleteCategory}
+        disabled={categoryActionsDisabled}
+      />
+      <CategoryProductsList
+        group={group}
+        onEditProduct={onEditProduct}
+        onDeleteProduct={onDeleteProduct}
+        onToggleActive={onToggleActiveProduct}
+        disabled={productActionsDisabled}
+      />
+    </section>
   );
 }
 
@@ -172,19 +341,6 @@ function ProductsPage() {
     return search ? result.filter((group) => group.products.length > 0) : result;
   }, [filteredProducts, categories, search]);
 
-  const [localGroups, setLocalGroups] = useState<CategoryGroup[]>([]);
-  const localGroupsRef = useRef<CategoryGroup[]>([]);
-  const isDraggingRef = useRef(false);
-
-  useEffect(() => {
-    localGroupsRef.current = localGroups;
-  }, [localGroups]);
-
-  useEffect(() => {
-    if (isDraggingRef.current) return;
-    setLocalGroups(groups);
-  }, [groups]);
-
   const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
     organizationId: organization!.id,
@@ -192,17 +348,29 @@ function ProductsPage() {
   const { mutateAsync: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct({
     organizationId: organization!.id,
   });
-  const { mutateAsync: reorderProducts } = useReorderProducts({
+  const { mutateAsync: toggleProductActive, isPending: isTogglingActive } = useToggleProductActive({
     organizationId: organization!.id,
   });
-  const { mutateAsync: toggleProductActive, isPending: isTogglingActive } = useToggleProductActive({
+
+  const { mutateAsync: createCategory, isPending: isCreatingCategory } = useCreateProductCategory();
+  const { mutateAsync: updateCategory, isPending: isUpdatingCategory } = useUpdateProductCategory({
+    organizationId: organization!.id,
+  });
+  const { mutateAsync: deleteCategory, isPending: isDeletingCategory } = useDeleteProductCategory({
     organizationId: organization!.id,
   });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [productsModalCategory, setProductsModalCategory] = useState<Category | null>(null);
+  const [productOrderGroup, setProductOrderGroup] = useState<CategoryGroup | null>(null);
+  const [isCategoryOrderModalOpen, setIsCategoryOrderModalOpen] = useState(false);
+
   const isSubmitting = isCreatingProduct || isUpdatingProduct;
+  const isCategorySubmitting = isCreatingCategory || isUpdatingCategory;
 
   async function onSubmit(values: ProductFormValues) {
     try {
@@ -269,18 +437,43 @@ function ProductsPage() {
     }
   }
 
-  async function handleGroupDragEnd(groupKey: string) {
-    isDraggingRef.current = false;
-    const group = localGroupsRef.current.find((g) => g.key === groupKey);
-    if (!group) return;
+  async function onCategorySubmit(values: CategoryFormValues) {
+    try {
+      if (editingCategory) {
+        await updateCategory({ id: editingCategory.id, ...values });
+        toast.success("Categoria atualizada com sucesso.");
+      } else {
+        await createCategory({ organizationId: organization!.id, ...values });
+        toast.success("Categoria criada com sucesso.");
+      }
+      setIsCategoryFormOpen(false);
+      setEditingCategory(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao salvar categoria.");
+    }
+  }
+
+  function handleStartEditCategory(category: Category) {
+    setEditingCategory(category);
+    setIsCategoryFormOpen(true);
+  }
+
+  function handleCloseCategoryForm() {
+    setIsCategoryFormOpen(false);
+    setEditingCategory(null);
+  }
+
+  async function handleDeleteCategory(categoryId: string, categoryName: string) {
+    const confirmed = window.confirm(
+      `Deseja realmente excluir a categoria "${categoryName}"? Os produtos vinculados ficarão sem categoria.`,
+    );
+    if (!confirmed) return;
 
     try {
-      await reorderProducts({
-        organizationId: organization!.id,
-        orderedIds: group.products.map((product) => product.id),
-      });
+      await deleteCategory({ id: categoryId, organizationId: organization!.id });
+      toast.success("Categoria excluída com sucesso.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao reordenar produtos.");
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir categoria.");
     }
   }
 
@@ -303,18 +496,29 @@ function ProductsPage() {
   if (total === 0 && !searchInput) {
     return (
       <>
-        <EmptyState>
-          <EmptyState.Icon>🧁</EmptyState.Icon>
-          <EmptyState.Title>Nenhum produto ainda</EmptyState.Title>
-          <EmptyState.Description>
-            Cadastre seus produtos para agilizar o preenchimento de pedidos.
-          </EmptyState.Description>
-          <EmptyState.Action>
-            <Button size="sm" onClick={() => setIsFormOpen(true)}>
-              Novo produto
-            </Button>
-          </EmptyState.Action>
-        </EmptyState>
+        <main className="mx-auto w-full max-w-4xl px-5 pb-5">
+          <header className="sticky top-[env(safe-area-inset-top)] z-20 bg-background pt-5 mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
+            <AppTitle>Produtos</AppTitle>
+          </header>
+
+          <EmptyState>
+            <EmptyState.Icon>🧁</EmptyState.Icon>
+            <EmptyState.Title>Nenhum produto ainda</EmptyState.Title>
+            <EmptyState.Description>
+              Cadastre seus produtos para agilizar o preenchimento de pedidos.
+            </EmptyState.Description>
+            <EmptyState.Action>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" onClick={() => setIsFormOpen(true)}>
+                  Novo produto
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setEditingCategory(null); setIsCategoryFormOpen(true); }}>
+                  Nova categoria
+                </Button>
+              </div>
+            </EmptyState.Action>
+          </EmptyState>
+        </main>
 
         <ProductFormModal
           isOpen={isFormOpen}
@@ -323,6 +527,23 @@ function ProductsPage() {
           categories={categories}
           onClose={handleClose}
           onSubmit={onSubmit}
+        />
+
+        <CategoryFormModal
+          isOpen={isCategoryFormOpen}
+          mode={editingCategory ? "edit" : "create"}
+          isSubmitting={isCategorySubmitting}
+          initialValues={
+            editingCategory
+              ? {
+                  name: editingCategory.name,
+                  description: editingCategory.description ?? "",
+                  displayLimit: editingCategory.displayLimit ?? undefined,
+                }
+              : undefined
+          }
+          onClose={handleCloseCategoryForm}
+          onSubmit={onCategorySubmit}
         />
       </>
     );
@@ -342,12 +563,11 @@ function ProductsPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              nativeButton={false}
-              render={<Link to="/app/products/categories" />}
+              size="icon-sm"
+              onClick={() => { setEditingCategory(null); setIsCategoryFormOpen(true); }}
+              aria-label="Nova categoria"
             >
-              <FolderIcon />
-              Categorias
+              <FolderPlusIcon />
             </Button>
             <Button
               size="icon-sm"
@@ -369,62 +589,43 @@ function ProductsPage() {
         </EmptyState>
       )}
 
-      {localGroups.length > 0 && (
+      {groups.length > 0 && (
         <div className="space-y-5">
-          {!search && (
-            <p className="text-xs text-muted-foreground -mt-3">
-              Arraste pelo ícone para reordenar os produtos dentro de cada categoria.
-            </p>
+          {groups.map((group) =>
+            group.key === NO_CATEGORY_KEY ? (
+              <CategorySection
+                key={group.key}
+                group={group}
+                onOrganizeProducts={() => setProductOrderGroup(group)}
+                onOrganizeCategories={categories.length > 1 ? () => setIsCategoryOrderModalOpen(true) : undefined}
+                onEditProduct={handleStartEdit}
+                onDeleteProduct={(product) => handleDelete(product.id, product.name)}
+                onToggleActiveProduct={handleToggleActive}
+                productActionsDisabled={isDeletingProduct || isTogglingActive}
+              />
+            ) : (
+              <CategorySection
+                key={group.key}
+                group={group}
+                onEditCategory={() => {
+                  const category = categories.find((item) => item.id === group.key);
+                  if (category) handleStartEditCategory(category);
+                }}
+                onDeleteCategory={() => handleDeleteCategory(group.key, group.name)}
+                onManageProducts={() => {
+                  const category = categories.find((item) => item.id === group.key);
+                  if (category) setProductsModalCategory(category);
+                }}
+                onOrganizeProducts={() => setProductOrderGroup(group)}
+                onOrganizeCategories={categories.length > 1 ? () => setIsCategoryOrderModalOpen(true) : undefined}
+                categoryActionsDisabled={isDeletingCategory}
+                onEditProduct={handleStartEdit}
+                onDeleteProduct={(product) => handleDelete(product.id, product.name)}
+                onToggleActiveProduct={handleToggleActive}
+                productActionsDisabled={isDeletingProduct || isTogglingActive}
+              />
+            ),
           )}
-
-          {localGroups.map((group) => (
-            <section key={group.key}>
-              <div className="flex items-center justify-between px-1 mb-2">
-                <h3 className="font-heading text-sm text-foreground">{group.name}</h3>
-                <span className="text-xs text-muted-foreground">{group.products.length}</span>
-              </div>
-
-              {group.products.length === 0 ? (
-                <p className="px-1 text-xs text-muted-foreground">Nenhum produto nesta categoria.</p>
-              ) : (
-                <Reorder.Group
-                  as="div"
-                  axis="y"
-                  values={group.products}
-                  onReorder={(newProducts) => {
-                    setLocalGroups((prev) =>
-                      prev.map((g) => (g.key === group.key ? { ...g, products: newProducts } : g)),
-                    );
-                  }}
-                  className="flex w-full flex-col gap-2.5"
-                >
-                  {group.products.map((product, index) => (
-                    <Fragment key={product.id}>
-                      <SortableProductItem
-                        product={product}
-                        draggable={!search}
-                        onEdit={() => handleStartEdit(product)}
-                        onDelete={() => handleDelete(product.id, product.name)}
-                        onToggleActive={() => handleToggleActive(product)}
-                        onDragStart={() => { isDraggingRef.current = true; }}
-                        onDragEnd={() => handleGroupDragEnd(group.key)}
-                        disabled={isDeletingProduct || isTogglingActive}
-                      />
-                      {group.displayLimit === index + 1 && index + 1 < group.products.length && (
-                        <div className="flex items-center gap-2 px-1 py-0.5">
-                          <div className="h-px flex-1 bg-border" />
-                          <span className="text-[10px] text-muted-foreground">
-                            Abaixo, estarão no ver mais do cardápio
-                          </span>
-                          <div className="h-px flex-1 bg-border" />
-                        </div>
-                      )}
-                    </Fragment>
-                  ))}
-                </Reorder.Group>
-              )}
-            </section>
-          ))}
         </div>
       )}
 
@@ -445,6 +646,45 @@ function ProductsPage() {
         }
         onClose={handleClose}
         onSubmit={onSubmit}
+      />
+
+      <CategoryFormModal
+        isOpen={isCategoryFormOpen}
+        mode={editingCategory ? "edit" : "create"}
+        isSubmitting={isCategorySubmitting}
+        initialValues={
+          editingCategory
+            ? {
+                name: editingCategory.name,
+                description: editingCategory.description ?? "",
+                displayLimit: editingCategory.displayLimit ?? undefined,
+              }
+            : undefined
+        }
+        onClose={handleCloseCategoryForm}
+        onSubmit={onCategorySubmit}
+      />
+
+      <CategoryProductsModal
+        isOpen={productsModalCategory !== null}
+        category={productsModalCategory}
+        organizationId={organization!.id}
+        onClose={() => setProductsModalCategory(null)}
+      />
+
+      <CategoryProductOrderModal
+        isOpen={productOrderGroup !== null}
+        category={productOrderGroup ? { id: productOrderGroup.key, name: productOrderGroup.name } : null}
+        products={productOrderGroup?.products ?? []}
+        organizationId={organization!.id}
+        onClose={() => setProductOrderGroup(null)}
+      />
+
+      <CategoryOrderModal
+        isOpen={isCategoryOrderModalOpen}
+        categories={categories}
+        organizationId={organization!.id}
+        onClose={() => setIsCategoryOrderModalOpen(false)}
       />
     </main>
 
