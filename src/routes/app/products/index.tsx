@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -11,14 +11,11 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { ProductFormModal, type ProductFormValues } from "@/components/product-form-modal";
 import { CategoryFormModal, type CategoryFormValues } from "@/components/category-form-modal";
 import { CategoryProductsModal } from "@/components/category-products-modal";
 import { CategoryProductOrderModal } from "@/components/category-product-order-modal";
 import { CategoryOrderModal } from "@/components/category-order-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
-import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
-import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
 import { useToggleProductActive } from "@/hooks/tanstack/product/use-toggle-product-active";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
@@ -171,14 +168,14 @@ function CategorySectionHeader({
                 Editar categoria
               </DropdownMenuItem>
             )}
+
+            {(onManageProducts || onEdit) && <DropdownMenuSeparator />}
+
             {onOrganizeProducts && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onOrganizeProducts}>
-                  <ArrowUpDownIcon />
-                  Organizar produtos
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem onClick={onOrganizeProducts}>
+                <ArrowUpDownIcon />
+                Organizar produtos
+              </DropdownMenuItem>
             )}
             {onOrganizeCategories && (
               <DropdownMenuItem onClick={onOrganizeCategories}>
@@ -295,6 +292,7 @@ function CategorySection({
 
 function ProductsPage() {
   const { organization } = useAuth();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
 
   const { data, isLoading, isError, error } = useGetProducts({
@@ -341,10 +339,6 @@ function ProductsPage() {
     return search ? result.filter((group) => group.products.length > 0) : result;
   }, [filteredProducts, categories, search]);
 
-  const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
-  const { mutateAsync: updateProduct, isPending: isUpdatingProduct } = useUpdateProduct({
-    organizationId: organization!.id,
-  });
   const { mutateAsync: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct({
     organizationId: organization!.id,
   });
@@ -360,55 +354,13 @@ function ProductsPage() {
     organizationId: organization!.id,
   });
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [productsModalCategory, setProductsModalCategory] = useState<Category | null>(null);
   const [productOrderGroup, setProductOrderGroup] = useState<CategoryGroup | null>(null);
   const [isCategoryOrderModalOpen, setIsCategoryOrderModalOpen] = useState(false);
 
-  const isSubmitting = isCreatingProduct || isUpdatingProduct;
   const isCategorySubmitting = isCreatingCategory || isUpdatingCategory;
-
-  async function onSubmit(values: ProductFormValues) {
-    try {
-      if (editingProduct) {
-        await updateProduct({
-          id: editingProduct.id,
-          name: values.name,
-          description: values.description,
-          price: values.price,
-          categoryId: values.categoryId,
-        });
-        toast.success("Produto atualizado com sucesso.");
-      } else {
-        await createProduct({
-          organizationId: organization!.id,
-          name: values.name,
-          description: values.description,
-          price: values.price,
-          categoryId: values.categoryId,
-        });
-        toast.success("Produto criado com sucesso.");
-      }
-      setIsFormOpen(false);
-      setEditingProduct(null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao salvar produto.");
-    }
-  }
-
-  function handleStartEdit(product: Product) {
-    setEditingProduct(product);
-    setIsFormOpen(true);
-  }
-
-  function handleClose() {
-    setIsFormOpen(false);
-    setEditingProduct(null);
-  }
 
   async function handleDelete(productId: string, productName: string) {
     const confirmed = window.confirm(
@@ -509,7 +461,7 @@ function ProductsPage() {
             </EmptyState.Description>
             <EmptyState.Action>
               <div className="flex flex-wrap justify-center gap-2">
-                <Button size="sm" onClick={() => setIsFormOpen(true)}>
+                <Button size="sm" nativeButton={false} render={<Link to="/app/products/new" />}>
                   Novo produto
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => { setEditingCategory(null); setIsCategoryFormOpen(true); }}>
@@ -519,15 +471,6 @@ function ProductsPage() {
             </EmptyState.Action>
           </EmptyState>
         </main>
-
-        <ProductFormModal
-          isOpen={isFormOpen}
-          mode="create"
-          isSubmitting={isSubmitting}
-          categories={categories}
-          onClose={handleClose}
-          onSubmit={onSubmit}
-        />
 
         <CategoryFormModal
           isOpen={isCategoryFormOpen}
@@ -572,7 +515,8 @@ function ProductsPage() {
             <Button
               size="icon-sm"
               className="hidden md:inline-flex"
-              onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+              nativeButton={false}
+              render={<Link to="/app/products/new" />}
             >
               <PlusIcon />
             </Button>
@@ -598,7 +542,7 @@ function ProductsPage() {
                 group={group}
                 onOrganizeProducts={() => setProductOrderGroup(group)}
                 onOrganizeCategories={categories.length > 1 ? () => setIsCategoryOrderModalOpen(true) : undefined}
-                onEditProduct={handleStartEdit}
+                onEditProduct={(product) => navigate({ to: "/app/products/$productId", params: { productId: product.id } })}
                 onDeleteProduct={(product) => handleDelete(product.id, product.name)}
                 onToggleActiveProduct={handleToggleActive}
                 productActionsDisabled={isDeletingProduct || isTogglingActive}
@@ -619,7 +563,7 @@ function ProductsPage() {
                 onOrganizeProducts={() => setProductOrderGroup(group)}
                 onOrganizeCategories={categories.length > 1 ? () => setIsCategoryOrderModalOpen(true) : undefined}
                 categoryActionsDisabled={isDeletingCategory}
-                onEditProduct={handleStartEdit}
+                onEditProduct={(product) => navigate({ to: "/app/products/$productId", params: { productId: product.id } })}
                 onDeleteProduct={(product) => handleDelete(product.id, product.name)}
                 onToggleActiveProduct={handleToggleActive}
                 productActionsDisabled={isDeletingProduct || isTogglingActive}
@@ -628,25 +572,6 @@ function ProductsPage() {
           )}
         </div>
       )}
-
-      <ProductFormModal
-        isOpen={isFormOpen}
-        mode={editingProduct ? "edit" : "create"}
-        isSubmitting={isSubmitting}
-        categories={categories}
-        initialValues={
-          editingProduct
-            ? {
-                name: editingProduct.name,
-                description: editingProduct.description ?? undefined,
-                price: editingProduct.price,
-                categoryId: editingProduct.categoryId ?? undefined,
-              }
-            : undefined
-        }
-        onClose={handleClose}
-        onSubmit={onSubmit}
-      />
 
       <CategoryFormModal
         isOpen={isCategoryFormOpen}
@@ -691,7 +616,8 @@ function ProductsPage() {
     <Button
       size="icon"
       className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 size-14 shadow-lg md:hidden"
-      onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+      nativeButton={false}
+      render={<Link to="/app/products/new" />}
     >
       <PlusIcon className="size-6" />
       <span className="sr-only">Novo produto</span>
