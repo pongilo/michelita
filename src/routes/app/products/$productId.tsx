@@ -50,6 +50,7 @@ function ProductDetailsPage() {
         id: product.id,
         name: values.name,
         description: values.description,
+        imageUrl: values.imageUrl,
         price: values.price,
         categoryId: values.categoryId,
       });
@@ -132,9 +133,11 @@ function ProductDetailsPage() {
         mode="edit"
         isSubmitting={isUpdating}
         categories={categories}
+        organizationId={organization!.id}
         initialValues={{
           name: product.name,
           description: product.description ?? undefined,
+          imageUrl: product.imageUrl ?? undefined,
           price: product.price,
           categoryId: product.categoryId ?? undefined,
         }}

@@ -29,6 +29,7 @@ function NewProductPage() {
         organizationId: organization!.id,
         name: values.name,
         description: values.description,
+        imageUrl: values.imageUrl,
         price: values.price,
         categoryId: values.categoryId,
       });
@@ -52,6 +53,7 @@ function NewProductPage() {
         mode="create"
         isSubmitting={isPending}
         categories={categories}
+        organizationId={organization!.id}
         onSubmit={handleSubmit}
         onCancel={() => navigate({ to: "/app/products" })}
       />

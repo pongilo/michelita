@@ -6,6 +6,7 @@ const createProductSchema = z.object({
   organizationId: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
   description: z.string().trim().optional(),
+  imageUrl: z.url().optional(),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
   categoryId: z.uuid().optional(),
 });
@@ -35,6 +36,7 @@ const createProductServerFn = createServerFn({ method: "POST" })
         organizationId: data.organizationId,
         name: data.name,
         description: toOptionalString(data.description),
+        imageUrl: data.imageUrl ?? null,
         price: data.price,
         categoryId,
         displayOrder: existingCount,
@@ -43,6 +45,7 @@ const createProductServerFn = createServerFn({ method: "POST" })
         id: true,
         name: true,
         description: true,
+        imageUrl: true,
         price: true,
         categoryId: true,
       },

@@ -63,6 +63,7 @@ function HomePage() {
               <MenuList>
                 {section.visibleProducts.map((product, index) => (
                   <MenuList.Item key={product.id} index={index}>
+                    {product.imageUrl && <MenuList.Item.Thumbnail src={product.imageUrl} alt={product.name} />}
                     <MenuList.Item.Info
                       name={product.name}
                       description={product.description ?? undefined}

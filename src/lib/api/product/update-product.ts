@@ -6,6 +6,7 @@ const updateProductSchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
   description: z.string().trim().optional(),
+  imageUrl: z.url().optional(),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
   categoryId: z.uuid().optional(),
 });
@@ -29,6 +30,7 @@ const updateProductServerFn = createServerFn({ method: "POST" })
       data: {
         name: data.name,
         description: toOptionalString(data.description),
+        imageUrl: data.imageUrl ?? null,
         price: data.price,
         categoryId: data.categoryId ?? null,
       },
@@ -36,6 +38,7 @@ const updateProductServerFn = createServerFn({ method: "POST" })
         id: true,
         name: true,
         description: true,
+        imageUrl: true,
         price: true,
         categoryId: true,
       },

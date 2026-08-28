@@ -7,6 +7,7 @@ import {
   EditIcon,
   EllipsisVerticalIcon,
   FolderPlusIcon,
+  ImageIcon,
   PackagePlusIcon,
   PlusIcon,
   Trash2Icon,
@@ -25,7 +26,7 @@ import { useDeleteProductCategory } from "@/hooks/tanstack/product-category/use-
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions, ItemMedia } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -53,6 +54,7 @@ type Product = {
   id: string;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   price: number;
   categoryId: string | null;
   isActive: boolean;
@@ -89,6 +91,15 @@ function ProductListItem({
 }) {
   return (
     <Item variant="outline" className={cn("bg-background", !product.isActive && "opacity-60")}>
+      <ItemMedia className="size-10 flex-none overflow-hidden rounded-lg bg-muted">
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt="" className="size-full object-cover" />
+        ) : (
+          <div className="flex size-full items-center justify-center text-muted-foreground">
+            <ImageIcon className="size-4" />
+          </div>
+        )}
+      </ItemMedia>
       <ItemContent>
         <ItemTitle>
           {product.name}

@@ -20,6 +20,7 @@ const getProductsServerFn = createServerFn({ method: "POST" })
         id: true,
         name: true,
         description: true,
+        imageUrl: true,
         price: true,
         categoryId: true,
         isActive: true,
