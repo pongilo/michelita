@@ -64,9 +64,21 @@ export const Route = createRootRoute({
 
 function useRegisterSW() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-    }
+    if (!('serviceWorker' in navigator)) return
+
+    fetch('/sw.js', { cache: 'no-store' })
+      .then((res) => {
+        const contentType = res.headers.get('content-type') ?? ''
+        if (!contentType.includes('javascript')) {
+          return navigator.serviceWorker
+            .getRegistrations()
+            .then((registrations) => {
+              registrations.forEach((registration) => registration.unregister())
+            })
+        }
+        return navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(() => undefined)
+      })
+      .catch(() => {})
   }, [])
 }
 
