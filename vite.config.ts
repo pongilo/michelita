@@ -22,7 +22,6 @@ export default defineConfig({
     tanstackStart({
       srcDirectory: 'src',
     }),
-    nitro(),
     viteReact(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -82,5 +81,6 @@ export default defineConfig({
         enabled: false,
       },
     }),
+    nitro(),
   ],
 });
