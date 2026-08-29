@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { PackageIcon, ListOrderedIcon, PlusIcon, UserRoundIcon, UsersRoundIcon } from "lucide-react";
+import { HomeIcon, PackageIcon, ListOrderedIcon, PlusIcon, UserRoundIcon, UsersRoundIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MobileNavProvider, useMobileNav } from "@/contexts/mobile-nav-context";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const navItems = [
+  { to: "/app", icon: HomeIcon, label: "Início" },
   { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/products", icon: PackageIcon, label: "Produtos" },

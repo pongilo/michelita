@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as SiteRouteRouteImport } from './routes/_site/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as SiteItemIdRouteImport } from './routes/_site/$itemId'
@@ -39,6 +40,11 @@ const SiteRouteRoute = SiteRouteRouteImport.update({
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
+  '/app/': typeof AppIndexRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -130,11 +137,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
-  '/app': typeof AppRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
+  '/app': typeof AppIndexRoute
   '/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -155,6 +162,7 @@ export interface FileRoutesById {
   '/_site/$itemId': typeof SiteItemIdRoute
   '/app/account': typeof AppAccountRoute
   '/_site/': typeof SiteIndexRoute
+  '/app/': typeof AppIndexRoute
   '/_auth/organization/new': typeof AuthOrganizationNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -174,6 +182,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/$itemId'
     | '/app/account'
+    | '/app/'
     | '/organization/new'
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
@@ -186,11 +195,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/login'
     | '/register'
     | '/$itemId'
     | '/app/account'
+    | '/app'
     | '/organization/new'
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/_site/$itemId'
     | '/app/account'
     | '/_site/'
+    | '/app/'
     | '/_auth/organization/new'
     | '/app/customers/$customerId'
     | '/app/orders/$orderId'
@@ -249,6 +259,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_site/': {
       id: '/_site/'
@@ -383,6 +400,7 @@ const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
+  AppIndexRoute: typeof AppIndexRoute
   AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
@@ -395,6 +413,7 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccountRoute: AppAccountRoute,
+  AppIndexRoute: AppIndexRoute,
   AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
