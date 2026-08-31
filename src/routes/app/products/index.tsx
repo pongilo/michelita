@@ -104,7 +104,14 @@ function ProductListItem({
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
-          {product.name}
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={disabled}
+            className="truncate text-left hover:underline disabled:pointer-events-none"
+          >
+            {product.name}
+          </button>
           {!product.isActive && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal text-muted-foreground">
               Inativo
@@ -121,9 +128,6 @@ function ProductListItem({
           disabled={disabled}
           aria-label={product.isActive ? "Desativar produto" : "Ativar produto"}
         />
-        <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={disabled}>
-          <EditIcon />
-        </Button>
         <Button size="icon-sm" variant="ghost" onClick={onDelete} disabled={disabled}>
           <Trash2Icon />
         </Button>
