@@ -22,6 +22,7 @@ const getProductsServerFn = createServerFn({ method: "POST" })
         description: true,
         imageUrl: true,
         price: true,
+        multiplier: true,
         categoryId: true,
         isActive: true,
         category: { select: { id: true, name: true } },
@@ -29,7 +30,11 @@ const getProductsServerFn = createServerFn({ method: "POST" })
     });
 
     return {
-      products: products.map((p) => ({ ...p, price: Number(p.price) })),
+      products: products.map((p) => ({
+        ...p,
+        price: Number(p.price),
+        multiplier: p.multiplier !== null ? Number(p.multiplier) : null,
+      })),
     };
   });
 

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ type ProductSuppliesCardProps = {
   productId: string;
   organizationId: string;
   productPrice: number;
+  multiplier: number | null;
+  onMultiplierChange: (multiplier: number | null) => Promise<void> | void;
+  onApplySuggestedPrice: (price: number) => Promise<void> | void;
 };
 
 function ProductSupplyRow({
@@ -75,9 +78,17 @@ function ProductSupplyRow({
   );
 }
 
-export function ProductSuppliesCard({ productId, organizationId, productPrice }: ProductSuppliesCardProps) {
+export function ProductSuppliesCard({
+  productId,
+  organizationId,
+  productPrice,
+  multiplier,
+  onMultiplierChange,
+  onApplySuggestedPrice,
+}: ProductSuppliesCardProps) {
   const [selectedSupplyId, setSelectedSupplyId] = useState("");
   const [newQuantity, setNewQuantity] = useState("");
+  const [multiplierInput, setMultiplierInput] = useState(multiplier !== null ? String(multiplier) : "");
 
   const { data: suppliesData } = useGetSupplies({ organizationId });
   const allSupplies = suppliesData?.supplies ?? [];
@@ -95,7 +106,33 @@ export function ProductSuppliesCard({ productId, organizationId, productPrice }:
   }, [allSupplies, items]);
 
   const totalCost = items.reduce((sum, item) => sum + item.quantity * item.supply.costPerUnit, 0);
-  const costShare = productPrice > 0 ? totalCost / productPrice : null;
+  const suggestedPrice = multiplier !== null && totalCost > 0 ? totalCost * multiplier : null;
+  const priceDiff = suggestedPrice !== null ? suggestedPrice - productPrice : null;
+
+  useEffect(() => {
+    setMultiplierInput(multiplier !== null ? String(multiplier) : "");
+  }, [multiplier]);
+
+  async function handleMultiplierBlur() {
+    const trimmed = multiplierInput.trim();
+    if (trimmed === "") {
+      if (multiplier === null) return;
+      await onMultiplierChange(null);
+      return;
+    }
+    const parsed = Number(trimmed.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setMultiplierInput(multiplier !== null ? String(multiplier) : "");
+      return;
+    }
+    if (parsed === multiplier) return;
+    await onMultiplierChange(parsed);
+  }
+
+  async function handleApplySuggestedPrice() {
+    if (suggestedPrice === null) return;
+    await onApplySuggestedPrice(Number(suggestedPrice.toFixed(2)));
+  }
 
   async function handleAdd() {
     if (!selectedSupplyId) return;
@@ -157,14 +194,59 @@ export function ProductSuppliesCard({ productId, organizationId, productPrice }:
           )}
 
           {items.length > 0 && (
-            <div className="flex items-center justify-between rounded-2xl border border-dashed px-4 py-3 text-sm">
-              <span className="text-muted-foreground">Custo total (CMV)</span>
-              <span className="font-medium">
-                {currencyFormatter.format(totalCost)}
-                {costShare !== null && (
-                  <span className="text-muted-foreground"> ({(costShare * 100).toFixed(1)}% do preço)</span>
-                )}
-              </span>
+            <div className="space-y-2 rounded-2xl border px-4 py-3">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Custo total (CMV)</span>
+                <span className="font-medium">{currencyFormatter.format(totalCost)}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="product-multiplier" className="text-sm text-muted-foreground">
+                  Multiplicador desejado
+                </label>
+                <div className="flex items-center gap-1">
+                  <Input
+                    id="product-multiplier"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder="0"
+                    className="h-9 w-20 text-right"
+                    value={multiplierInput}
+                    onChange={(event) => setMultiplierInput(event.target.value)}
+                    onBlur={handleMultiplierBlur}
+                  />
+                  <span className="text-sm text-muted-foreground">x</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Preço aplicado</span>
+                <span className="font-medium">{currencyFormatter.format(productPrice)}</span>
+              </div>
+
+              {suggestedPrice !== null && priceDiff !== null && (
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">Preço sugerido</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {currencyFormatter.format(suggestedPrice)}
+                      {Math.abs(priceDiff) > 0.005 && (
+                        <span className={priceDiff > 0 ? "text-amber-700" : "text-muted-foreground"}>
+                          {" "}
+                          ({priceDiff > 0 ? "+" : "-"}
+                          {currencyFormatter.format(Math.abs(priceDiff))})
+                        </span>
+                      )}
+                    </span>
+                    {Math.abs(priceDiff) > 0.005 && (
+                      <Button type="button" size="sm" variant="outline" onClick={handleApplySuggestedPrice}>
+                        Usar este preço
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

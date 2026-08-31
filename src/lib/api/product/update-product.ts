@@ -8,6 +8,7 @@ const updateProductSchema = z.object({
   description: z.string().trim().optional(),
   imageUrl: z.url().optional(),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
+  multiplier: z.number().positive("O multiplicador deve ser maior que zero.").optional(),
   categoryId: z.uuid().optional(),
 });
 
@@ -32,6 +33,7 @@ const updateProductServerFn = createServerFn({ method: "POST" })
         description: toOptionalString(data.description),
         imageUrl: data.imageUrl ?? null,
         price: data.price,
+        multiplier: data.multiplier ?? null,
         categoryId: data.categoryId ?? null,
       },
       select: {
@@ -40,11 +42,16 @@ const updateProductServerFn = createServerFn({ method: "POST" })
         description: true,
         imageUrl: true,
         price: true,
+        multiplier: true,
         categoryId: true,
       },
     });
 
-    return { ...product, price: Number(product.price) };
+    return {
+      ...product,
+      price: Number(product.price),
+      multiplier: product.multiplier !== null ? Number(product.multiplier) : null,
+    };
   });
 
 export async function updateProduct(data: UpdateProductProps) {

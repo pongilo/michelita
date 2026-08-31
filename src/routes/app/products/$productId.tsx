@@ -58,12 +58,48 @@ function ProductDetailsPage() {
         description: values.description,
         imageUrl: values.imageUrl,
         price: values.price,
+        multiplier: product.multiplier ?? undefined,
         categoryId: values.categoryId,
       });
       toast.success("Produto atualizado com sucesso.");
       navigate({ to: "/app/products" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar produto.");
+    }
+  }
+
+  async function handleMultiplierChange(multiplier: number | null) {
+    if (!product) return;
+    try {
+      await updateProduct({
+        id: product.id,
+        name: product.name,
+        description: product.description ?? undefined,
+        imageUrl: product.imageUrl ?? undefined,
+        price: product.price,
+        multiplier: multiplier ?? undefined,
+        categoryId: product.categoryId ?? undefined,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar multiplicador.");
+    }
+  }
+
+  async function handleApplySuggestedPrice(price: number) {
+    if (!product) return;
+    try {
+      await updateProduct({
+        id: product.id,
+        name: product.name,
+        description: product.description ?? undefined,
+        imageUrl: product.imageUrl ?? undefined,
+        price,
+        multiplier: product.multiplier ?? undefined,
+        categoryId: product.categoryId ?? undefined,
+      });
+      toast.success("Preço atualizado com sucesso.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar preço.");
     }
   }
 
@@ -170,6 +206,9 @@ function ProductDetailsPage() {
             productId={product.id}
             organizationId={organization!.id}
             productPrice={product.price}
+            multiplier={product.multiplier}
+            onMultiplierChange={handleMultiplierChange}
+            onApplySuggestedPrice={handleApplySuggestedPrice}
           />
         </TabsContent>
       </Tabs>
