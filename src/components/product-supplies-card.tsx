@@ -1,12 +1,12 @@
-import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Trash2Icon } from "lucide-react";
+import { SettingsIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
+import { ManageSuppliesModal } from "@/components/manage-supplies-modal";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
 import { useAddProductSupply } from "@/hooks/tanstack/product-supply/use-add-product-supply";
@@ -89,6 +89,7 @@ export function ProductSuppliesCard({
   const [selectedSupplyId, setSelectedSupplyId] = useState("");
   const [newQuantity, setNewQuantity] = useState("");
   const [multiplierInput, setMultiplierInput] = useState(multiplier !== null ? String(multiplier) : "");
+  const [isManageSuppliesOpen, setIsManageSuppliesOpen] = useState(false);
 
   const { data: suppliesData } = useGetSupplies({ organizationId });
   const allSupplies = suppliesData?.supplies ?? [];
@@ -171,6 +172,13 @@ export function ProductSuppliesCard({
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsManageSuppliesOpen(true)}>
+          <SettingsIcon />
+          Gerenciar insumos
+        </Button>
+      </div>
+
       {isLoading ? (
         <LoadingState label="Carregando ficha técnica..." />
       ) : (
@@ -262,9 +270,13 @@ export function ProductSuppliesCard({
           {allSupplies.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Você ainda não tem insumos cadastrados.{" "}
-              <Link to="/app/supplies" className="underline underline-offset-4">
+              <button
+                type="button"
+                onClick={() => setIsManageSuppliesOpen(true)}
+                className="underline underline-offset-4"
+              >
                 Cadastre um insumo
-              </Link>{" "}
+              </button>{" "}
               para adicioná-lo aqui.
             </p>
           ) : availableSupplies.length === 0 ? (
@@ -304,6 +316,12 @@ export function ProductSuppliesCard({
           )}
         </>
       )}
+
+      <ManageSuppliesModal
+        isOpen={isManageSuppliesOpen}
+        organizationId={organizationId}
+        onClose={() => setIsManageSuppliesOpen(false)}
+      />
     </div>
   );
 }

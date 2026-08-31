@@ -4,9 +4,10 @@ import { ListOrderedIcon, PackageIcon, UsersRoundIcon, WheatIcon } from "lucide-
 import { useAuth } from "@/contexts/auth-context";
 import { useGetDashboardSummary } from "@/hooks/tanstack/dashboard/use-get-dashboard-summary";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
+import { ManageSuppliesModal } from "@/components/manage-supplies-modal";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/")({
@@ -22,6 +23,7 @@ function HomePage() {
   // "today" is only ever set on the client, so it reflects the browser's local
   // date instead of the server's clock/timezone during SSR.
   const [today, setToday] = useState<string | null>(null);
+  const [isManageSuppliesOpen, setIsManageSuppliesOpen] = useState(false);
 
   useEffect(() => {
     setToday(toDateKey(new Date()));
@@ -159,14 +161,20 @@ function HomePage() {
               </CardContent>
 
               <CardFooter>
-                <Link to="/app/supplies" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-                  Ver insumos
-                </Link>
+                <Button variant="outline" className="w-full" onClick={() => setIsManageSuppliesOpen(true)}>
+                  Gerenciar insumos
+                </Button>
               </CardFooter>
             </Card>
           </div>
         )}
       </div>
+
+      <ManageSuppliesModal
+        isOpen={isManageSuppliesOpen}
+        organizationId={organization!.id}
+        onClose={() => setIsManageSuppliesOpen(false)}
+      />
     </div>
   );
 }

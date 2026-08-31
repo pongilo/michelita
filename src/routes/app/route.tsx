@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { HomeIcon, PackageIcon, ListOrderedIcon, PlusIcon, UsersRoundIcon, WheatIcon } from "lucide-react";
+import { HomeIcon, PackageIcon, ListOrderedIcon, PlusIcon, UsersRoundIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app")({
@@ -12,7 +12,6 @@ const navItems = [
   { to: "/app/orders", icon: ListOrderedIcon, label: "Pedidos" },
   { to: "/app/customers", icon: UsersRoundIcon, label: "Clientes" },
   { to: "/app/products", icon: PackageIcon, label: "Produtos" },
-  { to: "/app/supplies", icon: WheatIcon, label: "Insumos" },
 ] as const;
 
 function AppBar({ orgName }: { orgName: string }) {
