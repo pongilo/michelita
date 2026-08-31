@@ -427,7 +427,11 @@ function ProductsPage() {
   async function onCategorySubmit(values: CategoryFormValues) {
     try {
       if (editingCategory) {
-        await updateCategory({ id: editingCategory.id, ...values });
+        await updateCategory({
+          id: editingCategory.id,
+          ...values,
+          displayLimit: editingCategory.displayLimit ?? undefined,
+        });
         toast.success("Categoria atualizada com sucesso.");
       } else {
         await createCategory({ organizationId: organization!.id, ...values });
@@ -516,7 +520,6 @@ function ProductsPage() {
               ? {
                   name: editingCategory.name,
                   description: editingCategory.description ?? "",
-                  displayLimit: editingCategory.displayLimit ?? undefined,
                 }
               : undefined
           }
@@ -619,7 +622,6 @@ function ProductsPage() {
             ? {
                 name: editingCategory.name,
                 description: editingCategory.description ?? "",
-                displayLimit: editingCategory.displayLimit ?? undefined,
               }
             : undefined
         }
@@ -636,7 +638,12 @@ function ProductsPage() {
 
       <CategoryProductOrderModal
         isOpen={productOrderGroup !== null}
-        category={productOrderGroup ? { id: productOrderGroup.key, name: productOrderGroup.name } : null}
+        categoryName={productOrderGroup?.name ?? ""}
+        category={
+          productOrderGroup && productOrderGroup.key !== NO_CATEGORY_KEY
+            ? (categories.find((item) => item.id === productOrderGroup.key) ?? null)
+            : null
+        }
         products={productOrderGroup?.products ?? []}
         organizationId={organization!.id}
         onClose={() => setProductOrderGroup(null)}

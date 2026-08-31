@@ -4,14 +4,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormModal } from "@/components/form-modal";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export const categoryFormSchema = z.object({
   name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome da categoria."),
   description: z.string().trim().optional(),
-  displayLimit: z.number().int("Informe um número inteiro.").min(1, "O limite deve ser maior que zero.").optional(),
 });
 
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
@@ -29,7 +28,6 @@ function getDefaultValues(initialValues?: Partial<CategoryFormValues>): Category
   return {
     name: initialValues?.name ?? "",
     description: initialValues?.description ?? "",
-    displayLimit: initialValues?.displayLimit,
   };
 }
 
@@ -54,7 +52,7 @@ export function CategoryFormModal({
   useEffect(() => {
     if (!isOpen) return;
     reset(getDefaultValues(initialValues));
-  }, [isOpen, initialValues?.name, initialValues?.description, initialValues?.displayLimit, reset]);
+  }, [isOpen, initialValues?.name, initialValues?.description, reset]);
 
   return (
     <FormModal
@@ -74,24 +72,6 @@ export function CategoryFormModal({
             <FieldLabel>Descrição</FieldLabel>
             <Textarea placeholder="Descrição da categoria (opcional)" {...register("description")} />
             <FieldError>{errors.description?.message}</FieldError>
-          </Field>
-
-          <Field>
-            <FieldLabel>Limite de produtos no cardápio</FieldLabel>
-            <Input
-              type="number"
-              step="1"
-              min="1"
-              placeholder="Sempre mostra todos"
-              {...register("displayLimit", {
-                setValueAs: (value) => (value === "" ? undefined : Number(value)),
-              })}
-            />
-            <FieldDescription>
-              Deixe em branco para mostrar todos os produtos. Se preencher, ex: 4, o cardápio mostra esse
-              número de produtos com um botão para ver os demais da categoria.
-            </FieldDescription>
-            <FieldError>{errors.displayLimit?.message}</FieldError>
           </Field>
         </FieldGroup>
 
