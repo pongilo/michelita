@@ -9,6 +9,7 @@ const createProductSchema = z.object({
   imageUrl: z.url().optional(),
   price: z.number().min(0, "O preço deve ser maior ou igual a zero."),
   categoryId: z.uuid().optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type CreateProductProps = z.infer<typeof createProductSchema>;
@@ -40,6 +41,7 @@ const createProductServerFn = createServerFn({ method: "POST" })
         price: data.price,
         categoryId,
         displayOrder: existingCount,
+        isActive: data.isActive ?? true,
       },
       select: {
         id: true,

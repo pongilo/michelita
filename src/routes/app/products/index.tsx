@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -16,7 +16,9 @@ import { CategoryFormModal, type CategoryFormValues } from "@/components/categor
 import { CategoryProductsModal } from "@/components/category-products-modal";
 import { CategoryProductOrderModal } from "@/components/category-product-order-modal";
 import { CategoryOrderModal } from "@/components/category-order-modal";
+import { ProductQuickCreateModal, type ProductQuickCreateValues } from "@/components/product-quick-create-modal";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
+import { useCreateProduct } from "@/hooks/tanstack/product/use-create-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
 import { useToggleProductActive } from "@/hooks/tanstack/product/use-toggle-product-active";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
@@ -356,6 +358,7 @@ function ProductsPage() {
   const { mutateAsync: toggleProductActive, isPending: isTogglingActive } = useToggleProductActive({
     organizationId: organization!.id,
   });
+  const { mutateAsync: createProduct, isPending: isCreatingProduct } = useCreateProduct();
 
   const { mutateAsync: createCategory, isPending: isCreatingCategory } = useCreateProductCategory();
   const { mutateAsync: updateCategory, isPending: isUpdatingCategory } = useUpdateProductCategory({
@@ -370,8 +373,25 @@ function ProductsPage() {
   const [productsModalCategory, setProductsModalCategory] = useState<Category | null>(null);
   const [productOrderGroup, setProductOrderGroup] = useState<CategoryGroup | null>(null);
   const [isCategoryOrderModalOpen, setIsCategoryOrderModalOpen] = useState(false);
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
 
   const isCategorySubmitting = isCreatingCategory || isUpdatingCategory;
+
+  async function handleQuickCreate(values: ProductQuickCreateValues) {
+    try {
+      const product = await createProduct({
+        organizationId: organization!.id,
+        name: values.name,
+        price: 0,
+        isActive: false,
+      });
+      toast.success("Produto criado com sucesso.");
+      setIsQuickCreateOpen(false);
+      navigate({ to: "/app/products/$productId", params: { productId: product.id } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao criar produto.");
+    }
+  }
 
   async function handleDelete(productId: string, productName: string) {
     const confirmed = window.confirm(
@@ -472,7 +492,7 @@ function ProductsPage() {
             </EmptyState.Description>
             <EmptyState.Action>
               <div className="flex flex-wrap justify-center gap-2">
-                <Button size="sm" nativeButton={false} render={<Link to="/app/products/new" />}>
+                <Button size="sm" onClick={() => setIsQuickCreateOpen(true)}>
                   Novo produto
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => { setEditingCategory(null); setIsCategoryFormOpen(true); }}>
@@ -499,6 +519,13 @@ function ProductsPage() {
           onClose={handleCloseCategoryForm}
           onSubmit={onCategorySubmit}
         />
+
+        <ProductQuickCreateModal
+          isOpen={isQuickCreateOpen}
+          isSubmitting={isCreatingProduct}
+          onClose={() => setIsQuickCreateOpen(false)}
+          onSubmit={handleQuickCreate}
+        />
       </>
     );
   }
@@ -523,12 +550,7 @@ function ProductsPage() {
             >
               <FolderPlusIcon />
             </Button>
-            <Button
-              size="icon-sm"
-              className="hidden md:inline-flex"
-              nativeButton={false}
-              render={<Link to="/app/products/new" />}
-            >
+            <Button size="icon-sm" className="hidden md:inline-flex" onClick={() => setIsQuickCreateOpen(true)}>
               <PlusIcon />
             </Button>
           </div>
@@ -622,13 +644,19 @@ function ProductsPage() {
         organizationId={organization!.id}
         onClose={() => setIsCategoryOrderModalOpen(false)}
       />
+
+      <ProductQuickCreateModal
+        isOpen={isQuickCreateOpen}
+        isSubmitting={isCreatingProduct}
+        onClose={() => setIsQuickCreateOpen(false)}
+        onSubmit={handleQuickCreate}
+      />
     </main>
 
     <Button
       size="icon"
       className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 size-14 shadow-lg md:hidden"
-      nativeButton={false}
-      render={<Link to="/app/products/new" />}
+      onClick={() => setIsQuickCreateOpen(true)}
     >
       <PlusIcon className="size-6" />
       <span className="sr-only">Novo produto</span>

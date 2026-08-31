@@ -22,7 +22,6 @@ import { Route as AppSuppliesIndexRouteImport } from './routes/app/supplies/inde
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppOrdersIndexRouteImport } from './routes/app/orders/index'
 import { Route as AppCustomersIndexRouteImport } from './routes/app/customers/index'
-import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppProductsProductIdRouteImport } from './routes/app/products/$productId'
 import { Route as AppOrdersFormRouteImport } from './routes/app/orders/form'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
@@ -92,11 +91,6 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppProductsNewRoute = AppProductsNewRouteImport.update({
-  id: '/products/new',
-  path: '/products/new',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppProductsProductIdRoute = AppProductsProductIdRouteImport.update({
   id: '/products/$productId',
   path: '/products/$productId',
@@ -136,7 +130,6 @@ export interface FileRoutesByFullPath {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/$productId': typeof AppProductsProductIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/app/customers/': typeof AppCustomersIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
@@ -154,7 +147,6 @@ export interface FileRoutesByTo {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/$productId': typeof AppProductsProductIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/app/customers': typeof AppCustomersIndexRoute
   '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
@@ -176,7 +168,6 @@ export interface FileRoutesById {
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/orders/form': typeof AppOrdersFormRoute
   '/app/products/$productId': typeof AppProductsProductIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/app/customers/': typeof AppCustomersIndexRoute
   '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
@@ -197,7 +188,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/products/$productId'
-    | '/app/products/new'
     | '/app/customers/'
     | '/app/orders/'
     | '/app/products/'
@@ -215,7 +205,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/products/$productId'
-    | '/app/products/new'
     | '/app/customers'
     | '/app/orders'
     | '/app/products'
@@ -236,7 +225,6 @@ export interface FileRouteTypes {
     | '/app/orders/$orderId'
     | '/app/orders/form'
     | '/app/products/$productId'
-    | '/app/products/new'
     | '/app/customers/'
     | '/app/orders/'
     | '/app/products/'
@@ -342,13 +330,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/products/new': {
-      id: '/app/products/new'
-      path: '/products/new'
-      fullPath: '/app/products/new'
-      preLoaderRoute: typeof AppProductsNewRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/products/$productId': {
       id: '/app/products/$productId'
       path: '/products/$productId'
@@ -424,7 +405,6 @@ interface AppRouteRouteChildren {
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppOrdersFormRoute: typeof AppOrdersFormRoute
   AppProductsProductIdRoute: typeof AppProductsProductIdRoute
-  AppProductsNewRoute: typeof AppProductsNewRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
@@ -438,7 +418,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppOrdersFormRoute: AppOrdersFormRoute,
   AppProductsProductIdRoute: AppProductsProductIdRoute,
-  AppProductsNewRoute: AppProductsNewRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,

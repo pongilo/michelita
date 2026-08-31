@@ -1,23 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { EllipsisVerticalIcon, InfoIcon, Trash2Icon, WheatIcon, XIcon } from "lucide-react";
+import { InfoIcon, WheatIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { AppTitle } from "@/components/app-title";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductForm, type ProductFormValues } from "@/components/product-form";
 import { ProductSuppliesCard } from "@/components/product-supplies-card";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
-import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
 
 type ProductTab = "info" | "ficha-tecnica";
@@ -43,9 +36,6 @@ function ProductDetailsPage() {
   const categories = categoriesData?.categories ?? [];
 
   const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct({
-    organizationId: organization!.id,
-  });
-  const { mutateAsync: deleteProduct, isPending: isDeleting } = useDeleteProduct({
     organizationId: organization!.id,
   });
 
@@ -103,22 +93,6 @@ function ProductDetailsPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!product) return;
-    const confirmed = window.confirm(
-      `Deseja realmente excluir o produto "${product.name}"? Esta ação não pode ser desfeita.`,
-    );
-    if (!confirmed) return;
-
-    try {
-      await deleteProduct({ id: product.id, organizationId: organization!.id });
-      toast.success("Produto excluído com sucesso.");
-      navigate({ to: "/app/products" });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao excluir produto.");
-    }
-  }
-
   if (isLoading) {
     return (
       <main className="mx-auto w-full max-w-2xl px-5 py-8">
@@ -149,26 +123,10 @@ function ProductDetailsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pb-5">
       <div className="sticky top-0 z-20 flex items-center justify-between gap-3 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
-        <AppTitle>Editar produto</AppTitle>
-        <div className="flex items-center gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className={buttonVariants({ variant: "ghost", size: "icon" })}
-              aria-label="Ações do produto"
-            >
-              <EllipsisVerticalIcon />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" disabled={isDeleting} onClick={handleDelete}>
-                <Trash2Icon />
-                Excluir produto
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button type="button" variant="ghost" size="icon" nativeButton={false} render={<Link to="/app/products" />}>
-            <XIcon />
-          </Button>
-        </div>
+        <AppTitle>{product.name}</AppTitle>
+        <Button type="button" variant="ghost" size="icon" nativeButton={false} render={<Link to="/app/products" />}>
+          <XIcon />
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => value && setActiveTab(value as ProductTab)}>
