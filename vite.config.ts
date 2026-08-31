@@ -36,7 +36,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
-        start_url: '/app/orders',
+        start_url: '/app',
         lang: 'pt-BR',
         icons: [
           {

@@ -35,7 +35,7 @@ function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 pb-24 md:pb-5">
-      <header className="flex items-center justify-between px-5 pt-5">
+      <header className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
         <AppTitle>{`Olá, ${organization!.name}!`}</AppTitle>
 
         <Link

@@ -1,15 +1,14 @@
 import { ChevronLeftIcon } from "lucide-react";
-import { useCanGoBack, useRouter, useRouterState } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
 export function AppTitle({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const canGoBack = useCanGoBack();
   const isHome = useRouterState({ select: (s) => s.location.pathname === "/app" });
 
   return (
     <span className="inline-flex items-center gap-2 md:contents">
-      {canGoBack && !isHome && (
+      {!isHome && (
         <Button
           type="button"
           variant="ghost"

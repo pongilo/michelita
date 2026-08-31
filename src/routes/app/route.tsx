@@ -63,7 +63,7 @@ function PrivateLayout() {
   return (
     <div className="flex min-h-svh flex-col">
       {!hideChrome && <AppBar orgName={organization.name} />}
-      <div className="flex-1 pt-[env(safe-area-inset-top)] md:pt-0 min-h-screen">
+      <div className="flex-1 min-h-screen">
         <Outlet />
       </div>
     </div>
