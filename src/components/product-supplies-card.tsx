@@ -5,7 +5,7 @@ import { Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
@@ -48,16 +48,13 @@ function ProductSupplyRow({
   }
 
   return (
-    <Item variant="outline" className="bg-background">
-      <ItemContent>
-        <ItemTitle>{item.supply.name}</ItemTitle>
-        <ItemDescription>
-          {unitCostFormatter.format(item.supply.costPerUnit)} / {item.supply.unit} · custo de{" "}
-          {currencyFormatter.format(lineCost)}
-        </ItemDescription>
-      </ItemContent>
-      <ItemActions>
-        <div className="flex items-center gap-1">
+    <TableRow>
+      <TableCell className="max-w-24 truncate font-heading font-medium md:max-w-40">{item.supply.name}</TableCell>
+      <TableCell className="hidden text-right text-muted-foreground md:table-cell">
+        {unitCostFormatter.format(item.supply.costPerUnit)} / {item.supply.unit}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end gap-1">
           <Input
             type="number"
             step="0.001"
@@ -70,11 +67,14 @@ function ProductSupplyRow({
           />
           <span className="text-sm text-muted-foreground">{item.supply.unit}</span>
         </div>
+      </TableCell>
+      <TableCell className="text-right font-medium">{currencyFormatter.format(lineCost)}</TableCell>
+      <TableCell>
         <Button size="icon-sm" variant="ghost" onClick={onRemove} disabled={disabled}>
           <Trash2Icon />
         </Button>
-      </ItemActions>
-    </Item>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -180,17 +180,30 @@ export function ProductSuppliesCard({
       ) : (
         <>
           {items.length > 0 && (
-            <ItemGroup>
-              {items.map((item) => (
-                <ProductSupplyRow
-                  key={item.id}
-                  item={item}
-                  disabled={isRemoving}
-                  onUpdate={(quantity) => handleUpdate(item.id, quantity)}
-                  onRemove={() => handleRemove(item.id)}
-                />
-              ))}
-            </ItemGroup>
+            <div className="overflow-hidden rounded-2xl border border-border bg-background">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Insumo</TableHead>
+                    <TableHead className="hidden text-right md:table-cell">Custo/unidade</TableHead>
+                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead className="text-right">Custo</TableHead>
+                    <TableHead className="w-0" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => (
+                    <ProductSupplyRow
+                      key={item.id}
+                      item={item}
+                      disabled={isRemoving}
+                      onUpdate={(quantity) => handleUpdate(item.id, quantity)}
+                      onRemove={() => handleRemove(item.id)}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
 
           {items.length > 0 && (

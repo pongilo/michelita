@@ -11,11 +11,11 @@ import { useDeleteSupply } from "@/hooks/tanstack/supply/use-delete-supply";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
-import { Item, ItemGroup, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
 import { normalize } from "@/lib/utils";
-import { unitCostFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter, unitCostFormatter } from "@/lib/utils/formatter";
 
 export const Route = createFileRoute("/app/supplies/")({
   component: SuppliesPage,
@@ -155,7 +155,7 @@ function SuppliesPage() {
 
   return (
     <>
-      <main className="mx-auto w-full max-w-4xl px-5 pb-24 md:pb-5">
+      <main className="mx-auto w-full max-w-6xl px-5 pb-24 md:pb-5">
         <header className="sticky top-0 z-20 space-y-4 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
           <div className="flex items-start justify-between">
             <div className="flex items-baseline gap-2">
@@ -180,26 +180,57 @@ function SuppliesPage() {
         )}
 
         {supplies.length > 0 && (
-          <ItemGroup>
-            {supplies.map((supply) => (
-              <Item key={supply.id} variant="outline" className="bg-background">
-                <ItemContent>
-                  <ItemTitle>{supply.name}</ItemTitle>
-                  <ItemDescription>
-                    {unitCostFormatter.format(supply.costPerUnit)} / {supply.unit}
-                  </ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Button size="icon-sm" variant="ghost" onClick={() => handleStartEdit(supply)} disabled={isDeleting}>
-                    <EditIcon />
-                  </Button>
-                  <Button size="icon-sm" variant="ghost" onClick={() => handleDelete(supply)} disabled={isDeleting}>
-                    <Trash2Icon />
-                  </Button>
-                </ItemActions>
-              </Item>
-            ))}
-          </ItemGroup>
+          <div className="overflow-hidden rounded-2xl border border-border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="hidden text-right md:table-cell">Preço da compra</TableHead>
+                  <TableHead className="hidden text-right md:table-cell">Qtd. comprada</TableHead>
+                  <TableHead className="text-right">Custo/unidade</TableHead>
+                  <TableHead className="w-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {supplies.map((supply) => (
+                  <TableRow key={supply.id}>
+                    <TableCell className="max-w-32 truncate font-heading font-medium sm:max-w-none">
+                      {supply.name}
+                    </TableCell>
+                    <TableCell className="hidden text-right md:table-cell">
+                      {currencyFormatter.format(supply.purchasePrice)}
+                    </TableCell>
+                    <TableCell className="hidden text-right md:table-cell">
+                      {supply.purchaseQuantity} {supply.unit}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {unitCostFormatter.format(supply.costPerUnit)} / {supply.unit}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleStartEdit(supply)}
+                          disabled={isDeleting}
+                        >
+                          <EditIcon />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(supply)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2Icon />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
 
         <SupplyFormModal
