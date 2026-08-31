@@ -95,7 +95,7 @@ function ProductDetailsPage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-5 py-8">
+      <main className="mx-auto w-full max-w-4xl px-5 py-8">
         <LoadingState label="Carregando produto..." />
       </main>
     );
@@ -103,7 +103,7 @@ function ProductDetailsPage() {
 
   if (isError) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-5 py-8">
+      <main className="mx-auto w-full max-w-4xl px-5 py-8">
         <p className="text-destructive">Erro ao carregar produto: {error.message}</p>
       </main>
     );
@@ -111,7 +111,7 @@ function ProductDetailsPage() {
 
   if (!product) {
     return (
-      <main className="mx-auto w-full max-w-2xl space-y-4 px-5 py-8">
+      <main className="mx-auto w-full max-w-4xl space-y-4 px-5 py-8">
         <p className="text-muted-foreground">Produto não encontrado.</p>
         <Button variant="outline" onClick={() => navigate({ to: "/app/products" })}>
           Voltar para produtos
@@ -121,7 +121,7 @@ function ProductDetailsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pb-5">
+    <main className="mx-auto w-full max-w-4xl px-5 pb-5">
       <div className="sticky top-0 z-20 flex items-center justify-between gap-3 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
         <AppTitle>{product.name}</AppTitle>
         <Button type="button" variant="ghost" size="icon" nativeButton={false} render={<Link to="/app/products" />}>

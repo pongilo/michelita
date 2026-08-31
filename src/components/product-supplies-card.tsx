@@ -68,7 +68,7 @@ function ProductSupplyRow({
           <span className="text-sm text-muted-foreground">{item.supply.unit}</span>
         </div>
       </TableCell>
-      <TableCell className="text-right font-medium">{currencyFormatter.format(lineCost)}</TableCell>
+      <TableCell className="hidden text-right font-medium md:table-cell">{currencyFormatter.format(lineCost)}</TableCell>
       <TableCell>
         <Button size="icon-sm" variant="ghost" onClick={onRemove} disabled={disabled}>
           <Trash2Icon />
@@ -171,10 +171,6 @@ export function ProductSuppliesCard({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Insumos usados neste produto, para ajudar a calcular o custo e o preço de venda.
-      </p>
-
       {isLoading ? (
         <LoadingState label="Carregando ficha técnica..." />
       ) : (
@@ -187,7 +183,7 @@ export function ProductSuppliesCard({
                     <TableHead>Insumo</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Custo/unidade</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="text-right">Custo</TableHead>
+                    <TableHead className="hidden text-right md:table-cell">Custo</TableHead>
                     <TableHead className="w-0" />
                   </TableRow>
                 </TableHeader>
