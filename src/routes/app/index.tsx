@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ListOrderedIcon, PackageIcon, UsersRoundIcon } from "lucide-react";
+import { ListOrderedIcon, PackageIcon, UsersRoundIcon, WheatIcon } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useGetDashboardSummary } from "@/hooks/tanstack/dashboard/use-get-dashboard-summary";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,8 +51,8 @@ function HomePage() {
         {isError && <p className="text-destructive text-sm">{error.message}</p>}
 
         {data && (
-          <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
-            <Card className="md:row-span-2">
+          <div className="grid gap-4 md:grid-cols-2 md:grid-rows-3">
+            <Card className="md:row-span-3">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ListOrderedIcon className="size-5" />
@@ -139,6 +139,28 @@ function HomePage() {
               <CardFooter>
                 <Link to="/app/products" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
                   Ver produtos
+                </Link>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <WheatIcon className="size-5" />
+                  Insumos
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-4xl font-heading">{data.suppliesCount}</p>
+                <p className="text-sm text-muted-foreground">
+                  {data.suppliesCount === 1 ? "insumo" : "insumos"}
+                </p>
+              </CardContent>
+
+              <CardFooter>
+                <Link to="/app/supplies" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+                  Ver insumos
                 </Link>
               </CardFooter>
             </Card>

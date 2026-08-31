@@ -27,6 +27,7 @@ model Organization {
   order           Order[]
   product         Product[]
   productCategory ProductCategory[]
+  supply          Supply[]
 
   @@map("organization")
   @@schema("public")
@@ -98,6 +99,7 @@ model Product {
 
   organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   category     ProductCategory? @relation(fields: [categoryId], references: [id])
+  supply       ProductSupply[]
 
   @@map("product")
   @@schema("public")
@@ -117,5 +119,36 @@ model ProductCategory {
 
   @@unique([organizationId, slug])
   @@map("product_category")
+  @@schema("public")
+}
+
+model Supply {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+  name             String
+  unit             String
+  purchasePrice    Decimal  @map("purchase_price") @db.Decimal(10, 2)
+  purchaseQuantity Decimal  @map("purchase_quantity") @db.Decimal(10, 3)
+  costPerUnit      Decimal  @map("cost_per_unit") @db.Decimal(12, 6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      ProductSupply[]
+
+  @@map("supply")
+  @@schema("public")
+}
+
+model ProductSupply {
+  id        String  @id @default(uuid()) @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  supplyId  String  @map("supply_id") @db.Uuid
+  quantity  Decimal @db.Decimal(10, 3)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supply  Supply  @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, supplyId])
+  @@map("product_supply")
   @@schema("public")
 }

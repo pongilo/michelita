@@ -3,6 +3,15 @@ export const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+// Ingredient unit costs are often fractions of a cent (e.g. R$/g), so this keeps
+// extra precision instead of rounding everything down to R$0,00.
+export const unitCostFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
 export const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
   timeStyle: "short",

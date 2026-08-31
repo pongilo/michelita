@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { EllipsisVerticalIcon, Trash2Icon, XIcon } from "lucide-react";
+import { EllipsisVerticalIcon, InfoIcon, Trash2Icon, WheatIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { AppTitle } from "@/components/app-title";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -11,11 +12,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductForm, type ProductFormValues } from "@/components/product-form";
+import { ProductSuppliesCard } from "@/components/product-supplies-card";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useDeleteProduct } from "@/hooks/tanstack/product/use-delete-product";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
+
+type ProductTab = "info" | "ficha-tecnica";
 
 export const Route = createFileRoute("/app/products/$productId")({
   component: ProductDetailsPage,
@@ -25,6 +30,7 @@ function ProductDetailsPage() {
   const { organization } = useAuth();
   const { productId } = Route.useParams();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<ProductTab>("info");
 
   const { data, isLoading, isError, error } = useGetProducts({
     organizationId: organization!.id,
@@ -129,21 +135,44 @@ function ProductDetailsPage() {
         </div>
       </div>
 
-      <ProductForm
-        mode="edit"
-        isSubmitting={isUpdating}
-        categories={categories}
-        organizationId={organization!.id}
-        initialValues={{
-          name: product.name,
-          description: product.description ?? undefined,
-          imageUrl: product.imageUrl ?? undefined,
-          price: product.price,
-          categoryId: product.categoryId ?? undefined,
-        }}
-        onSubmit={handleSubmit}
-        onCancel={() => navigate({ to: "/app/products" })}
-      />
+      <Tabs value={activeTab} onValueChange={(value) => value && setActiveTab(value as ProductTab)}>
+        <TabsList className="w-full mb-6">
+          <TabsTrigger value="info" className="flex-1">
+            <InfoIcon />
+            Informações
+          </TabsTrigger>
+          <TabsTrigger value="ficha-tecnica" className="flex-1">
+            <WheatIcon />
+            Ficha técnica
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="info">
+          <ProductForm
+            mode="edit"
+            isSubmitting={isUpdating}
+            categories={categories}
+            organizationId={organization!.id}
+            initialValues={{
+              name: product.name,
+              description: product.description ?? undefined,
+              imageUrl: product.imageUrl ?? undefined,
+              price: product.price,
+              categoryId: product.categoryId ?? undefined,
+            }}
+            onSubmit={handleSubmit}
+            onCancel={() => navigate({ to: "/app/products" })}
+          />
+        </TabsContent>
+
+        <TabsContent value="ficha-tecnica">
+          <ProductSuppliesCard
+            productId={product.id}
+            organizationId={organization!.id}
+            productPrice={product.price}
+          />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }
