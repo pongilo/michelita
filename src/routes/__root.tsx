@@ -138,7 +138,7 @@ function GoogleAnalytics() {
   return null
 }
 
-function NotFoundComponent() {
+export function NotFoundComponent() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-3 px-6 text-center">
       <h1 className="text-2xl font-bold">Pagina nao encontrada</h1>

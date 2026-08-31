@@ -52,7 +52,7 @@ function RegisterPage() {
           }
 
           await queryClient.refetchQueries({ queryKey: ["auth-user"] });
-          await navigate({ to: "/app/orders" });
+          await navigate({ to: "/app" });
         },
         onError: (error) => {
           toast.error(error.message);

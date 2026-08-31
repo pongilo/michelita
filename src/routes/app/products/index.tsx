@@ -460,7 +460,7 @@ function ProductsPage() {
     return (
       <>
         <main className="mx-auto w-full max-w-4xl px-5 pb-5">
-          <header className="sticky top-[env(safe-area-inset-top)] z-20 bg-background pt-5 mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
+          <header className="sticky top-0 z-20 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
             <AppTitle>Produtos</AppTitle>
           </header>
 
@@ -506,7 +506,7 @@ function ProductsPage() {
   return (
     <>
     <main className="mx-auto w-full max-w-4xl px-5 pb-24 md:pb-5">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 space-y-4 bg-background pt-5 mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
+      <header className="sticky top-0 z-20 space-y-4 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
         <div className="flex items-start justify-between">
           <div className="flex items-baseline gap-2">
             <AppTitle>Produtos</AppTitle>

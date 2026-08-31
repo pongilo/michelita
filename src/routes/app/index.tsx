@@ -35,8 +35,15 @@ function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 pb-24 md:pb-5">
-      <header className="px-5 pt-5">
-        <AppTitle>Início</AppTitle>
+      <header className="flex items-center justify-between px-5 pt-5">
+        <AppTitle>{`Olá, ${organization!.name}!`}</AppTitle>
+
+        <Link
+          to="/app/account"
+          className="flex aspect-square size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground md:hidden"
+        >
+          {organization!.name.charAt(0).toUpperCase()}
+        </Link>
       </header>
 
       <div className="px-5">

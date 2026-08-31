@@ -116,7 +116,7 @@ function OrderFormRoute() {
         <main className="mx-auto w-full max-w-5xl px-5 pb-5">
           <form onSubmit={handleSubmit(onCreateOrder)} className="space-y-8">
             <div className="space-y-4">
-              <div className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-background pt-5 md:static md:top-auto md:z-auto md:bg-transparent">
+              <div className="sticky top-0 z-20 flex items-center justify-between bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] md:static md:top-auto md:z-auto md:bg-transparent">
                 <AppTitle>Novo pedido</AppTitle>
                 <Button
                   type="button"

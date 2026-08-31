@@ -252,7 +252,7 @@ function OrderPage() {
   return (
     <>
       <div className="mx-auto w-full max-w-6xl space-y-4 pb-24 md:pb-5">
-        <header className="sticky top-[env(safe-area-inset-top)] z-20 flex flex-wrap items-center gap-2 bg-background px-5 pt-5 md:static md:top-auto md:z-auto md:bg-transparent">
+        <header className="sticky top-0 z-20 flex flex-wrap items-center gap-2 bg-background px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] md:static md:top-auto md:z-auto md:bg-transparent">
           <AppTitle>Pedidos</AppTitle>
 
           <div className="ml-auto flex items-center gap-2">

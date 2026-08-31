@@ -1,22 +1,24 @@
-import { MenuIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
+import { useCanGoBack, useRouter, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { useMobileNav } from "@/contexts/mobile-nav-context";
 
 export function AppTitle({ children }: { children: React.ReactNode }) {
-  const { enabled, setOpen } = useMobileNav();
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  const isHome = useRouterState({ select: (s) => s.location.pathname === "/app" });
 
   return (
     <span className="inline-flex items-center gap-2 md:contents">
-      {enabled && (
+      {canGoBack && !isHome && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="md:hidden"
-          onClick={() => setOpen(true)}
+          onClick={() => router.history.back()}
         >
-          <MenuIcon className="size-5" />
-          <span className="sr-only">Abrir menu</span>
+          <ChevronLeftIcon className="size-5" />
+          <span className="sr-only">Voltar</span>
         </Button>
       )}
       <h1 className="text-2xl font-heading">{children}</h1>
