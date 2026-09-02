@@ -1,22 +1,22 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SuppliesManager } from "@/components/supplies-manager";
+import { RecipesManager } from "@/components/recipes-manager";
 import { Button } from "@/components/ui/button";
 
-type ManageSuppliesModalProps = {
+type ManageRecipesModalProps = {
   isOpen: boolean;
   organizationId: string;
   onClose: () => void;
 };
 
-export function ManageSuppliesModal({ isOpen, organizationId, onClose }: ManageSuppliesModalProps) {
+export function ManageRecipesModal({ isOpen, organizationId, onClose }: ManageRecipesModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex max-h-[80vh] flex-col gap-0 p-0 sm:max-w-2xl">
         <DialogHeader className="p-5 pb-3">
-          <DialogTitle>Gerenciar insumos</DialogTitle>
+          <DialogTitle>Gerenciar receitas</DialogTitle>
         </DialogHeader>
 
-        <SuppliesManager organizationId={organizationId} />
+        <RecipesManager organizationId={organizationId} />
 
         <div className="flex items-center justify-end gap-2 border-t border-border p-5">
           <Button type="button" variant="ghost" onClick={onClose}>

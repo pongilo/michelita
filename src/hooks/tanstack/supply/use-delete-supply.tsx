@@ -13,6 +13,8 @@ export function useDeleteSupply({ organizationId }: UseDeleteSupplyProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies", organizationId] });
       queryClient.invalidateQueries({ queryKey: ["product-supplies"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["product-recipes"] });
     },
   });
 }

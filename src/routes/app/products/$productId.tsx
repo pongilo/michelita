@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductForm, type ProductFormValues } from "@/components/product-form";
-import { ProductSuppliesCard } from "@/components/product-supplies-card";
+import { ProductCostSheetCard } from "@/components/product-cost-sheet-card";
 import { useGetProducts } from "@/hooks/tanstack/product/use-get-products";
 import { useUpdateProduct } from "@/hooks/tanstack/product/use-update-product";
 import { useGetProductCategories } from "@/hooks/tanstack/product-category/use-get-product-categories";
@@ -160,7 +160,7 @@ function ProductDetailsPage() {
         </TabsContent>
 
         <TabsContent value="ficha-tecnica">
-          <ProductSuppliesCard
+          <ProductCostSheetCard
             productId={product.id}
             organizationId={organization!.id}
             productPrice={product.price}

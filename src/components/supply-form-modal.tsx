@@ -8,12 +8,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { unitCostFormatter } from "@/lib/utils/formatter";
-
-const UNIT_OPTIONS = [
-  { value: "g", label: "Grama (g)" },
-  { value: "ml", label: "Mililitro (ml)" },
-  { value: "un", label: "Unidade (un)" },
-] as const;
+import { UNIT_OPTIONS } from "@/lib/constants/units";
 
 export const supplyFormSchema = z.object({
   name: z.string().trim().min(2, "Informe ao menos 2 caracteres para o nome do insumo."),

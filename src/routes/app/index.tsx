@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ListOrderedIcon, PackageIcon, UsersRoundIcon, WheatIcon } from "lucide-react";
+import { ChefHatIcon, ListOrderedIcon, PackageIcon, UsersRoundIcon, WheatIcon } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useGetDashboardSummary } from "@/hooks/tanstack/dashboard/use-get-dashboard-summary";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { AppTitle } from "@/components/app-title";
 import { ManageSuppliesModal } from "@/components/manage-supplies-modal";
+import { ManageRecipesModal } from "@/components/manage-recipes-modal";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/")({
@@ -24,6 +25,7 @@ function HomePage() {
   // date instead of the server's clock/timezone during SSR.
   const [today, setToday] = useState<string | null>(null);
   const [isManageSuppliesOpen, setIsManageSuppliesOpen] = useState(false);
+  const [isManageRecipesOpen, setIsManageRecipesOpen] = useState(false);
 
   useEffect(() => {
     setToday(toDateKey(new Date()));
@@ -166,6 +168,27 @@ function HomePage() {
                 </Button>
               </CardFooter>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ChefHatIcon className="size-5" />
+                  Receitas
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Agrupe insumos em receitas reutilizáveis para montar a ficha técnica dos produtos.
+                </p>
+              </CardContent>
+
+              <CardFooter>
+                <Button variant="outline" className="w-full" onClick={() => setIsManageRecipesOpen(true)}>
+                  Gerenciar receitas
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         )}
       </div>
@@ -174,6 +197,12 @@ function HomePage() {
         isOpen={isManageSuppliesOpen}
         organizationId={organization!.id}
         onClose={() => setIsManageSuppliesOpen(false)}
+      />
+
+      <ManageRecipesModal
+        isOpen={isManageRecipesOpen}
+        organizationId={organization!.id}
+        onClose={() => setIsManageRecipesOpen(false)}
       />
     </div>
   );
