@@ -10,6 +10,7 @@ const updateSupplySchema = z.object({
   purchaseQuantity: z
     .number({ error: "Informe uma quantidade válida." })
     .positive("A quantidade deve ser maior que zero."),
+  isIngredient: z.boolean(),
 });
 
 export type UpdateSupplyProps = z.infer<typeof updateSupplySchema>;
@@ -25,6 +26,7 @@ const updateSupplyServerFn = createServerFn({ method: "POST" })
         purchasePrice: data.purchasePrice,
         purchaseQuantity: data.purchaseQuantity,
         costPerUnit: data.purchasePrice / data.purchaseQuantity,
+        isIngredient: data.isIngredient,
       },
       select: {
         id: true,
@@ -33,6 +35,7 @@ const updateSupplyServerFn = createServerFn({ method: "POST" })
         purchasePrice: true,
         purchaseQuantity: true,
         costPerUnit: true,
+        isIngredient: true,
         updatedAt: true,
       },
     });

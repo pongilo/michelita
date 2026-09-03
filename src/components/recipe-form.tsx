@@ -71,12 +71,17 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
   const [subView, setSubView] = useState<"recipe" | "create-supply">("recipe");
 
   useEffect(() => {
-    onSubViewChange?.(subView === "create-supply" ? { title: "Novo insumo", onCancel: () => setSubView("recipe") } : null);
+    onSubViewChange?.(
+      subView === "create-supply" ? { title: "Novo ingrediente", onCancel: () => setSubView("recipe") } : null,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subView, onSubViewChange]);
 
   const { data: suppliesData, isLoading: isLoadingSupplies } = useGetSupplies({ organizationId });
-  const allSupplies = useMemo(() => suppliesData?.supplies ?? [], [suppliesData]);
+  const allSupplies = useMemo(
+    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient),
+    [suppliesData],
+  );
 
   const filteredSupplies = useMemo(() => {
     const term = normalize(supplySearch.trim());
@@ -203,6 +208,7 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
       <SupplyForm
         mode="create"
         isSubmitting={isCreatingSupply}
+        defaultIsIngredient
         onCancel={() => setSubView("recipe")}
         onSubmit={handleCreateSupply}
       />
@@ -258,13 +264,13 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="text-sm font-medium text-foreground">Insumos</h4>
+          <h4 className="text-sm font-medium text-foreground">Ingredientes</h4>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
             onClick={() => setSubView("create-supply")}
-            aria-label="Novo insumo"
+            aria-label="Novo ingrediente"
           >
             <PlusIcon />
           </Button>
@@ -275,16 +281,16 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
             type="search"
             value={supplySearch}
             onChange={(event) => setSupplySearch(event.target.value)}
-            placeholder="Buscar insumo"
+            placeholder="Buscar ingrediente"
           />
         )}
 
         {isLoadingIngredients ? (
-          <LoadingState label="Carregando insumos..." />
+          <LoadingState label="Carregando ingredientes..." />
         ) : allSupplies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Você ainda não tem insumos cadastrados.</p>
+          <p className="text-sm text-muted-foreground">Você ainda não tem ingredientes cadastrados.</p>
         ) : filteredSupplies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum insumo encontrado para "{supplySearch}".</p>
+          <p className="text-sm text-muted-foreground">Nenhum ingrediente encontrado para "{supplySearch}".</p>
         ) : (
           <ItemGroup>
             {filteredSupplies.map((supply) => {

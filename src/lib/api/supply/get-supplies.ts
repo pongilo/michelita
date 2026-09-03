@@ -23,6 +23,7 @@ const getSuppliesServerFn = createServerFn({ method: "POST" })
         purchasePrice: true,
         purchaseQuantity: true,
         costPerUnit: true,
+        isIngredient: true,
         updatedAt: true,
         _count: { select: { product: true } },
       },

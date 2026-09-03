@@ -2,8 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { unitCostFormatter } from "@/lib/utils/formatter";
 import { UNIT_OPTIONS } from "@/lib/constants/units";
@@ -15,6 +17,7 @@ export const supplyFormSchema = z.object({
   purchaseQuantity: z
     .number({ error: "Informe uma quantidade válida." })
     .positive("A quantidade deve ser maior que zero."),
+  isIngredient: z.boolean(),
 });
 
 export type SupplyFormValues = z.infer<typeof supplyFormSchema>;
@@ -23,18 +26,23 @@ type SupplyFormProps = {
   mode: "create" | "edit";
   isSubmitting: boolean;
   initialValues?: Partial<SupplyFormValues>;
+  defaultIsIngredient?: boolean;
   onCancel: () => void;
   onSubmit: (values: SupplyFormValues) => Promise<void> | void;
   onDelete?: () => void;
   isDeleting?: boolean;
 };
 
-function getDefaultValues(initialValues?: Partial<SupplyFormValues>): SupplyFormValues {
+function getDefaultValues(
+  initialValues?: Partial<SupplyFormValues>,
+  defaultIsIngredient = true,
+): SupplyFormValues {
   return {
     name: initialValues?.name ?? "",
     unit: initialValues?.unit ?? "",
     purchasePrice: initialValues?.purchasePrice ?? 0,
     purchaseQuantity: initialValues?.purchaseQuantity ?? 0,
+    isIngredient: initialValues?.isIngredient ?? defaultIsIngredient,
   };
 }
 
@@ -42,6 +50,7 @@ export function SupplyForm({
   mode,
   isSubmitting,
   initialValues,
+  defaultIsIngredient,
   onCancel,
   onSubmit,
   onDelete,
@@ -55,7 +64,7 @@ export function SupplyForm({
     formState: { errors },
   } = useForm<SupplyFormValues>({
     resolver: zodResolver(supplyFormSchema),
-    defaultValues: getDefaultValues(initialValues),
+    defaultValues: getDefaultValues(initialValues, defaultIsIngredient),
   });
 
   const purchasePrice = watch("purchasePrice");
@@ -129,6 +138,17 @@ export function SupplyForm({
               : "Informe o preço e a quantidade da compra"}
           </div>
           <FieldDescription>Calculado automaticamente a partir do preço e da quantidade comprada.</FieldDescription>
+        </Field>
+
+        <Field orientation="horizontal">
+          <Controller
+            name="isIngredient"
+            control={control}
+            render={({ field }) => (
+              <Checkbox id="supply-is-ingredient" checked={field.value} onCheckedChange={field.onChange} />
+            )}
+          />
+          <Label htmlFor="supply-is-ingredient">É um ingrediente</Label>
         </Field>
       </FieldGroup>
 

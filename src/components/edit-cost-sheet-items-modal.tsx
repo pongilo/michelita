@@ -24,7 +24,7 @@ import { useRemoveProductRecipe } from "@/hooks/tanstack/product-recipe/use-remo
 
 type ItemType = "supply" | "recipe";
 type SelectionEntry = { type: ItemType; quantity: string };
-type CatalogTab = "supplies" | "recipes";
+type CatalogTarget = "recipes" | "ingredients" | "others";
 type CatalogFormMeta = { title: string; onCancel: () => void };
 
 type EditCostSheetItemsModalProps = {
@@ -33,6 +33,98 @@ type EditCostSheetItemsModalProps = {
   organizationId: string;
   onClose: () => void;
 };
+
+type SupplyOption = { id: string; name: string; unit: string };
+
+function SupplyChecklistTab({
+  supplies,
+  search,
+  onSearchChange,
+  selected,
+  onToggle,
+  onQuantityChange,
+  searchPlaceholder,
+  emptyLabel,
+  noResultsLabel,
+  onCreate,
+  createLabel,
+  onManage,
+  manageLabel,
+}: {
+  supplies: SupplyOption[];
+  search: string;
+  onSearchChange: (value: string) => void;
+  selected: Record<string, SelectionEntry>;
+  onToggle: (id: string) => void;
+  onQuantityChange: (id: string, quantity: string) => void;
+  searchPlaceholder: string;
+  emptyLabel: string;
+  noResultsLabel: string;
+  onCreate: () => void;
+  createLabel: string;
+  onManage: () => void;
+  manageLabel: string;
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-2 px-5 pb-3">
+        <Input
+          type="search"
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={searchPlaceholder}
+          className="flex-1"
+        />
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onCreate} aria-label={createLabel}>
+          <PlusIcon />
+        </Button>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onManage} aria-label={manageLabel}>
+          <SettingsIcon />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-3">
+        {supplies.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{search ? noResultsLabel : emptyLabel}</p>
+        ) : (
+          <ItemGroup>
+            {supplies.map((supply) => {
+              const key = `supply:${supply.id}`;
+              const entry = selected[key];
+              return (
+                <Item key={key} variant="outline" size="sm">
+                  <Checkbox
+                    id={`edit-item-${key}`}
+                    checked={!!entry}
+                    onCheckedChange={() => onToggle(supply.id)}
+                  />
+                  <label htmlFor={`edit-item-${key}`} className="flex flex-1 cursor-pointer flex-col">
+                    <ItemTitle>{supply.name}</ItemTitle>
+                  </label>
+                  {entry && (
+                    <ItemActions>
+                      <Input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        placeholder="Qtd."
+                        autoFocus
+                        className="h-8 w-20"
+                        value={entry.quantity}
+                        onChange={(event) => onQuantityChange(supply.id, event.target.value)}
+                      />
+                      <span className="text-xs text-muted-foreground">{supply.unit}</span>
+                    </ItemActions>
+                  )}
+                </Item>
+              );
+            })}
+          </ItemGroup>
+        )}
+      </div>
+    </>
+  );
+}
 
 export function EditCostSheetItemsModal({
   isOpen,
@@ -43,12 +135,13 @@ export function EditCostSheetItemsModal({
   const [selected, setSelected] = useState<Record<string, SelectionEntry>>({});
   const [hasSeeded, setHasSeeded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [itemsTab, setItemsTab] = useState<CatalogTab>("recipes");
+  const [itemsTab, setItemsTab] = useState<CatalogTarget>("recipes");
   const [recipeSearch, setRecipeSearch] = useState("");
-  const [supplySearch, setSupplySearch] = useState("");
+  const [ingredientSearch, setIngredientSearch] = useState("");
+  const [otherSearch, setOtherSearch] = useState("");
 
   const [mode, setMode] = useState<"items" | "catalog">("items");
-  const [catalogTab, setCatalogTab] = useState<CatalogTab>("supplies");
+  const [catalogTarget, setCatalogTarget] = useState<CatalogTarget>("ingredients");
   const [catalogAutoCreate, setCatalogAutoCreate] = useState(false);
   const [catalogReturnsToItems, setCatalogReturnsToItems] = useState(false);
   const [catalogSessionId, setCatalogSessionId] = useState(0);
@@ -56,16 +149,29 @@ export function EditCostSheetItemsModal({
   const [recipesForm, setRecipesForm] = useState<CatalogFormMeta | null>(null);
 
   const { data: suppliesData, isLoading: isLoadingSupplies } = useGetSupplies({ organizationId });
-  const allSupplies = useMemo(() => suppliesData?.supplies ?? [], [suppliesData]);
+  const allIngredients = useMemo(
+    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient),
+    [suppliesData],
+  );
+  const allOthers = useMemo(
+    () => (suppliesData?.supplies ?? []).filter((supply) => !supply.isIngredient),
+    [suppliesData],
+  );
 
   const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes({ organizationId });
   const allRecipes = useMemo(() => recipesData?.recipes ?? [], [recipesData]);
 
-  const filteredSupplies = useMemo(() => {
-    const term = normalize(supplySearch.trim());
-    if (!term) return allSupplies;
-    return allSupplies.filter((supply) => normalize(supply.name).includes(term));
-  }, [allSupplies, supplySearch]);
+  const filteredIngredients = useMemo(() => {
+    const term = normalize(ingredientSearch.trim());
+    if (!term) return allIngredients;
+    return allIngredients.filter((supply) => normalize(supply.name).includes(term));
+  }, [allIngredients, ingredientSearch]);
+
+  const filteredOthers = useMemo(() => {
+    const term = normalize(otherSearch.trim());
+    if (!term) return allOthers;
+    return allOthers.filter((supply) => normalize(supply.name).includes(term));
+  }, [allOthers, otherSearch]);
 
   const filteredRecipes = useMemo(() => {
     const term = normalize(recipeSearch.trim());
@@ -85,7 +191,8 @@ export function EditCostSheetItemsModal({
     if (!isOpen) {
       setHasSeeded(false);
       setRecipeSearch("");
-      setSupplySearch("");
+      setIngredientSearch("");
+      setOtherSearch("");
       setItemsTab("recipes");
       setMode("items");
       setSuppliesForm(null);
@@ -130,8 +237,8 @@ export function EditCostSheetItemsModal({
     setSelected((prev) => (prev[key] ? { ...prev, [key]: { type, quantity } } : prev));
   }
 
-  function openCatalog(tab: CatalogTab, autoCreate: boolean) {
-    setCatalogTab(tab);
+  function openCatalog(target: CatalogTarget, autoCreate: boolean) {
+    setCatalogTarget(target);
     setCatalogAutoCreate(autoCreate);
     // A direct jump into the create form (via the "+" next to a tab in the items
     // screen) should have Cancel/Save/Voltar return straight to "items" — skipping
@@ -165,7 +272,7 @@ export function EditCostSheetItemsModal({
     [catalogReturnsToItems],
   );
 
-  const activeCatalogForm = catalogTab === "supplies" ? suppliesForm : recipesForm;
+  const activeCatalogForm = catalogTarget === "recipes" ? recipesForm : suppliesForm;
 
   function handleBack() {
     if (activeCatalogForm) {
@@ -238,7 +345,8 @@ export function EditCostSheetItemsModal({
     }
   }
 
-  const catalogListTitle = catalogTab === "supplies" ? "Gerenciar insumos" : "Gerenciar receitas";
+  const catalogListTitle =
+    catalogTarget === "recipes" ? "Gerenciar receitas" : catalogTarget === "ingredients" ? "Gerenciar ingredientes" : "Gerenciar outros";
   const headerTitle =
     mode === "catalog" ? (activeCatalogForm?.title ?? catalogListTitle) : "Itens da ficha técnica";
 
@@ -266,12 +374,13 @@ export function EditCostSheetItemsModal({
               ) : (
                 <Tabs
                   value={itemsTab}
-                  onValueChange={(value) => value && setItemsTab(value as CatalogTab)}
+                  onValueChange={(value) => value && setItemsTab(value as CatalogTarget)}
                   className="min-h-0 flex-1 gap-3"
                 >
                   <TabsList className="mx-5 w-fit">
                     <TabsTrigger value="recipes">Receitas</TabsTrigger>
-                    <TabsTrigger value="supplies">Insumos</TabsTrigger>
+                    <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
+                    <TabsTrigger value="others">Outros</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="recipes" className="flex min-h-0 flex-1 flex-col">
@@ -348,78 +457,40 @@ export function EditCostSheetItemsModal({
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="supplies" className="flex min-h-0 flex-1 flex-col">
-                    <div className="flex items-center gap-2 px-5 pb-3">
-                      <Input
-                        type="search"
-                        value={supplySearch}
-                        onChange={(event) => setSupplySearch(event.target.value)}
-                        placeholder="Buscar insumo"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => openCatalog("supplies", true)}
-                        aria-label="Novo insumo"
-                      >
-                        <PlusIcon />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => openCatalog("supplies", false)}
-                        aria-label="Gerenciar insumos"
-                      >
-                        <SettingsIcon />
-                      </Button>
-                    </div>
+                  <TabsContent value="ingredients" className="flex min-h-0 flex-1 flex-col">
+                    <SupplyChecklistTab
+                      supplies={filteredIngredients}
+                      search={ingredientSearch}
+                      onSearchChange={setIngredientSearch}
+                      selected={selected}
+                      onToggle={(id) => toggle("supply", id)}
+                      onQuantityChange={(id, quantity) => setQuantity("supply", id, quantity)}
+                      searchPlaceholder="Buscar ingrediente"
+                      emptyLabel="Nenhum ingrediente cadastrado."
+                      noResultsLabel={`Nenhum ingrediente encontrado para "${ingredientSearch}".`}
+                      onCreate={() => openCatalog("ingredients", true)}
+                      createLabel="Novo ingrediente"
+                      onManage={() => openCatalog("ingredients", false)}
+                      manageLabel="Gerenciar ingredientes"
+                    />
+                  </TabsContent>
 
-                    <div className="flex-1 overflow-y-auto px-5 pb-3">
-                      {allSupplies.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Nenhum insumo cadastrado.</p>
-                      ) : filteredSupplies.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          Nenhum insumo encontrado para "{supplySearch}".
-                        </p>
-                      ) : (
-                        <ItemGroup>
-                          {filteredSupplies.map((supply) => {
-                            const key = `supply:${supply.id}`;
-                            const entry = selected[key];
-                            return (
-                              <Item key={key} variant="outline" size="sm">
-                                <Checkbox
-                                  id={`edit-item-${key}`}
-                                  checked={!!entry}
-                                  onCheckedChange={() => toggle("supply", supply.id)}
-                                />
-                                <label htmlFor={`edit-item-${key}`} className="flex flex-1 cursor-pointer flex-col">
-                                  <ItemTitle>{supply.name}</ItemTitle>
-                                </label>
-                                {entry && (
-                                  <ItemActions>
-                                    <Input
-                                      type="number"
-                                      step="0.001"
-                                      min="0"
-                                      placeholder="Qtd."
-                                      autoFocus
-                                      className="h-8 w-20"
-                                      value={entry.quantity}
-                                      onChange={(event) => setQuantity("supply", supply.id, event.target.value)}
-                                    />
-                                    <span className="text-xs text-muted-foreground">{supply.unit}</span>
-                                  </ItemActions>
-                                )}
-                              </Item>
-                            );
-                          })}
-                        </ItemGroup>
-                      )}
-                    </div>
+                  <TabsContent value="others" className="flex min-h-0 flex-1 flex-col">
+                    <SupplyChecklistTab
+                      supplies={filteredOthers}
+                      search={otherSearch}
+                      onSearchChange={setOtherSearch}
+                      selected={selected}
+                      onToggle={(id) => toggle("supply", id)}
+                      onQuantityChange={(id, quantity) => setQuantity("supply", id, quantity)}
+                      searchPlaceholder="Buscar item"
+                      emptyLabel="Nenhum item cadastrado."
+                      noResultsLabel={`Nenhum item encontrado para "${otherSearch}".`}
+                      onCreate={() => openCatalog("others", true)}
+                      createLabel="Novo item"
+                      onManage={() => openCatalog("others", false)}
+                      manageLabel="Gerenciar outros"
+                    />
                   </TabsContent>
                 </Tabs>
               )}
@@ -439,21 +510,22 @@ export function EditCostSheetItemsModal({
           </>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
-            {catalogTab === "supplies" ? (
-              <SuppliesManager
-                key={`supplies-${catalogSessionId}`}
-                organizationId={organizationId}
-                showFormHeader={false}
-                autoCreate={catalogAutoCreate}
-                onViewChange={handleSuppliesViewChange}
-              />
-            ) : (
+            {catalogTarget === "recipes" ? (
               <RecipesManager
                 key={`recipes-${catalogSessionId}`}
                 organizationId={organizationId}
                 showFormHeader={false}
                 autoCreate={catalogAutoCreate}
                 onViewChange={handleRecipesViewChange}
+              />
+            ) : (
+              <SuppliesManager
+                key={`supplies-${catalogTarget}-${catalogSessionId}`}
+                organizationId={organizationId}
+                showFormHeader={false}
+                autoCreate={catalogAutoCreate}
+                context={catalogTarget === "ingredients" ? "ingredient" : "other"}
+                onViewChange={handleSuppliesViewChange}
               />
             )}
           </div>

@@ -21,14 +21,17 @@ type Supply = {
   purchasePrice: number;
   purchaseQuantity: number;
   costPerUnit: number;
+  isIngredient: boolean;
 };
 
 type SupplyFormMeta = { title: string; onCancel: () => void };
+type SupplyContext = "ingredient" | "other";
 
 type SuppliesManagerProps = {
   organizationId: string;
   showFormHeader?: boolean;
   autoCreate?: boolean;
+  context?: SupplyContext;
   onViewChange?: (view: "list" | "form", meta?: SupplyFormMeta) => void;
 };
 
@@ -36,30 +39,39 @@ export function SuppliesManager({
   organizationId,
   showFormHeader = true,
   autoCreate = false,
+  context,
   onViewChange,
 }: SuppliesManagerProps) {
   const [searchInput, setSearchInput] = useState("");
   const [view, setView] = useState<"list" | "form">(autoCreate ? "form" : "list");
   const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
 
+  const createTitle = "Novo insumo";
+  const editTitle =
+    context === "ingredient" ? "Editar ingrediente" : context === "other" ? "Editar item" : "Editar insumo";
+
   useEffect(() => {
     if (view === "form") {
-      onViewChange?.("form", { title: editingSupply ? "Editar insumo" : "Novo insumo", onCancel: handleCancelForm });
+      onViewChange?.("form", { title: editingSupply ? editTitle : createTitle, onCancel: handleCancelForm });
     } else {
       onViewChange?.("list");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, editingSupply, onViewChange]);
+  }, [view, editingSupply, onViewChange, createTitle, editTitle]);
 
   const { data, isLoading } = useGetSupplies({ organizationId });
-  const allSupplies = useMemo(() => data?.supplies ?? [], [data]);
-  const total = allSupplies.length;
+  const contextSupplies = useMemo(() => {
+    const all = data?.supplies ?? [];
+    if (!context) return all;
+    return all.filter((supply) => (context === "ingredient" ? supply.isIngredient : !supply.isIngredient));
+  }, [data, context]);
+  const total = contextSupplies.length;
 
   const supplies = useMemo(() => {
     const search = normalize(searchInput.trim());
-    if (!search) return allSupplies;
-    return allSupplies.filter((supply) => normalize(supply.name).includes(search));
-  }, [allSupplies, searchInput]);
+    if (!search) return contextSupplies;
+    return contextSupplies.filter((supply) => normalize(supply.name).includes(search));
+  }, [contextSupplies, searchInput]);
 
   const { mutateAsync: createSupply, isPending: isCreating } = useCreateSupply();
   const { mutateAsync: updateSupply, isPending: isUpdating } = useUpdateSupply({ organizationId });
@@ -121,7 +133,7 @@ export function SuppliesManager({
             <Button type="button" variant="ghost" size="icon-sm" onClick={handleCancelForm} aria-label="Voltar">
               <ArrowLeftIcon />
             </Button>
-            <h4 className="font-heading text-sm font-medium">{editingSupply ? "Editar insumo" : "Novo insumo"}</h4>
+            <h4 className="font-heading text-sm font-medium">{editingSupply ? editTitle : createTitle}</h4>
           </div>
         )}
 
@@ -129,6 +141,7 @@ export function SuppliesManager({
           mode={editingSupply ? "edit" : "create"}
           isSubmitting={isSubmitting}
           initialValues={editingSupply ?? undefined}
+          defaultIsIngredient={context !== "other"}
           onCancel={handleCancelForm}
           onSubmit={onSubmit}
           onDelete={editingSupply ? () => handleDelete(editingSupply) : undefined}
@@ -148,7 +161,7 @@ export function SuppliesManager({
           placeholder="Buscar insumo"
           className="flex-1"
         />
-        <Button type="button" size="icon-sm" onClick={handleStartCreate} aria-label="Novo insumo">
+        <Button type="button" size="icon-sm" onClick={handleStartCreate} aria-label={createTitle}>
           <PlusIcon />
         </Button>
       </div>
@@ -165,7 +178,7 @@ export function SuppliesManager({
             </EmptyState.Description>
             <EmptyState.Action>
               <Button size="sm" onClick={handleStartCreate}>
-                Novo insumo
+                {createTitle}
               </Button>
             </EmptyState.Action>
           </EmptyState>

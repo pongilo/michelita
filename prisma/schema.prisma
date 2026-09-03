@@ -133,6 +133,7 @@ model Supply {
   purchasePrice    Decimal  @map("purchase_price") @db.Decimal(10, 2)
   purchaseQuantity Decimal  @map("purchase_quantity") @db.Decimal(10, 3)
   costPerUnit      Decimal  @map("cost_per_unit") @db.Decimal(12, 6)
+  isIngredient     Boolean  @default(true) @map("is_ingredient")
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
