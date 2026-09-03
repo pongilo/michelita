@@ -21,24 +21,22 @@ const getDashboardSummaryServerFn = createServerFn({ method: "POST" })
     const monthStart = new Date(Date.UTC(dayStart.getUTCFullYear(), dayStart.getUTCMonth(), 1));
     const monthEnd = new Date(Date.UTC(dayStart.getUTCFullYear(), dayStart.getUTCMonth() + 1, 1));
 
-    const [ordersDeliveredToday, topProductsRaw, customersCount, productsCount, suppliesCount] =
-      await Promise.all([
-        prisma.order.count({
-          where: { organizationId, item: { some: { deliveredAt: { gte: dayStart, lt: dayEnd } } } },
-        }),
-        prisma.orderItem.groupBy({
-          by: ["description"],
-          where: {
-            order: { organizationId, orderedAt: { gte: monthStart, lt: monthEnd } },
-          },
-          _sum: { quantity: true },
-          orderBy: { _sum: { quantity: "desc" } },
-          take: 3,
-        }),
-        prisma.customer.count({ where: { organizationId } }),
-        prisma.product.count({ where: { organizationId } }),
-        prisma.supply.count({ where: { organizationId } }),
-      ]);
+    const [ordersDeliveredToday, topProductsRaw, customersCount, productsCount] = await Promise.all([
+      prisma.order.count({
+        where: { organizationId, item: { some: { deliveredAt: { gte: dayStart, lt: dayEnd } } } },
+      }),
+      prisma.orderItem.groupBy({
+        by: ["description"],
+        where: {
+          order: { organizationId, orderedAt: { gte: monthStart, lt: monthEnd } },
+        },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 3,
+      }),
+      prisma.customer.count({ where: { organizationId } }),
+      prisma.product.count({ where: { organizationId } }),
+    ]);
 
     return {
       ordersDeliveredToday,
@@ -48,7 +46,6 @@ const getDashboardSummaryServerFn = createServerFn({ method: "POST" })
       })),
       customersCount,
       productsCount,
-      suppliesCount,
     };
   });
 

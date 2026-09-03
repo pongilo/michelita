@@ -25,6 +25,7 @@ type RecipesManagerProps = {
   organizationId: string;
   showFormHeader?: boolean;
   autoCreate?: boolean;
+  initialEditRecipe?: Recipe | null;
   onViewChange?: (view: "list" | "form", meta?: RecipeFormMeta) => void;
 };
 
@@ -32,11 +33,12 @@ export function RecipesManager({
   organizationId,
   showFormHeader = true,
   autoCreate = false,
+  initialEditRecipe = null,
   onViewChange,
 }: RecipesManagerProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [view, setView] = useState<"list" | "form">(autoCreate ? "form" : "list");
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [view, setView] = useState<"list" | "form">(autoCreate || initialEditRecipe ? "form" : "list");
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(initialEditRecipe);
   // When the recipe form opens a nested "create supply" sub-view, it reports its
   // own title/cancel here so the outer header (back button, title) reflects it
   // instead of the recipe form's own.
@@ -120,7 +122,7 @@ export function RecipesManager({
           placeholder="Buscar receita"
           className="flex-1"
         />
-        <Button type="button" size="icon-sm" onClick={handleStartCreate} aria-label="Nova receita">
+        <Button type="button" variant="outline" size="icon-sm" onClick={handleStartCreate} aria-label="Nova receita">
           <PlusIcon />
         </Button>
       </div>

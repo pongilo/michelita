@@ -23,9 +23,11 @@ const getRecipesServerFn = createServerFn({ method: "POST" })
         yieldUnit: true,
         updatedAt: true,
         supply: {
+          orderBy: { supply: { name: "asc" } },
           select: {
+            id: true,
             quantity: true,
-            supply: { select: { costPerUnit: true } },
+            supply: { select: { id: true, name: true, unit: true, costPerUnit: true } },
           },
         },
         _count: { select: { product: true } },
@@ -50,6 +52,14 @@ const getRecipesServerFn = createServerFn({ method: "POST" })
           costTotal,
           costPerYield,
           _count: recipe._count,
+          ingredients: recipe.supply.map((item) => ({
+            id: item.id,
+            quantity: Number(item.quantity),
+            supply: {
+              ...item.supply,
+              costPerUnit: Number(item.supply.costPerUnit),
+            },
+          })),
         };
       }),
     };

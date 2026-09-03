@@ -31,6 +31,7 @@ type SuppliesManagerProps = {
   organizationId: string;
   showFormHeader?: boolean;
   autoCreate?: boolean;
+  initialEditSupply?: Supply | null;
   context?: SupplyContext;
   onViewChange?: (view: "list" | "form", meta?: SupplyFormMeta) => void;
 };
@@ -39,12 +40,13 @@ export function SuppliesManager({
   organizationId,
   showFormHeader = true,
   autoCreate = false,
+  initialEditSupply = null,
   context,
   onViewChange,
 }: SuppliesManagerProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [view, setView] = useState<"list" | "form">(autoCreate ? "form" : "list");
-  const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
+  const [view, setView] = useState<"list" | "form">(autoCreate || initialEditSupply ? "form" : "list");
+  const [editingSupply, setEditingSupply] = useState<Supply | null>(initialEditSupply);
 
   const createTitle = "Novo insumo";
   const editTitle =
@@ -161,7 +163,7 @@ export function SuppliesManager({
           placeholder="Buscar insumo"
           className="flex-1"
         />
-        <Button type="button" size="icon-sm" onClick={handleStartCreate} aria-label={createTitle}>
+        <Button type="button" variant="outline" size="icon-sm" onClick={handleStartCreate} aria-label={createTitle}>
           <PlusIcon />
         </Button>
       </div>

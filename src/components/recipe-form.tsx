@@ -267,7 +267,7 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
           <h4 className="text-sm font-medium text-foreground">Ingredientes</h4>
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="icon-sm"
             onClick={() => setSubView("create-supply")}
             aria-label="Novo ingrediente"
