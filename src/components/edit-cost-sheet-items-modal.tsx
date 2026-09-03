@@ -4,6 +4,7 @@ import { ArrowLeftIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon } from "luci
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
@@ -457,6 +458,7 @@ export function EditCostSheetItemsModal({
   const [recipeSearch, setRecipeSearch] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [otherSearch, setOtherSearch] = useState("");
+  const [showOnlySelected, setShowOnlySelected] = useState(false);
 
   const [mode, setMode] = useState<"items" | "catalog">("items");
   const [catalogTarget, setCatalogTarget] = useState<CatalogTarget>("ingredients");
@@ -483,21 +485,27 @@ export function EditCostSheetItemsModal({
 
   const filteredIngredients = useMemo(() => {
     const term = normalize(ingredientSearch.trim());
-    if (!term) return allIngredients;
-    return allIngredients.filter((supply) => normalize(supply.name).includes(term));
-  }, [allIngredients, ingredientSearch]);
+    let list = allIngredients;
+    if (term) list = list.filter((supply) => normalize(supply.name).includes(term));
+    if (showOnlySelected) list = list.filter((supply) => selected[`supply:${supply.id}`]);
+    return list;
+  }, [allIngredients, ingredientSearch, showOnlySelected, selected]);
 
   const filteredOthers = useMemo(() => {
     const term = normalize(otherSearch.trim());
-    if (!term) return allOthers;
-    return allOthers.filter((supply) => normalize(supply.name).includes(term));
-  }, [allOthers, otherSearch]);
+    let list = allOthers;
+    if (term) list = list.filter((supply) => normalize(supply.name).includes(term));
+    if (showOnlySelected) list = list.filter((supply) => selected[`supply:${supply.id}`]);
+    return list;
+  }, [allOthers, otherSearch, showOnlySelected, selected]);
 
   const filteredRecipes = useMemo(() => {
     const term = normalize(recipeSearch.trim());
-    if (!term) return allRecipes;
-    return allRecipes.filter((recipe) => normalize(recipe.name).includes(term));
-  }, [allRecipes, recipeSearch]);
+    let list = allRecipes;
+    if (term) list = list.filter((recipe) => normalize(recipe.name).includes(term));
+    if (showOnlySelected) list = list.filter((recipe) => selected[`recipe:${recipe.id}`]);
+    return list;
+  }, [allRecipes, recipeSearch, showOnlySelected, selected]);
 
   const { data: productSuppliesData, isLoading: isLoadingProductSupplies } = useGetProductSupplies({ productId });
   const supplyItems = useMemo(() => productSuppliesData?.items ?? [], [productSuppliesData]);
@@ -514,6 +522,7 @@ export function EditCostSheetItemsModal({
       setIngredientSearch("");
       setOtherSearch("");
       setItemsTab("recipes");
+      setShowOnlySelected(false);
       setMode("items");
       setSuppliesForm(null);
       setRecipesForm(null);
@@ -730,7 +739,7 @@ export function EditCostSheetItemsModal({
           ? "Novo ingrediente"
           : "Novo item";
   const headerTitle =
-    mode === "catalog" ? (activeCatalogForm?.title ?? catalogFallbackTitle) : "Itens da ficha técnica";
+    mode === "catalog" ? (activeCatalogForm?.title ?? catalogFallbackTitle) : "Ficha técnica";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -759,11 +768,24 @@ export function EditCostSheetItemsModal({
                   onValueChange={(value) => value && setItemsTab(value as CatalogTarget)}
                   className="min-h-0 flex-1 gap-3"
                 >
-                  <TabsList className="mx-5 w-fit">
-                    <TabsTrigger value="recipes">Receitas</TabsTrigger>
-                    <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
-                    <TabsTrigger value="others">Outros</TabsTrigger>
-                  </TabsList>
+                  <div className="mx-5 flex items-center gap-4">
+                    <TabsList className="w-fit">
+                      <TabsTrigger value="recipes">Receitas</TabsTrigger>
+                      <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
+                      <TabsTrigger value="others">Outros</TabsTrigger>
+                    </TabsList>
+
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="show-only-selected"
+                        checked={showOnlySelected}
+                        onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
+                      />
+                      <Label htmlFor="show-only-selected" className="cursor-pointer text-sm text-muted-foreground">
+                        Selecionados ({selectedCount})
+                      </Label>
+                    </div>
+                  </div>
 
                   <TabsContent value="recipes" className="flex min-h-0 flex-1 flex-col">
                     <RecipeChecklistTab
@@ -821,8 +843,7 @@ export function EditCostSheetItemsModal({
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-border p-5">
-              <p className="text-sm text-muted-foreground">{selectedCount} selecionado(s)</p>
+            <div className="flex items-center justify-end gap-3 border-t border-border p-5">
               <div className="flex gap-2">
                 <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
                   Cancelar
