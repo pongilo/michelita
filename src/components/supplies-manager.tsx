@@ -5,7 +5,6 @@ import { SupplyForm, type SupplyFormValues } from "@/components/supply-form";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useCreateSupply } from "@/hooks/tanstack/supply/use-create-supply";
 import { useUpdateSupply } from "@/hooks/tanstack/supply/use-update-supply";
-import { useDeleteSupply } from "@/hooks/tanstack/supply/use-delete-supply";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -77,7 +76,6 @@ export function SuppliesManager({
 
   const { mutateAsync: createSupply, isPending: isCreating } = useCreateSupply();
   const { mutateAsync: updateSupply, isPending: isUpdating } = useUpdateSupply({ organizationId });
-  const { mutateAsync: deleteSupply, isPending: isDeleting } = useDeleteSupply({ organizationId });
   const isSubmitting = isCreating || isUpdating;
 
   function handleStartCreate() {
@@ -111,22 +109,6 @@ export function SuppliesManager({
     }
   }
 
-  async function handleDelete(supply: Supply) {
-    const confirmed = window.confirm(
-      `Deseja realmente excluir o insumo "${supply.name}"? Ele será removido da ficha técnica dos produtos vinculados.`,
-    );
-    if (!confirmed) return;
-
-    try {
-      await deleteSupply({ id: supply.id, organizationId });
-      toast.success("Insumo excluído com sucesso.");
-      setView("list");
-      setEditingSupply(null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao excluir insumo.");
-    }
-  }
-
   if (view === "form") {
     return (
       <div className="flex-1 overflow-y-auto px-5 pb-5">
@@ -146,8 +128,6 @@ export function SuppliesManager({
           defaultIsIngredient={context !== "other"}
           onCancel={handleCancelForm}
           onSubmit={onSubmit}
-          onDelete={editingSupply ? () => handleDelete(editingSupply) : undefined}
-          isDeleting={isDeleting}
         />
       </div>
     );

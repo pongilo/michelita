@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ChevronDownIcon, ChevronRightIcon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
+import { useUpdateProductSupply } from "@/hooks/tanstack/product-supply/use-update-product-supply";
 import { useGetProductRecipes } from "@/hooks/tanstack/product-recipe/use-get-product-recipes";
+import { useUpdateProductRecipe } from "@/hooks/tanstack/product-recipe/use-update-product-recipe";
 import { currencyFormatter, unitCostFormatter } from "@/lib/utils/formatter";
 
 type ProductCostSheetCardProps = {
@@ -41,8 +44,30 @@ type RecipeItem = {
   };
 };
 
-function SupplyDisplayRow({ item }: { item: SupplyItem }) {
+function SupplyDisplayRow({
+  item,
+  onQuantityChange,
+}: {
+  item: SupplyItem;
+  onQuantityChange: (id: string, quantity: number) => Promise<void> | void;
+}) {
+  const [quantityInput, setQuantityInput] = useState(String(item.quantity));
+
+  useEffect(() => {
+    setQuantityInput(String(item.quantity));
+  }, [item.quantity]);
+
   const lineCost = item.quantity * item.supply.costPerUnit;
+
+  async function handleBlur() {
+    const parsed = Number(quantityInput.trim().replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setQuantityInput(String(item.quantity));
+      return;
+    }
+    if (parsed === item.quantity) return;
+    await onQuantityChange(item.id, parsed);
+  }
 
   return (
     <TableRow>
@@ -51,16 +76,49 @@ function SupplyDisplayRow({ item }: { item: SupplyItem }) {
         {unitCostFormatter.format(item.supply.costPerUnit)} / {item.supply.unit}
       </TableCell>
       <TableCell className="text-right">
-        {item.quantity} {item.supply.unit}
+        <div className="flex items-center justify-end gap-1">
+          <Input
+            type="number"
+            step="0.001"
+            min="0"
+            className="h-8 w-20 text-right"
+            value={quantityInput}
+            onChange={(event) => setQuantityInput(event.target.value)}
+            onBlur={handleBlur}
+          />
+          <span className="text-xs text-muted-foreground">{item.supply.unit}</span>
+        </div>
       </TableCell>
       <TableCell className="hidden text-right font-medium md:table-cell">{currencyFormatter.format(lineCost)}</TableCell>
     </TableRow>
   );
 }
 
-function RecipeDisplayRow({ item }: { item: RecipeItem }) {
+function RecipeDisplayRow({
+  item,
+  onQuantityChange,
+}: {
+  item: RecipeItem;
+  onQuantityChange: (id: string, quantity: number) => Promise<void> | void;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [quantityInput, setQuantityInput] = useState(String(item.quantity));
+
+  useEffect(() => {
+    setQuantityInput(String(item.quantity));
+  }, [item.quantity]);
+
   const lineCost = item.recipe.costPerYield !== null ? item.quantity * item.recipe.costPerYield : null;
+
+  async function handleBlur() {
+    const parsed = Number(quantityInput.trim().replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setQuantityInput(String(item.quantity));
+      return;
+    }
+    if (parsed === item.quantity) return;
+    await onQuantityChange(item.id, parsed);
+  }
 
   return (
     <>
@@ -87,7 +145,18 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
             : "—"}
         </TableCell>
         <TableCell className="text-right">
-          {item.quantity} {item.recipe.yieldUnit}
+          <div className="flex items-center justify-end gap-1">
+            <Input
+              type="number"
+              step="0.001"
+              min="0"
+              className="h-8 w-20 text-right"
+              value={quantityInput}
+              onChange={(event) => setQuantityInput(event.target.value)}
+              onBlur={handleBlur}
+            />
+            <span className="text-xs text-muted-foreground">{item.recipe.yieldUnit}</span>
+          </div>
         </TableCell>
         <TableCell className="hidden text-right font-medium md:table-cell">
           {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
@@ -140,6 +209,25 @@ export function ProductCostSheetCard({
   const recipeItems = useMemo(() => productRecipesData?.items ?? [], [productRecipesData]);
 
   const isLoading = isLoadingSupplies || isLoadingRecipes;
+
+  const { mutateAsync: updateProductSupply } = useUpdateProductSupply({ productId });
+  const { mutateAsync: updateProductRecipe } = useUpdateProductRecipe({ productId });
+
+  async function handleSupplyQuantityChange(id: string, quantity: number) {
+    try {
+      await updateProductSupply({ id, quantity });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar quantidade.");
+    }
+  }
+
+  async function handleRecipeQuantityChange(id: string, quantity: number) {
+    try {
+      await updateProductRecipe({ id, quantity });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar quantidade.");
+    }
+  }
 
   const combinedRows = useMemo(() => {
     const rows: CombinedRow[] = [
@@ -211,9 +299,17 @@ export function ProductCostSheetCard({
                 <TableBody>
                   {combinedRows.map((row) =>
                     row.kind === "supply" ? (
-                      <SupplyDisplayRow key={`supply-${row.item.id}`} item={row.item} />
+                      <SupplyDisplayRow
+                        key={`supply-${row.item.id}`}
+                        item={row.item}
+                        onQuantityChange={handleSupplyQuantityChange}
+                      />
                     ) : (
-                      <RecipeDisplayRow key={`recipe-${row.item.id}`} item={row.item} />
+                      <RecipeDisplayRow
+                        key={`recipe-${row.item.id}`}
+                        item={row.item}
+                        onQuantityChange={handleRecipeQuantityChange}
+                      />
                     ),
                   )}
                 </TableBody>

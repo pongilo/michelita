@@ -83,7 +83,7 @@ export function RecipesManager({
 
   if (view === "form") {
     return (
-      <div className="flex-1 overflow-y-auto px-5 pb-5">
+      <div className="flex-1 overflow-y-auto px-5">
         {showFormHeader && (
           <div className="flex items-center gap-2 pb-3">
             <Button

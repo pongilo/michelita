@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { unitCostFormatter } from "@/lib/utils/formatter";
 import { UNIT_OPTIONS } from "@/lib/constants/units";
 
@@ -29,8 +29,6 @@ type SupplyFormProps = {
   defaultIsIngredient?: boolean;
   onCancel: () => void;
   onSubmit: (values: SupplyFormValues) => Promise<void> | void;
-  onDelete?: () => void;
-  isDeleting?: boolean;
 };
 
 function getDefaultValues(
@@ -53,8 +51,6 @@ export function SupplyForm({
   defaultIsIngredient,
   onCancel,
   onSubmit,
-  onDelete,
-  isDeleting,
 }: SupplyFormProps) {
   const {
     register,
@@ -82,43 +78,20 @@ export function SupplyForm({
         </Field>
 
         <Field>
-          <FieldLabel>Unidade de medida</FieldLabel>
-          <Controller
-            name="unit"
-            control={control}
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={(value) => field.onChange(value ?? "")}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione a unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {UNIT_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+          <FieldLabel>Preço da compra (R$)</FieldLabel>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0,00"
+            {...register("purchasePrice", { valueAsNumber: true })}
           />
-          <FieldError>{errors.unit?.message}</FieldError>
+          <FieldError>{errors.purchasePrice?.message}</FieldError>
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field>
-            <FieldLabel>Preço da compra (R$)</FieldLabel>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0,00"
-              {...register("purchasePrice", { valueAsNumber: true })}
-            />
-            <FieldError>{errors.purchasePrice?.message}</FieldError>
-          </Field>
-
-          <Field>
-            <FieldLabel>Quantidade comprada</FieldLabel>
+            <FieldLabel>Quantidade</FieldLabel>
             <Input
               type="number"
               step="0.001"
@@ -127,6 +100,26 @@ export function SupplyForm({
               {...register("purchaseQuantity", { valueAsNumber: true })}
             />
             <FieldError>{errors.purchaseQuantity?.message}</FieldError>
+          </Field>
+
+          <Field>
+            <FieldLabel>Unidade</FieldLabel>
+            <Controller
+              name="unit"
+              control={control}
+              render={({ field }) => (
+                <Tabs value={field.value} onValueChange={(value) => value && field.onChange(value)}>
+                  <TabsList>
+                    {UNIT_OPTIONS.map((option) => (
+                      <TabsTrigger key={option} value={option} className="flex-1">
+                        {option}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              )}
+            />
+            <FieldError>{errors.unit?.message}</FieldError>
           </Field>
         </div>
 
@@ -152,22 +145,13 @@ export function SupplyForm({
         </Field>
       </FieldGroup>
 
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          {mode === "edit" && onDelete && (
-            <Button type="button" variant="destructive" onClick={onDelete} disabled={isDeleting || isSubmitting}>
-              Excluir
-            </Button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : mode === "create" ? "Salvar insumo" : "Salvar alterações"}
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : mode === "create" ? "Salvar insumo" : "Salvar alterações"}
+        </Button>
       </div>
     </form>
   );

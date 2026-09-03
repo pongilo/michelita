@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SupplyForm, type SupplyFormValues } from "@/components/supply-form";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useCreateSupply } from "@/hooks/tanstack/supply/use-create-supply";
@@ -20,7 +20,6 @@ import { useUpdateRecipeSupply } from "@/hooks/tanstack/recipe-supply/use-update
 import { useRemoveRecipeSupply } from "@/hooks/tanstack/recipe-supply/use-remove-recipe-supply";
 import { useCreateRecipe } from "@/hooks/tanstack/recipe/use-create-recipe";
 import { useUpdateRecipe } from "@/hooks/tanstack/recipe/use-update-recipe";
-import { useDeleteRecipe } from "@/hooks/tanstack/recipe/use-delete-recipe";
 import { UNIT_OPTIONS } from "@/lib/constants/units";
 import { normalize } from "@/lib/utils";
 
@@ -107,7 +106,6 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
   const { mutateAsync: addRecipeSupply } = useAddRecipeSupply({ recipeId, organizationId });
   const { mutateAsync: updateRecipeSupply } = useUpdateRecipeSupply({ recipeId, organizationId });
   const { mutateAsync: removeRecipeSupply } = useRemoveRecipeSupply({ recipeId, organizationId });
-  const { mutateAsync: deleteRecipe, isPending: isDeleting } = useDeleteRecipe({ organizationId });
   const { mutateAsync: createSupply, isPending: isCreatingSupply } = useCreateSupply();
   const isSubmitting = isCreating || isUpdating;
 
@@ -185,22 +183,6 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
     }
   }
 
-  async function handleDelete() {
-    if (!recipe) return;
-    const confirmed = window.confirm(
-      `Deseja realmente excluir a receita "${recipe.name}"? Ela será removida da ficha técnica dos produtos vinculados.`,
-    );
-    if (!confirmed) return;
-
-    try {
-      await deleteRecipe({ id: recipe.id, organizationId });
-      toast.success("Receita excluída com sucesso.");
-      onCancel();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao excluir receita.");
-    }
-  }
-
   const isLoadingIngredients = isLoadingSupplies || (mode === "edit" && isLoadingExisting);
 
   if (subView === "create-supply") {
@@ -243,18 +225,15 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
               name="yieldUnit"
               control={control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={(value) => field.onChange(value ?? "")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <Tabs value={field.value} onValueChange={(value) => value && field.onChange(value)}>
+                  <TabsList>
                     {UNIT_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
+                      <TabsTrigger key={option} value={option} className="flex-1">
+                        {option}
+                      </TabsTrigger>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </TabsList>
+                </Tabs>
               )}
             />
             <FieldError>{errors.yieldUnit?.message}</FieldError>
@@ -263,26 +242,27 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
       </FieldGroup>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <h4 className="text-sm font-medium text-foreground">Ingredientes</h4>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            onClick={() => setSubView("create-supply")}
-            aria-label="Novo ingrediente"
-          >
-            <PlusIcon />
-          </Button>
-        </div>
+        <h4 className="text-sm font-medium text-foreground">Ingredientes</h4>
 
-        {!isLoadingIngredients && allSupplies.length > 0 && (
-          <Input
-            type="search"
-            value={supplySearch}
-            onChange={(event) => setSupplySearch(event.target.value)}
-            placeholder="Buscar ingrediente"
-          />
+        {!isLoadingIngredients && (
+          <div className="flex items-center gap-2">
+            <Input
+              type="search"
+              value={supplySearch}
+              onChange={(event) => setSupplySearch(event.target.value)}
+              placeholder="Buscar ingrediente"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setSubView("create-supply")}
+              aria-label="Novo ingrediente"
+            >
+              <PlusIcon />
+            </Button>
+          </div>
         )}
 
         {isLoadingIngredients ? (
@@ -292,63 +272,59 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
         ) : filteredSupplies.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum ingrediente encontrado para "{supplySearch}".</p>
         ) : (
-          <ItemGroup>
-            {filteredSupplies.map((supply) => {
-              const quantity = selected[supply.id];
-              const isChecked = quantity !== undefined;
-              return (
-                <Item key={supply.id} variant="outline" size="sm">
-                  <Checkbox
-                    id={`recipe-supply-${supply.id}`}
-                    checked={isChecked}
-                    onCheckedChange={() => toggleSupply(supply.id)}
-                  />
-                  <label htmlFor={`recipe-supply-${supply.id}`} className="flex flex-1 cursor-pointer flex-col">
-                    <ItemTitle>{supply.name}</ItemTitle>
-                  </label>
-                  {isChecked && (
-                    <ItemActions>
-                      <Input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        placeholder="Qtd."
-                        autoFocus
-                        className="h-8 w-20"
-                        value={quantity}
-                        onChange={(event) => setSupplyQuantity(supply.id, event.target.value)}
-                      />
-                      <span className="text-xs text-muted-foreground">{supply.unit}</span>
-                    </ItemActions>
-                  )}
-                </Item>
-              );
-            })}
-          </ItemGroup>
+          <div className="overflow-hidden rounded-2xl border border-border bg-background">
+            <Table>
+              <TableBody>
+                {filteredSupplies.map((supply) => {
+                  const quantity = selected[supply.id];
+                  const isChecked = quantity !== undefined;
+                  return (
+                    <TableRow key={supply.id}>
+                      <TableCell className="w-0">
+                        <Checkbox
+                          id={`recipe-supply-${supply.id}`}
+                          checked={isChecked}
+                          onCheckedChange={() => toggleSupply(supply.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="max-w-32 truncate sm:max-w-none">
+                        <label htmlFor={`recipe-supply-${supply.id}`} className="cursor-pointer font-heading font-medium">
+                          {supply.name}
+                        </label>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isChecked && (
+                          <div className="flex items-center justify-end gap-1">
+                            <Input
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              placeholder="Qtd."
+                              autoFocus
+                              className="h-8 w-20"
+                              value={quantity}
+                              onChange={(event) => setSupplyQuantity(supply.id, event.target.value)}
+                            />
+                            <span className="text-xs text-muted-foreground">{supply.unit}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
 
-      <div className="sticky bottom-0 -mx-5 flex items-center justify-between gap-2 border-t border-border bg-popover px-5 pt-3 pb-1">
-        <div>
-          {mode === "edit" && recipe && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting || isSubmitting}
-            >
-              Excluir
-            </Button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : mode === "create" ? "Salvar receita" : "Salvar alterações"}
-          </Button>
-        </div>
+      <div className="sticky bottom-0 -mx-5 flex items-center justify-end gap-2 border-t border-border bg-popover px-5 py-3">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : mode === "create" ? "Salvar receita" : "Salvar alterações"}
+        </Button>
       </div>
     </form>
   );
