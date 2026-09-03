@@ -1,20 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { ChevronDownIcon, ChevronRightIcon, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
-import { ManageCatalogModal } from "@/components/manage-catalog-modal";
-import { AddCostSheetItemsModal } from "@/components/add-cost-sheet-items-modal";
-import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
+import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
-import { useUpdateProductSupply } from "@/hooks/tanstack/product-supply/use-update-product-supply";
-import { useRemoveProductSupply } from "@/hooks/tanstack/product-supply/use-remove-product-supply";
-import { useGetRecipes } from "@/hooks/tanstack/recipe/use-get-recipes";
 import { useGetProductRecipes } from "@/hooks/tanstack/product-recipe/use-get-product-recipes";
-import { useUpdateProductRecipe } from "@/hooks/tanstack/product-recipe/use-update-product-recipe";
-import { useRemoveProductRecipe } from "@/hooks/tanstack/product-recipe/use-remove-product-recipe";
 import { currencyFormatter, unitCostFormatter } from "@/lib/utils/formatter";
 
 type ProductCostSheetCardProps = {
@@ -49,29 +41,8 @@ type RecipeItem = {
   };
 };
 
-function SupplyLineRow({
-  item,
-  onUpdate,
-  onRemove,
-  disabled,
-}: {
-  item: SupplyItem;
-  onUpdate: (quantity: number) => Promise<void>;
-  onRemove: () => void;
-  disabled: boolean;
-}) {
-  const [quantity, setQuantity] = useState(String(item.quantity));
+function SupplyDisplayRow({ item }: { item: SupplyItem }) {
   const lineCost = item.quantity * item.supply.costPerUnit;
-
-  async function handleBlur() {
-    const parsed = Number(quantity.replace(",", "."));
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setQuantity(String(item.quantity));
-      return;
-    }
-    if (parsed === item.quantity) return;
-    await onUpdate(parsed);
-  }
 
   return (
     <TableRow>
@@ -79,55 +50,17 @@ function SupplyLineRow({
       <TableCell className="hidden text-right text-muted-foreground md:table-cell">
         {unitCostFormatter.format(item.supply.costPerUnit)} / {item.supply.unit}
       </TableCell>
-      <TableCell>
-        <div className="flex items-center justify-end gap-1">
-          <Input
-            type="number"
-            step="0.001"
-            min="0"
-            className="h-9 w-20"
-            value={quantity}
-            disabled={disabled}
-            onChange={(event) => setQuantity(event.target.value)}
-            onBlur={handleBlur}
-          />
-          <span className="text-sm text-muted-foreground">{item.supply.unit}</span>
-        </div>
+      <TableCell className="text-right">
+        {item.quantity} {item.supply.unit}
       </TableCell>
       <TableCell className="hidden text-right font-medium md:table-cell">{currencyFormatter.format(lineCost)}</TableCell>
-      <TableCell>
-        <Button size="icon-sm" variant="ghost" onClick={onRemove} disabled={disabled}>
-          <Trash2Icon />
-        </Button>
-      </TableCell>
     </TableRow>
   );
 }
 
-function RecipeLineRow({
-  item,
-  onUpdate,
-  onRemove,
-  disabled,
-}: {
-  item: RecipeItem;
-  onUpdate: (quantity: number) => Promise<void>;
-  onRemove: () => void;
-  disabled: boolean;
-}) {
-  const [quantity, setQuantity] = useState(String(item.quantity));
+function RecipeDisplayRow({ item }: { item: RecipeItem }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const lineCost = item.recipe.costPerYield !== null ? item.quantity * item.recipe.costPerYield : null;
-
-  async function handleBlur() {
-    const parsed = Number(quantity.replace(",", "."));
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setQuantity(String(item.quantity));
-      return;
-    }
-    if (parsed === item.quantity) return;
-    await onUpdate(parsed);
-  }
 
   return (
     <>
@@ -153,34 +86,17 @@ function RecipeLineRow({
             ? `${currencyFormatter.format(item.recipe.costPerYield)} / ${item.recipe.yieldQuantity} ${item.recipe.yieldUnit}`
             : "—"}
         </TableCell>
-        <TableCell>
-          <div className="flex items-center justify-end gap-1">
-            <Input
-              type="number"
-              step="0.001"
-              min="0"
-              className="h-9 w-20"
-              value={quantity}
-              disabled={disabled}
-              onChange={(event) => setQuantity(event.target.value)}
-              onBlur={handleBlur}
-            />
-            <span className="text-sm text-muted-foreground">{item.recipe.yieldUnit}</span>
-          </div>
+        <TableCell className="text-right">
+          {item.quantity} {item.recipe.yieldUnit}
         </TableCell>
         <TableCell className="hidden text-right font-medium md:table-cell">
           {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
-        </TableCell>
-        <TableCell>
-          <Button size="icon-sm" variant="ghost" onClick={onRemove} disabled={disabled}>
-            <Trash2Icon />
-          </Button>
         </TableCell>
       </TableRow>
 
       {isExpanded && item.recipe.ingredients.length > 0 && (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={5} className="bg-muted/30 py-2">
+          <TableCell colSpan={4} className="bg-muted/30 py-2">
             <ul className="space-y-1 pl-5 text-sm text-muted-foreground">
               {item.recipe.ingredients.map((ingredient) => (
                 <li key={ingredient.id} className="flex items-center justify-between gap-3">
@@ -215,38 +131,15 @@ export function ProductCostSheetCard({
   onApplySuggestedPrice,
 }: ProductCostSheetCardProps) {
   const [multiplierInput, setMultiplierInput] = useState(multiplier !== null ? String(multiplier) : "");
-  const [manageCatalogTab, setManageCatalogTab] = useState<"supplies" | "recipes" | null>(null);
-  const [isAddItemsOpen, setIsAddItemsOpen] = useState(false);
+  const [isEditItemsOpen, setIsEditItemsOpen] = useState(false);
 
-  const { data: suppliesData } = useGetSupplies({ organizationId });
-  const allSupplies = suppliesData?.supplies ?? [];
   const { data: productSuppliesData, isLoading: isLoadingSupplies } = useGetProductSupplies({ productId });
   const supplyItems = useMemo(() => productSuppliesData?.items ?? [], [productSuppliesData]);
 
-  const { data: recipesData } = useGetRecipes({ organizationId });
-  const allRecipes = recipesData?.recipes ?? [];
   const { data: productRecipesData, isLoading: isLoadingRecipes } = useGetProductRecipes({ productId });
   const recipeItems = useMemo(() => productRecipesData?.items ?? [], [productRecipesData]);
 
   const isLoading = isLoadingSupplies || isLoadingRecipes;
-
-  const { mutateAsync: updateProductSupply } = useUpdateProductSupply({ productId });
-  const { mutateAsync: removeProductSupply, isPending: isRemovingSupply } = useRemoveProductSupply({ productId });
-
-  const { mutateAsync: updateProductRecipe } = useUpdateProductRecipe({ productId });
-  const { mutateAsync: removeProductRecipe, isPending: isRemovingRecipe } = useRemoveProductRecipe({ productId });
-
-  const isRemoving = isRemovingSupply || isRemovingRecipe;
-
-  const availableSupplies = useMemo(() => {
-    const usedIds = new Set(supplyItems.map((item) => item.supply.id));
-    return allSupplies.filter((supply) => !usedIds.has(supply.id));
-  }, [allSupplies, supplyItems]);
-
-  const availableRecipes = useMemo(() => {
-    const usedIds = new Set(recipeItems.map((item) => item.recipe.id));
-    return allRecipes.filter((recipe) => !usedIds.has(recipe.id));
-  }, [allRecipes, recipeItems]);
 
   const combinedRows = useMemo(() => {
     const rows: CombinedRow[] = [
@@ -290,48 +183,13 @@ export function ProductCostSheetCard({
     await onApplySuggestedPrice(Number(suggestedPrice.toFixed(2)));
   }
 
-  async function handleUpdateSupply(id: string, quantity: number) {
-    try {
-      await updateProductSupply({ id, quantity });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao atualizar insumo.");
-    }
-  }
-
-  async function handleRemoveSupply(id: string) {
-    try {
-      await removeProductSupply({ id, productId });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao remover insumo.");
-    }
-  }
-
-  async function handleUpdateRecipe(id: string, quantity: number) {
-    try {
-      await updateProductRecipe({ id, quantity });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao atualizar receita.");
-    }
-  }
-
-  async function handleRemoveRecipe(id: string) {
-    try {
-      await removeProductRecipe({ id, productId });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao remover receita.");
-    }
-  }
-
-  const hasCatalog = allSupplies.length > 0 || allRecipes.length > 0;
-  const hasAvailable = availableSupplies.length > 0 || availableRecipes.length > 0;
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-heading text-sm text-muted-foreground">Itens da ficha técnica</h3>
-        <Button type="button" variant="outline" size="sm" onClick={() => setManageCatalogTab("supplies")}>
-          <SettingsIcon />
-          Gerenciar
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsEditItemsOpen(true)}>
+          <PencilIcon />
+          Editar itens
         </Button>
       </div>
 
@@ -348,27 +206,14 @@ export function ProductCostSheetCard({
                     <TableHead className="hidden text-right md:table-cell">Custo/unidade</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Custo</TableHead>
-                    <TableHead className="w-0" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {combinedRows.map((row) =>
                     row.kind === "supply" ? (
-                      <SupplyLineRow
-                        key={`supply-${row.item.id}`}
-                        item={row.item}
-                        disabled={isRemoving}
-                        onUpdate={(quantity) => handleUpdateSupply(row.item.id, quantity)}
-                        onRemove={() => handleRemoveSupply(row.item.id)}
-                      />
+                      <SupplyDisplayRow key={`supply-${row.item.id}`} item={row.item} />
                     ) : (
-                      <RecipeLineRow
-                        key={`recipe-${row.item.id}`}
-                        item={row.item}
-                        disabled={isRemoving}
-                        onUpdate={(quantity) => handleUpdateRecipe(row.item.id, quantity)}
-                        onRemove={() => handleRemoveRecipe(row.item.id)}
-                      />
+                      <RecipeDisplayRow key={`recipe-${row.item.id}`} item={row.item} />
                     ),
                   )}
                 </TableBody>
@@ -433,50 +278,17 @@ export function ProductCostSheetCard({
             </div>
           )}
 
-          {!hasCatalog ? (
-            <p className="text-sm text-muted-foreground">
-              Você ainda não tem insumos nem receitas cadastrados.{" "}
-              <button
-                type="button"
-                onClick={() => setManageCatalogTab("supplies")}
-                className="underline underline-offset-4"
-              >
-                Cadastre um insumo
-              </button>{" "}
-              ou{" "}
-              <button
-                type="button"
-                onClick={() => setManageCatalogTab("recipes")}
-                className="underline underline-offset-4"
-              >
-                uma receita
-              </button>{" "}
-              para adicionar aqui.
-            </p>
-          ) : !hasAvailable ? (
-            <p className="text-sm text-muted-foreground">Todos os insumos e receitas cadastrados já foram adicionados.</p>
-          ) : (
-            <Button type="button" variant="outline" onClick={() => setIsAddItemsOpen(true)}>
-              <PlusIcon />
-              Adicionar item
-            </Button>
+          {combinedRows.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum insumo ou receita adicionado ainda.</p>
           )}
         </>
       )}
 
-      <ManageCatalogModal
-        isOpen={manageCatalogTab !== null}
-        organizationId={organizationId}
-        defaultTab={manageCatalogTab ?? undefined}
-        onClose={() => setManageCatalogTab(null)}
-      />
-
-      <AddCostSheetItemsModal
-        isOpen={isAddItemsOpen}
+      <EditCostSheetItemsModal
+        isOpen={isEditItemsOpen}
         productId={productId}
-        availableSupplies={availableSupplies}
-        availableRecipes={availableRecipes}
-        onClose={() => setIsAddItemsOpen(false)}
+        organizationId={organizationId}
+        onClose={() => setIsEditItemsOpen(false)}
       />
     </div>
   );

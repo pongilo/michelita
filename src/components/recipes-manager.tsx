@@ -1,12 +1,7 @@
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { EditIcon, ListIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { RecipeFormModal, type RecipeFormValues } from "@/components/recipe-form-modal";
-import { RecipeIngredientsModal } from "@/components/recipe-ingredients-modal";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { RecipeForm } from "@/components/recipe-form";
 import { useGetRecipes } from "@/hooks/tanstack/recipe/use-get-recipes";
-import { useCreateRecipe } from "@/hooks/tanstack/recipe/use-create-recipe";
-import { useUpdateRecipe } from "@/hooks/tanstack/recipe/use-update-recipe";
-import { useDeleteRecipe } from "@/hooks/tanstack/recipe/use-delete-recipe";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,15 +19,40 @@ type Recipe = {
   costPerYield: number | null;
 };
 
+type RecipeFormMeta = { title: string; onCancel: () => void };
+
 type RecipesManagerProps = {
   organizationId: string;
+  showFormHeader?: boolean;
+  autoCreate?: boolean;
+  onViewChange?: (view: "list" | "form", meta?: RecipeFormMeta) => void;
 };
 
-export function RecipesManager({ organizationId }: RecipesManagerProps) {
+export function RecipesManager({
+  organizationId,
+  showFormHeader = true,
+  autoCreate = false,
+  onViewChange,
+}: RecipesManagerProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [view, setView] = useState<"list" | "form">(autoCreate ? "form" : "list");
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-  const [ingredientsRecipe, setIngredientsRecipe] = useState<Recipe | null>(null);
+  // When the recipe form opens a nested "create supply" sub-view, it reports its
+  // own title/cancel here so the outer header (back button, title) reflects it
+  // instead of the recipe form's own.
+  const [recipeSubViewMeta, setRecipeSubViewMeta] = useState<RecipeFormMeta | null>(null);
+
+  useEffect(() => {
+    if (view === "form") {
+      onViewChange?.(
+        "form",
+        recipeSubViewMeta ?? { title: editingRecipe ? "Editar receita" : "Nova receita", onCancel: handleCancelForm },
+      );
+    } else {
+      onViewChange?.("list");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, editingRecipe, onViewChange, recipeSubViewMeta]);
 
   const { data, isLoading } = useGetRecipes({ organizationId });
   const allRecipes = useMemo(() => data?.recipes ?? [], [data]);
@@ -44,53 +64,50 @@ export function RecipesManager({ organizationId }: RecipesManagerProps) {
     return allRecipes.filter((recipe) => normalize(recipe.name).includes(search));
   }, [allRecipes, searchInput]);
 
-  const { mutateAsync: createRecipe, isPending: isCreating } = useCreateRecipe();
-  const { mutateAsync: updateRecipe, isPending: isUpdating } = useUpdateRecipe({ organizationId });
-  const { mutateAsync: deleteRecipe, isPending: isDeleting } = useDeleteRecipe({ organizationId });
-  const isSubmitting = isCreating || isUpdating;
-
   function handleStartCreate() {
     setEditingRecipe(null);
-    setIsFormOpen(true);
+    setView("form");
   }
 
   function handleStartEdit(recipe: Recipe) {
     setEditingRecipe(recipe);
-    setIsFormOpen(true);
+    setView("form");
   }
 
-  function handleCloseForm() {
-    setIsFormOpen(false);
+  function handleCancelForm() {
+    setView("list");
     setEditingRecipe(null);
   }
 
-  async function onSubmit(values: RecipeFormValues) {
-    try {
-      if (editingRecipe) {
-        await updateRecipe({ id: editingRecipe.id, organizationId, ...values });
-        toast.success("Receita atualizada com sucesso.");
-      } else {
-        await createRecipe({ organizationId, ...values });
-        toast.success("Receita criada com sucesso.");
-      }
-      handleCloseForm();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao salvar receita.");
-    }
-  }
+  if (view === "form") {
+    return (
+      <div className="flex-1 overflow-y-auto px-5 pb-5">
+        {showFormHeader && (
+          <div className="flex items-center gap-2 pb-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={recipeSubViewMeta ? recipeSubViewMeta.onCancel : handleCancelForm}
+              aria-label="Voltar"
+            >
+              <ArrowLeftIcon />
+            </Button>
+            <h4 className="font-heading text-sm font-medium">
+              {recipeSubViewMeta ? recipeSubViewMeta.title : editingRecipe ? "Editar receita" : "Nova receita"}
+            </h4>
+          </div>
+        )}
 
-  async function handleDelete(recipe: Recipe) {
-    const confirmed = window.confirm(
-      `Deseja realmente excluir a receita "${recipe.name}"? Ela será removida da ficha técnica dos produtos vinculados.`,
+        <RecipeForm
+          organizationId={organizationId}
+          mode={editingRecipe ? "edit" : "create"}
+          recipe={editingRecipe}
+          onCancel={handleCancelForm}
+          onSubViewChange={setRecipeSubViewMeta}
+        />
+      </div>
     );
-    if (!confirmed) return;
-
-    try {
-      await deleteRecipe({ id: recipe.id, organizationId });
-      toast.success("Receita excluída com sucesso.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao excluir receita.");
-    }
   }
 
   return (
@@ -139,12 +156,15 @@ export function RecipesManager({ organizationId }: RecipesManagerProps) {
                   <TableHead className="hidden text-right md:table-cell">Rendimento</TableHead>
                   <TableHead className="hidden text-right md:table-cell">Custo total</TableHead>
                   <TableHead className="text-right">Custo/rendimento</TableHead>
-                  <TableHead className="w-0" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recipes.map((recipe) => (
-                  <TableRow key={recipe.id}>
+                  <TableRow
+                    key={recipe.id}
+                    className="cursor-pointer"
+                    onClick={() => handleStartEdit(recipe)}
+                  >
                     <TableCell className="max-w-32 truncate font-heading font-medium sm:max-w-none">
                       {recipe.name}
                     </TableCell>
@@ -157,35 +177,6 @@ export function RecipesManager({ organizationId }: RecipesManagerProps) {
                     <TableCell className="text-right font-medium">
                       {recipe.costPerYield !== null ? currencyFormatter.format(recipe.costPerYield) : "—"}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => setIngredientsRecipe(recipe)}
-                          disabled={isDeleting}
-                          aria-label="Ingredientes"
-                        >
-                          <ListIcon />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleStartEdit(recipe)}
-                          disabled={isDeleting}
-                        >
-                          <EditIcon />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(recipe)}
-                          disabled={isDeleting}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -193,22 +184,6 @@ export function RecipesManager({ organizationId }: RecipesManagerProps) {
           </div>
         )}
       </div>
-
-      <RecipeFormModal
-        isOpen={isFormOpen}
-        mode={editingRecipe ? "edit" : "create"}
-        isSubmitting={isSubmitting}
-        initialValues={editingRecipe ?? undefined}
-        onClose={handleCloseForm}
-        onSubmit={onSubmit}
-      />
-
-      <RecipeIngredientsModal
-        isOpen={ingredientsRecipe !== null}
-        recipe={ingredientsRecipe}
-        organizationId={organizationId}
-        onClose={() => setIngredientsRecipe(null)}
-      />
     </>
   );
 }

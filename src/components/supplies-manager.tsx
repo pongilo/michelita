@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { SupplyFormModal, type SupplyFormValues } from "@/components/supply-form-modal";
+import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { SupplyForm, type SupplyFormValues } from "@/components/supply-form";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useCreateSupply } from "@/hooks/tanstack/supply/use-create-supply";
 import { useUpdateSupply } from "@/hooks/tanstack/supply/use-update-supply";
@@ -23,14 +23,33 @@ type Supply = {
   costPerUnit: number;
 };
 
+type SupplyFormMeta = { title: string; onCancel: () => void };
+
 type SuppliesManagerProps = {
   organizationId: string;
+  showFormHeader?: boolean;
+  autoCreate?: boolean;
+  onViewChange?: (view: "list" | "form", meta?: SupplyFormMeta) => void;
 };
 
-export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
+export function SuppliesManager({
+  organizationId,
+  showFormHeader = true,
+  autoCreate = false,
+  onViewChange,
+}: SuppliesManagerProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [view, setView] = useState<"list" | "form">(autoCreate ? "form" : "list");
   const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
+
+  useEffect(() => {
+    if (view === "form") {
+      onViewChange?.("form", { title: editingSupply ? "Editar insumo" : "Novo insumo", onCancel: handleCancelForm });
+    } else {
+      onViewChange?.("list");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, editingSupply, onViewChange]);
 
   const { data, isLoading } = useGetSupplies({ organizationId });
   const allSupplies = useMemo(() => data?.supplies ?? [], [data]);
@@ -49,16 +68,16 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
 
   function handleStartCreate() {
     setEditingSupply(null);
-    setIsFormOpen(true);
+    setView("form");
   }
 
   function handleStartEdit(supply: Supply) {
     setEditingSupply(supply);
-    setIsFormOpen(true);
+    setView("form");
   }
 
-  function handleCloseForm() {
-    setIsFormOpen(false);
+  function handleCancelForm() {
+    setView("list");
     setEditingSupply(null);
   }
 
@@ -71,7 +90,8 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
         await createSupply({ organizationId, ...values });
         toast.success("Insumo criado com sucesso.");
       }
-      handleCloseForm();
+      setView("list");
+      setEditingSupply(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar insumo.");
     }
@@ -86,9 +106,36 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
     try {
       await deleteSupply({ id: supply.id, organizationId });
       toast.success("Insumo excluído com sucesso.");
+      setView("list");
+      setEditingSupply(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir insumo.");
     }
+  }
+
+  if (view === "form") {
+    return (
+      <div className="flex-1 overflow-y-auto px-5 pb-5">
+        {showFormHeader && (
+          <div className="flex items-center gap-2 pb-3">
+            <Button type="button" variant="ghost" size="icon-sm" onClick={handleCancelForm} aria-label="Voltar">
+              <ArrowLeftIcon />
+            </Button>
+            <h4 className="font-heading text-sm font-medium">{editingSupply ? "Editar insumo" : "Novo insumo"}</h4>
+          </div>
+        )}
+
+        <SupplyForm
+          mode={editingSupply ? "edit" : "create"}
+          isSubmitting={isSubmitting}
+          initialValues={editingSupply ?? undefined}
+          onCancel={handleCancelForm}
+          onSubmit={onSubmit}
+          onDelete={editingSupply ? () => handleDelete(editingSupply) : undefined}
+          isDeleting={isDeleting}
+        />
+      </div>
+    );
   }
 
   return (
@@ -137,12 +184,15 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
                   <TableHead className="hidden text-right md:table-cell">Preço da compra</TableHead>
                   <TableHead className="hidden text-right md:table-cell">Qtd. comprada</TableHead>
                   <TableHead className="text-right">Custo/unidade</TableHead>
-                  <TableHead className="w-0" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {supplies.map((supply) => (
-                  <TableRow key={supply.id}>
+                  <TableRow
+                    key={supply.id}
+                    className="cursor-pointer"
+                    onClick={() => handleStartEdit(supply)}
+                  >
                     <TableCell className="max-w-32 truncate font-heading font-medium sm:max-w-none">
                       {supply.name}
                     </TableCell>
@@ -155,26 +205,6 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
                     <TableCell className="text-right font-medium">
                       {unitCostFormatter.format(supply.costPerUnit)} / {supply.unit}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleStartEdit(supply)}
-                          disabled={isDeleting}
-                        >
-                          <EditIcon />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(supply)}
-                          disabled={isDeleting}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -182,15 +212,6 @@ export function SuppliesManager({ organizationId }: SuppliesManagerProps) {
           </div>
         )}
       </div>
-
-      <SupplyFormModal
-        isOpen={isFormOpen}
-        mode={editingSupply ? "edit" : "create"}
-        isSubmitting={isSubmitting}
-        initialValues={editingSupply ?? undefined}
-        onClose={handleCloseForm}
-        onSubmit={onSubmit}
-      />
     </>
   );
 }

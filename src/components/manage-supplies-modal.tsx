@@ -11,7 +11,7 @@ type ManageSuppliesModalProps = {
 export function ManageSuppliesModal({ isOpen, organizationId, onClose }: ManageSuppliesModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex max-h-[80vh] flex-col gap-0 p-0 sm:max-w-2xl">
+      <DialogContent className="flex h-[80vh] flex-col gap-0 p-0 sm:max-w-2xl">
         <DialogHeader className="p-5 pb-3">
           <DialogTitle>Gerenciar insumos</DialogTitle>
         </DialogHeader>
