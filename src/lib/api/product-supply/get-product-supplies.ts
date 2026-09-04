@@ -18,7 +18,7 @@ const getProductSuppliesServerFn = createServerFn({ method: "POST" })
         id: true,
         quantity: true,
         supply: {
-          select: { id: true, name: true, unit: true, costPerUnit: true },
+          select: { id: true, name: true, unit: true, costPerUnit: true, isIngredient: true },
         },
       },
     });

@@ -21,7 +21,7 @@ type ProductCostSheetCardProps = {
 type SupplyItem = {
   id: string;
   quantity: number;
-  supply: { id: string; name: string; unit: string; costPerUnit: number };
+  supply: { id: string; name: string; unit: string; costPerUnit: number; isIngredient: boolean };
 };
 
 type RecipeItem = {
@@ -126,6 +126,11 @@ type CombinedRow =
   | { kind: "supply"; name: string; item: SupplyItem }
   | { kind: "recipe"; name: string; item: RecipeItem };
 
+function getCategoryRank(row: CombinedRow): number {
+  if (row.kind === "recipe") return 0;
+  return row.item.supply.isIngredient ? 1 : 2;
+}
+
 export function ProductCostSheetCard({
   productId,
   organizationId,
@@ -150,7 +155,11 @@ export function ProductCostSheetCard({
       ...supplyItems.map((item): CombinedRow => ({ kind: "supply", name: item.supply.name, item })),
       ...recipeItems.map((item): CombinedRow => ({ kind: "recipe", name: item.recipe.name, item })),
     ];
-    return rows.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    return rows.sort((a, b) => {
+      const categoryDiff = getCategoryRank(a) - getCategoryRank(b);
+      if (categoryDiff !== 0) return categoryDiff;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
   }, [supplyItems, recipeItems]);
 
   const supplyCost = supplyItems.reduce((sum, item) => sum + item.quantity * item.supply.costPerUnit, 0);
@@ -206,7 +215,7 @@ export function ProductCostSheetCard({
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Item</TableHead>
+                    <TableHead>Insumo</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Custo</TableHead>
                   </TableRow>
