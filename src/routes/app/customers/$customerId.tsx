@@ -149,32 +149,34 @@ function CustomerDetailsPage() {
 
       {customer && metrics && (
         <div className={`space-y-8 ${selectedOrderIds.size > 0 ? "pb-24" : ""}`}>
-          <div className="divide-y md:border md:py-1 md:px-5 md:rounded-2xl md:card">
-            {customer.phone && (
-              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
-                <p className="font-heading text-base font-medium">Telefone</p>
-                <p className="text-base text-muted-foreground">
-                  {customer.phone}
-                </p>
-              </div>
-            )}
-            {customer.address && (
-              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
-                <p className="font-heading text-base font-medium">Endereço</p>
-                <p className="text-base text-muted-foreground">
-                  {customer.address}
-                </p>
-              </div>
-            )}
-            {customer.note && (
-              <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
-                <p className="font-heading text-base font-medium">Observação</p>
-                <p className="text-base text-muted-foreground">
-                  {customer.note}
-                </p>
-              </div>
-            )}
-          </div>
+          {(customer.phone || customer.address || customer.note) && (
+            <div className="divide-y md:border md:py-1 md:px-5 md:rounded-2xl md:card">
+              {customer.phone && (
+                <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                  <p className="font-heading text-base font-medium">Telefone</p>
+                  <p className="text-base text-muted-foreground">
+                    {customer.phone}
+                  </p>
+                </div>
+              )}
+              {customer.address && (
+                <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                  <p className="font-heading text-base font-medium">Endereço</p>
+                  <p className="text-base text-muted-foreground">
+                    {customer.address}
+                  </p>
+                </div>
+              )}
+              {customer.note && (
+                <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
+                  <p className="font-heading text-base font-medium">Observação</p>
+                  <p className="text-base text-muted-foreground">
+                    {customer.note}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Resumo financeiro */}
           <div className="grid grid-cols-3 gap-3">
