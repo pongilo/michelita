@@ -108,7 +108,9 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
               })}
             </ul>
 
-            <div className="mt-2 flex items-center justify-between gap-3 pl-5 text-sm">
+            <div className="my-2 border-t border-border pl-5" />
+
+            <div className="flex items-center justify-between gap-3 pl-5 text-sm">
               <span className="text-muted-foreground">Total</span>
               <span className="font-medium">
                 {item.recipe.yieldQuantity} {item.recipe.yieldUnit} •{" "}

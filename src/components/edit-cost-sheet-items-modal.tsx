@@ -21,6 +21,7 @@ import { normalize } from "@/lib/utils";
 import { currencyFormatter } from "@/lib/utils/formatter";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useDeleteSupply } from "@/hooks/tanstack/supply/use-delete-supply";
+import { useUpdateSupply } from "@/hooks/tanstack/supply/use-update-supply";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
 import { useAddProductSupply } from "@/hooks/tanstack/product-supply/use-add-product-supply";
 import { useUpdateProductSupply } from "@/hooks/tanstack/product-supply/use-update-product-supply";
@@ -62,6 +63,8 @@ function SupplyChecklistRow({
   onEditSupply,
   onDeleteSupply,
   isDeleting,
+  onMoveSupply,
+  isMoving,
 }: {
   supply: SupplyOption;
   entry: SelectionEntry | undefined;
@@ -70,6 +73,8 @@ function SupplyChecklistRow({
   onEditSupply: (supply: SupplyOption) => void;
   onDeleteSupply: (supply: SupplyOption) => void;
   isDeleting: boolean;
+  onMoveSupply: (supply: SupplyOption) => void;
+  isMoving: boolean;
 }) {
   const key = `supply:${supply.id}`;
 
@@ -110,6 +115,9 @@ function SupplyChecklistRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEditSupply(supply)}>Editar insumo</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveSupply(supply)} disabled={isMoving}>
+              {supply.isIngredient ? "Mover para outros" : "Mover para ingredientes"}
+            </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={() => onDeleteSupply(supply)} disabled={isDeleting}>
               Excluir
             </DropdownMenuItem>
@@ -227,6 +235,8 @@ function RecipeChecklistRow({
                 </ul>
               )}
 
+              <div className="border-t border-border" />
+
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Total</span>
                 <span className="font-medium">
@@ -341,6 +351,8 @@ function SupplyChecklistTab({
   onEditSupply,
   onDeleteSupply,
   isDeleting,
+  onMoveSupply,
+  isMoving,
   searchPlaceholder,
   emptyLabel,
   noResultsLabel,
@@ -356,6 +368,8 @@ function SupplyChecklistTab({
   onEditSupply: (supply: SupplyOption) => void;
   onDeleteSupply: (supply: SupplyOption) => void;
   isDeleting: boolean;
+  onMoveSupply: (supply: SupplyOption) => void;
+  isMoving: boolean;
   searchPlaceholder: string;
   emptyLabel: string;
   noResultsLabel: string;
@@ -394,6 +408,8 @@ function SupplyChecklistTab({
                     onEditSupply={onEditSupply}
                     onDeleteSupply={onDeleteSupply}
                     isDeleting={isDeleting}
+                    onMoveSupply={onMoveSupply}
+                    isMoving={isMoving}
                   />
                 ))}
               </TableBody>
@@ -510,6 +526,23 @@ export function EditCostSheetItemsModal({
   const { mutateAsync: removeProductRecipe } = useRemoveProductRecipe({ productId });
   const { mutateAsync: deleteSupply, isPending: isDeletingSupply } = useDeleteSupply({ organizationId });
   const { mutateAsync: deleteRecipe, isPending: isDeletingRecipe } = useDeleteRecipe({ organizationId });
+  const { mutateAsync: updateSupply, isPending: isMovingSupply } = useUpdateSupply({ organizationId });
+
+  async function handleMoveSupply(supply: SupplyOption) {
+    try {
+      await updateSupply({
+        id: supply.id,
+        name: supply.name,
+        unit: supply.unit,
+        purchasePrice: supply.purchasePrice,
+        purchaseQuantity: supply.purchaseQuantity,
+        isIngredient: !supply.isIngredient,
+      });
+      toast.success(supply.isIngredient ? "Insumo movido para outros." : "Insumo movido para ingredientes.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao mover insumo.");
+    }
+  }
 
   async function handleDeleteSupply(supply: SupplyOption) {
     const confirmed = window.confirm(
@@ -742,7 +775,7 @@ export function EditCostSheetItemsModal({
                         onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
                       />
                       <Label htmlFor="show-only-selected" className="cursor-pointer text-sm text-muted-foreground">
-                        Selecionados ({selectedCount})
+                        Filtrar selecionados ({selectedCount})
                       </Label>
                     </div>
                   </div>
@@ -773,6 +806,8 @@ export function EditCostSheetItemsModal({
                       onEditSupply={(supply) => openCatalog("ingredients", { editSupply: supply })}
                       onDeleteSupply={handleDeleteSupply}
                       isDeleting={isDeletingSupply}
+                      onMoveSupply={handleMoveSupply}
+                      isMoving={isMovingSupply}
                       searchPlaceholder="Buscar ingrediente"
                       emptyLabel="Nenhum ingrediente cadastrado."
                       noResultsLabel={`Nenhum ingrediente encontrado para "${ingredientSearch}".`}
@@ -792,6 +827,8 @@ export function EditCostSheetItemsModal({
                       onEditSupply={(supply) => openCatalog("others", { editSupply: supply })}
                       onDeleteSupply={handleDeleteSupply}
                       isDeleting={isDeletingSupply}
+                      onMoveSupply={handleMoveSupply}
+                      isMoving={isMovingSupply}
                       searchPlaceholder="Buscar item"
                       emptyLabel="Nenhum item cadastrado."
                       noResultsLabel={`Nenhum item encontrado para "${otherSearch}".`}

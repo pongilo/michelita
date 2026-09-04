@@ -2,10 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { unitCostFormatter } from "@/lib/utils/formatter";
 import { UNIT_OPTIONS } from "@/lib/constants/units";
@@ -131,17 +129,6 @@ export function SupplyForm({
               : "Informe o preço e a quantidade da compra"}
           </div>
           <FieldDescription>Calculado automaticamente a partir do preço e da quantidade comprada.</FieldDescription>
-        </Field>
-
-        <Field orientation="horizontal">
-          <Controller
-            name="isIngredient"
-            control={control}
-            render={({ field }) => (
-              <Checkbox id="supply-is-ingredient" checked={field.value} onCheckedChange={field.onChange} />
-            )}
-          />
-          <Label htmlFor="supply-is-ingredient">É um ingrediente</Label>
         </Field>
       </FieldGroup>
 
