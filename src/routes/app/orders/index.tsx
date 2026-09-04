@@ -14,6 +14,7 @@ import {
   currencyFormatter,
 } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { OrderItem } from "@/components/order-item";
 import { PeriodFilter } from "@/components/ui/period-filter";
 import { AppTitle } from "@/components/app-title";
@@ -118,8 +119,6 @@ const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: "month", label: "Mês" },
 ];
 
-type StatusFilter = "inProgress" | "finished" | "all";
-
 export const Route = createFileRoute("/app/orders/")({
   component: OrderPage,
 });
@@ -127,7 +126,7 @@ export const Route = createFileRoute("/app/orders/")({
 function OrderPage() {
   const { organization } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("day");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("inProgress");
+  const [onlyInProgress, setOnlyInProgress] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
@@ -178,33 +177,14 @@ function OrderPage() {
 
   const inProgressDays = displayDays.map((d) => ({
     date: d.date,
-    groups: d.groups.filter((g) => !g.items.every((i) => i.isDelivered)),
-  }));
-  const finishedDays = displayDays.map((d) => ({
-    date: d.date,
-    groups: d.groups.filter((g) => g.items.every((i) => i.isDelivered)),
+    groups: d.groups.filter((g) => !g.items.every((i) => i.isDelivered) || !g.order.isPaid),
   }));
 
   const inProgressCount = inProgressDays.reduce((sum, d) => sum + d.groups.length, 0);
-  const finishedCount = finishedDays.reduce((sum, d) => sum + d.groups.length, 0);
 
-  const statusOptions: { value: StatusFilter; label: string }[] = [
-    { value: "all", label: "Todos" },
-    { value: "inProgress", label: inProgressCount > 0 ? `Em andamento (${inProgressCount})` : "Em andamento" },
-    { value: "finished", label: finishedCount > 0 ? `Entregue (${finishedCount})` : "Entregue" },
-  ];
+  const visibleDays = onlyInProgress ? inProgressDays : displayDays;
 
-  const visibleDays = statusFilter === "inProgress"
-    ? inProgressDays
-    : statusFilter === "finished"
-      ? finishedDays
-      : displayDays;
-
-  const emptyDayMessage = statusFilter === "inProgress"
-    ? "Nenhuma entrega em andamento."
-    : statusFilter === "finished"
-      ? "Nenhum pedido entregue."
-      : "Nenhum pedido.";
+  const emptyDayMessage = onlyInProgress ? "Nenhuma entrega em andamento." : "Nenhum pedido.";
 
   const periodLabel = viewMode === "day"
     ? (referenceDate ? formatFullDayLabel(toExactDatetime(referenceDate)) : "")
@@ -256,6 +236,11 @@ function OrderPage() {
           <AppTitle>Pedidos</AppTitle>
 
           <div className="ml-auto flex items-center gap-2">
+            <PeriodFilter.Select
+              value={viewMode}
+              onChange={(value) => setViewMode(value as ViewMode)}
+              options={VIEW_MODE_OPTIONS}
+            />
             {viewMode === "day" && (
               <Button
                 onClick={handleCopyDeliveries}
@@ -295,16 +280,13 @@ function OrderPage() {
             </div>
           )}
 
-          <PeriodFilter.Select
-            value={viewMode}
-            onChange={(value) => setViewMode(value as ViewMode)}
-            options={VIEW_MODE_OPTIONS}
-          />
-          <PeriodFilter.Select
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value as StatusFilter)}
-            options={statusOptions}
-          />
+          <label className="ml-auto flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Checkbox
+              checked={onlyInProgress}
+              onCheckedChange={(checked) => setOnlyInProgress(checked === true)}
+            />
+            Em andamento{inProgressCount > 0 ? ` (${inProgressCount})` : ""}
+          </label>
         </div>
 
         {(isLoading || !startDate) && (

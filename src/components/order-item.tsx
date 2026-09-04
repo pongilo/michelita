@@ -146,21 +146,24 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
 
       <div className="space-y-0.5">
         <p className="text-xs uppercase font-medium text-blue-900 flex items-center gap-1.5">
-          <span>
-            {allDelivered ? "Entregue às " : "Entregar às "}
-            {timeFormatter.format(toExactDatetime(group.deliveredAt))}
-          </span>
+          <span>{timeFormatter.format(toExactDatetime(group.deliveredAt))}</span>
           <span className="size-1 rounded-full bg-blue-900"></span>
           <span>{currencyFormatter.format(group.order.total)}</span>
           {group.order.isPaid ? (
             <>
               <span className="size-1.5 rounded-full bg-green-600"></span>
               <span className="text-green-700">Pago</span>
-            </> 
+            </>
           ) : (
             <>
               <span className="size-1.5 rounded-full bg-yellow-600"></span>
               <span className="text-yellow-700">Pendente</span>
+            </>
+          )}
+          {allDelivered && (
+            <>
+              <span className="size-1.5 rounded-full bg-green-600"></span>
+              <span className="text-green-700">Entregue</span>
             </>
           )}
         </p>
