@@ -3,6 +3,7 @@ import { MapPinIcon, MoreVerticalIcon, StickyNoteIcon, User2Icon } from "lucide-
 import { useListOrders } from "@/hooks/tanstack/order/use-list-orders";
 import { timeFormatter, currencyFormatter, toExactDatetime, formatWeekdayDateTime } from "@/lib/utils/formatter";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,15 +68,15 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
 
   const allDelivered = group.items.every((i) => i.isDelivered);
 
-  const handleMarkDelivered = () => {
+  const handleToggleDelivered = (isDelivered: boolean) => {
     markDelivered(
-      { itemIds: group.items.map((i) => i.id), isDelivered: true },
+      { itemIds: group.items.map((i) => i.id), isDelivered },
       {
         onSuccess: () => {
-          toast.success("Itens marcados como entregues.");
+          toast.success(isDelivered ? "Itens marcados como entregues." : "Itens marcados como não entregues.");
           queryClient.invalidateQueries({ queryKey: ["orders", organizationId] });
         },
-        onError: (err: unknown) => toast.error(err instanceof Error ? err.message : "Erro ao marcar como entregue."),
+        onError: (err: unknown) => toast.error(err instanceof Error ? err.message : "Erro ao atualizar entrega."),
       },
     );
   };
@@ -113,15 +114,15 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
   };
 
   return (
-    <div className="relative md:rounded-md bg-background md:border border-y-4 p-5 space-y-3">
-      <div className="absolute top-3 right-3">
+    <div className="relative md:rounded-md bg-background md:border border-y-4 p-3 md:p-5">
+      <div className="absolute top-1.5 right-1.5 md:top-3 md:right-3">
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
             <MoreVerticalIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {!allDelivered && (
-              <DropdownMenuItem onClick={handleMarkDelivered} disabled={isMarkingDelivered}>
+              <DropdownMenuItem onClick={() => handleToggleDelivered(true)} disabled={isMarkingDelivered}>
                 Marcar como entregue
               </DropdownMenuItem>
             )}
@@ -144,72 +145,86 @@ export function OrderItem({ group, organizationId }: { group: Group; organizatio
         </DropdownMenu>
       </div>
 
-      <div className="space-y-0.5">
-        <p className="text-xs uppercase font-medium text-blue-900 flex items-center gap-1.5">
-          <span>{timeFormatter.format(toExactDatetime(group.deliveredAt))}</span>
-          <span className="size-1 rounded-full bg-blue-900"></span>
-          <span>{currencyFormatter.format(group.order.total)}</span>
-          {group.order.isPaid ? (
-            <>
-              <span className="size-1.5 rounded-full bg-green-600"></span>
-              <span className="text-green-700">Pago</span>
-            </>
-          ) : (
-            <>
-              <span className="size-1.5 rounded-full bg-yellow-600"></span>
-              <span className="text-yellow-700">Pendente</span>
-            </>
-          )}
-          {allDelivered && (
-            <>
-              <span className="size-1.5 rounded-full bg-green-600"></span>
-              <span className="text-green-700">Entregue</span>
-            </>
-          )}
-        </p>
-        {group.order.note && (
-          <p className="text-sm text-muted-foreground italic">Obs.: {group.order.note}</p>
-        )}
-      </div>
+      <div className="flex gap-3 md:gap-4">
+        <div className="flex w-12 flex-none flex-col items-center justify-between py-0.5 md:w-14">
+          <span className="text-sm font-semibold text-blue-900">
+            {timeFormatter.format(toExactDatetime(group.deliveredAt))}
+          </span>
+          <Checkbox
+            checked={allDelivered}
+            onCheckedChange={(checked) => handleToggleDelivered(checked === true)}
+            disabled={isMarkingDelivered}
+            aria-label="Marcar como entregue"
+          />
+        </div>
 
-      <div className="space-y-0.5">
-        {group.items.map((item) => (
-          <div key={item.id}>
-            <p className="text-base text-foreground">
-              {item.quantity > 1 && (
-                <span className="text-primary font-bold">{item.quantity}x </span>
+        <div className="flex-1 min-w-0 space-y-2 md:space-y-3">
+          <div className="space-y-0.5">
+            <p className="text-xs uppercase font-medium text-blue-900 flex items-center gap-1.5">
+              <span>{currencyFormatter.format(group.order.total)}</span>
+              {group.order.isPaid ? (
+                <>
+                  <span className="size-1.5 rounded-full bg-green-600"></span>
+                  <span className="text-green-700">Pago</span>
+                </>
+              ) : (
+                <>
+                  <span className="size-1.5 rounded-full bg-yellow-600"></span>
+                  <span className="text-yellow-700">Pendente</span>
+                </>
               )}
-              {item.description}
+              {allDelivered && (
+                <>
+                  <span className="size-1.5 rounded-full bg-green-600"></span>
+                  <span className="text-green-700">Entregue</span>
+                </>
+              )}
             </p>
-            {item.note && (
-              <p className="text-base text-muted-foreground italic">Obs.: {item.note}</p>
+            {group.order.note && (
+              <p className="text-sm text-muted-foreground italic">Obs.: {group.order.note}</p>
             )}
           </div>
-        ))}
-      </div>
 
-      {Object.keys(group.order.customer || {}).length > 0 && (
-        <div className="space-y-1 text-sm text-muted-foreground">
-          {group.order.customer?.name && (
-            <p className="flex items-center gap-1">
-              <User2Icon className="size-4 flex-none" />
-              {group.order.customer.name}
-            </p>
-          )}
-          {group.order.customer?.address && (
-            <p className="flex items-center gap-1">
-              <MapPinIcon className="size-4 flex-none" />
-              {group.order.customer.address}
-            </p>
-          )}
-          {group.order.customer?.note && (
-            <p className="flex items-center gap-1">
-              <StickyNoteIcon className="size-4 flex-none" />
-              {group.order.customer.note}
-            </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => (
+              <div key={item.id}>
+                <p className="text-base text-foreground">
+                  {item.quantity > 1 && (
+                    <span className="text-primary font-bold">{item.quantity}x </span>
+                  )}
+                  {item.description}
+                </p>
+                {item.note && (
+                  <p className="text-base text-muted-foreground italic">Obs.: {item.note}</p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {Object.keys(group.order.customer || {}).length > 0 && (
+            <div className="space-y-1 text-sm text-muted-foreground">
+              {group.order.customer?.name && (
+                <p className="flex items-center gap-1">
+                  <User2Icon className="size-4 flex-none" />
+                  {group.order.customer.name}
+                </p>
+              )}
+              {group.order.customer?.address && (
+                <p className="flex items-center gap-1">
+                  <MapPinIcon className="size-4 flex-none" />
+                  {group.order.customer.address}
+                </p>
+              )}
+              {group.order.customer?.note && (
+                <p className="flex items-center gap-1">
+                  <StickyNoteIcon className="size-4 flex-none" />
+                  {group.order.customer.note}
+                </p>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
