@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeftIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon, ChevronRightIcon, MoreVerticalIcon, PlusIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SuppliesManager } from "@/components/supplies-manager";
 import { RecipesManager } from "@/components/recipes-manager";
 import { normalize } from "@/lib/utils";
-import { currencyFormatter, unitCostFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter } from "@/lib/utils/formatter";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
 import { useDeleteSupply } from "@/hooks/tanstack/supply/use-delete-supply";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
@@ -65,99 +71,52 @@ function SupplyChecklistRow({
   onDeleteSupply: (supply: SupplyOption) => void;
   isDeleting: boolean;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const key = `supply:${supply.id}`;
 
   return (
-    <>
-      <TableRow>
-        <TableCell className="w-0">
-          <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
-        </TableCell>
-        <TableCell className="max-w-32 truncate sm:max-w-none">
-          <label htmlFor={`edit-item-${key}`} className="flex cursor-pointer items-baseline gap-2">
-            <span className="truncate font-heading font-medium">{supply.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {currencyFormatter.format(supply.purchasePrice)}
-            </span>
-          </label>
-        </TableCell>
-        <TableCell className="text-right">
-          {entry && (
-            <div className="flex items-center justify-end gap-1">
-              <Input
-                type="number"
-                step="0.001"
-                min="0"
-                placeholder="Qtd."
-                autoFocus
-                className="h-8 w-20"
-                value={entry.quantity}
-                onChange={(event) => onQuantityChange(event.target.value)}
-              />
-              <span className="text-xs text-muted-foreground">{supply.unit}</span>
-            </div>
-          )}
-        </TableCell>
-        <TableCell className="w-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setIsExpanded((value) => !value)}
-            aria-label={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
-          >
-            {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
-          </Button>
-        </TableCell>
-      </TableRow>
-
-      {isExpanded && (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={4} className="bg-muted/30 py-3">
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Preço da compra</span>
-                <span className="font-medium">{currencyFormatter.format(supply.purchasePrice)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Qtd. comprada</span>
-                <span className="font-medium">
-                  {supply.purchaseQuantity} {supply.unit}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Custo/unidade</span>
-                <span className="font-medium">
-                  {unitCostFormatter.format(supply.costPerUnit)} / {supply.unit}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onEditSupply(supply)}
-                >
-                  Editar insumo
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onDeleteSupply(supply)}
-                  disabled={isDeleting}
-                >
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          </TableCell>
-        </TableRow>
-      )}
-    </>
+    <TableRow>
+      <TableCell className="w-0">
+        <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
+      </TableCell>
+      <TableCell className="max-w-32 truncate sm:max-w-none">
+        <label htmlFor={`edit-item-${key}`} className="flex cursor-pointer items-baseline gap-2">
+          <span className="truncate font-heading font-medium">{supply.name}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {supply.purchaseQuantity} {supply.unit} • {currencyFormatter.format(supply.purchasePrice)}
+          </span>
+        </label>
+      </TableCell>
+      <TableCell className="text-right">
+        {entry && (
+          <div className="flex items-center justify-end gap-1">
+            <Input
+              type="number"
+              step="0.001"
+              min="0"
+              placeholder="Qtd."
+              autoFocus
+              className="h-8 w-20"
+              value={entry.quantity}
+              onChange={(event) => onQuantityChange(event.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">{supply.unit}</span>
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="w-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon-sm" />}>
+            <MoreVerticalIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEditSupply(supply)}>Editar insumo</DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={() => onDeleteSupply(supply)} disabled={isDeleting}>
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -168,7 +127,11 @@ type RecipeOption = {
   yieldUnit: string;
   costTotal: number;
   costPerYield: number | null;
-  ingredients: { id: string; quantity: number; supply: { id: string; name: string; unit: string } }[];
+  ingredients: {
+    id: string;
+    quantity: number;
+    supply: { id: string; name: string; unit: string; costPerUnit: number };
+  }[];
 };
 
 function RecipeChecklistRow({
@@ -201,7 +164,7 @@ function RecipeChecklistRow({
           <label htmlFor={`edit-item-${key}`} className="flex cursor-pointer items-baseline gap-2">
             <span className="truncate font-heading font-medium">{recipe.name}</span>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {recipe.costPerYield !== null ? currencyFormatter.format(recipe.costPerYield) : "—"}/{recipe.yieldUnit}
+              {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
             </span>
           </label>
         </TableCell>
@@ -243,34 +206,31 @@ function RecipeChecklistRow({
                 <p className="text-muted-foreground">Nenhum ingrediente cadastrado.</p>
               ) : (
                 <ul className="space-y-1">
-                  {recipe.ingredients.map((ingredient) => (
-                    <li
-                      key={ingredient.id}
-                      className="flex items-center justify-between gap-3 text-muted-foreground"
-                    >
-                      <span className="truncate">{ingredient.supply.name}</span>
-                      <span className="shrink-0">
-                        {ingredient.quantity} {ingredient.supply.unit}
-                      </span>
-                    </li>
-                  ))}
+                  {recipe.ingredients.map((ingredient) => {
+                    const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
+                    return (
+                      <li
+                        key={ingredient.id}
+                        className="flex items-center justify-between gap-3 text-muted-foreground"
+                      >
+                        <span className="truncate">{ingredient.supply.name}</span>
+                        <span className="shrink-0">
+                          {ingredient.quantity} {ingredient.supply.unit}
+                          {" · "}
+                          <span className="font-medium text-foreground">
+                            {currencyFormatter.format(ingredientCost)}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Rendimento</span>
+                <span className="text-muted-foreground">Total</span>
                 <span className="font-medium">
-                  {recipe.yieldQuantity} {recipe.yieldUnit}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Custo total</span>
-                <span className="font-medium">{currencyFormatter.format(recipe.costTotal)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Custo/rendimento</span>
-                <span className="font-medium">
-                  {recipe.costPerYield !== null ? currencyFormatter.format(recipe.costPerYield) : "—"}
+                  {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
                 </span>
               </div>
 

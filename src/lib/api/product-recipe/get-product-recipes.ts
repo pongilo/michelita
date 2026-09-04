@@ -53,6 +53,7 @@ const getProductRecipesServerFn = createServerFn({ method: "POST" })
             name: item.recipe.name,
             yieldQuantity,
             yieldUnit: item.recipe.yieldUnit,
+            costTotal,
             costPerYield,
             ingredients: item.recipe.supply.map((s) => ({
               id: s.id,

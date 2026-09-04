@@ -7,7 +7,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
 import { useGetProductRecipes } from "@/hooks/tanstack/product-recipe/use-get-product-recipes";
-import { currencyFormatter, unitCostFormatter } from "@/lib/utils/formatter";
+import { currencyFormatter } from "@/lib/utils/formatter";
 
 type ProductCostSheetCardProps = {
   productId: string;
@@ -32,6 +32,7 @@ type RecipeItem = {
     name: string;
     yieldQuantity: number;
     yieldUnit: string;
+    costTotal: number;
     costPerYield: number | null;
     ingredients: {
       id: string;
@@ -47,9 +48,6 @@ function SupplyDisplayRow({ item }: { item: SupplyItem }) {
   return (
     <TableRow>
       <TableCell className="max-w-24 truncate font-heading font-medium md:max-w-40">{item.supply.name}</TableCell>
-      <TableCell className="hidden text-right text-muted-foreground md:table-cell">
-        {unitCostFormatter.format(item.supply.costPerUnit)} / {item.supply.unit}
-      </TableCell>
       <TableCell className="text-right">
         {item.quantity} {item.supply.unit}
       </TableCell>
@@ -81,11 +79,6 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
             <span className="truncate">{item.recipe.name}</span>
           </button>
         </TableCell>
-        <TableCell className="hidden text-right text-muted-foreground md:table-cell">
-          {item.recipe.costPerYield !== null
-            ? `${currencyFormatter.format(item.recipe.costPerYield)} / ${item.recipe.yieldQuantity} ${item.recipe.yieldUnit}`
-            : "—"}
-        </TableCell>
         <TableCell className="text-right">
           {item.quantity} {item.recipe.yieldUnit}
         </TableCell>
@@ -96,21 +89,32 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
 
       {isExpanded && item.recipe.ingredients.length > 0 && (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={4} className="bg-muted/30 py-2">
+          <TableCell colSpan={3} className="bg-muted/30 py-2">
             <ul className="space-y-1 pl-5 text-sm text-muted-foreground">
-              {item.recipe.ingredients.map((ingredient) => (
-                <li key={ingredient.id} className="flex items-center justify-between gap-3">
-                  <span className="truncate">{ingredient.supply.name}</span>
-                  <span className="shrink-0">
-                    {ingredient.quantity} {ingredient.supply.unit}
-                    <span className="hidden md:inline">
-                      {" "}
-                      · {unitCostFormatter.format(ingredient.supply.costPerUnit)}/{ingredient.supply.unit}
+              {item.recipe.ingredients.map((ingredient) => {
+                const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
+                return (
+                  <li key={ingredient.id} className="flex items-center justify-between gap-3">
+                    <span className="truncate">{ingredient.supply.name}</span>
+                    <span className="shrink-0">
+                      {ingredient.quantity} {ingredient.supply.unit}
+                      {" · "}
+                      <span className="font-medium text-foreground">
+                        {currencyFormatter.format(ingredientCost)}
+                      </span>
                     </span>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
+
+            <div className="mt-2 flex items-center justify-between gap-3 pl-5 text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-medium">
+                {item.recipe.yieldQuantity} {item.recipe.yieldUnit} •{" "}
+                {currencyFormatter.format(item.recipe.costTotal)}
+              </span>
+            </div>
           </TableCell>
         </TableRow>
       )}
@@ -203,7 +207,6 @@ export function ProductCostSheetCard({
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead>Item</TableHead>
-                    <TableHead className="hidden text-right md:table-cell">Custo/unidade</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Custo</TableHead>
                   </TableRow>
