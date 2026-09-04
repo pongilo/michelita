@@ -1,26 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Item, ItemContent, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Item, ItemContent, ItemMedia, ItemTitle, ItemDescription, ItemSeparator } from "@/components/ui/item";
 import { CustomerFormModal, type CustomerFormValues } from "@/components/customer-form-modal";
+import { useBulkUpdateOrdersPaid } from "@/hooks/tanstack/order/use-bulk-update-orders-paid";
 import { useDeleteCustomer } from "@/hooks/tanstack/customer/use-delete-customer";
 import { useGetCustomerDetails } from "@/hooks/tanstack/customer/use-get-customer-details";
 import { useUpdateCustomer } from "@/hooks/tanstack/customer/use-update-customer";
-import { currencyFormatter, formatFullDate, formatMonthYearLabel, toExactDatetime } from "@/lib/utils/formatter";
+import { currencyFormatter, formatFullDate, toExactDatetime } from "@/lib/utils/formatter";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import { AppTitle } from "@/components/app-title";
-
-const ALL_MONTHS = "all";
-
-function monthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
 
 export const Route = createFileRoute("/app/customers/$customerId")({
   component: CustomerDetailsPage,
@@ -31,55 +26,71 @@ function CustomerDetailsPage() {
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(new Date()));
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
-  const { data, isLoading, isError, error } = useGetCustomerDetails({
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetCustomerDetails({
     organizationId: organization!.id,
     customerId,
   });
 
-  const monthOptions = useMemo(() => {
-    const labels = new Map<string, string>();
-    const now = new Date();
-    labels.set(monthKey(now), formatMonthYearLabel(now));
-    for (const order of data?.orders ?? []) {
-      const date = toExactDatetime(order.orderedAt);
-      const key = monthKey(date);
-      if (!labels.has(key)) labels.set(key, formatMonthYearLabel(date));
-    }
-    return Array.from(labels.entries())
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([value, label]) => ({ value, label }));
-  }, [data]);
+  const customer = data?.pages[0]?.customer;
+  const metrics = data?.pages[0]?.metrics;
+  const orders = data?.pages.flatMap((page) => page.orders) ?? [];
 
-  const filteredOrders = useMemo(() => {
-    if (!data) return [];
-    if (selectedMonth === ALL_MONTHS) return data.orders;
-    return data.orders.filter((order) => monthKey(toExactDatetime(order.orderedAt)) === selectedMonth);
-  }, [data, selectedMonth]);
-
-  const filteredMetrics = useMemo(() => {
-    const totalInvoiced = filteredOrders.reduce((sum, order) => sum + order.itemTotal, 0);
-    const totalPaid = filteredOrders.filter((o) => o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
-    const totalPending = filteredOrders.filter((o) => !o.isPaid).reduce((sum, order) => sum + order.itemTotal, 0);
-    return {
-      totalInvoiced: Number(totalInvoiced.toFixed(2)),
-      totalPaid: Number(totalPaid.toFixed(2)),
-      totalPending: Number(totalPending.toFixed(2)),
-    };
-  }, [filteredOrders]);
   const { mutateAsync: updateCustomer, isPending: isUpdatingCustomer } = useUpdateCustomer({
     organizationId: organization!.id,
   });
   const { mutateAsync: deleteCustomer, isPending: isDeletingCustomer } = useDeleteCustomer({
     organizationId: organization!.id,
   });
+  const { mutateAsync: bulkMarkOrdersPaid, isPending: isMarkingOrdersPaid } = useBulkUpdateOrdersPaid({
+    organizationId: organization!.id,
+  });
+
+  function toggleOrderSelection(orderId: string, checked: boolean) {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(orderId);
+      } else {
+        next.delete(orderId);
+      }
+      return next;
+    });
+  }
+
+  async function handleMarkSelectedAsPaid() {
+    if (selectedOrderIds.size === 0) return;
+    try {
+      await bulkMarkOrdersPaid({
+        organizationId: organization!.id,
+        orderIds: Array.from(selectedOrderIds),
+        isPaid: true,
+      });
+      toast.success(
+        selectedOrderIds.size === 1
+          ? "Pedido marcado como pago."
+          : `${selectedOrderIds.size} pedidos marcados como pagos.`,
+      );
+      setSelectedOrderIds(new Set());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao marcar pedidos como pagos.");
+    }
+  }
 
   async function onSubmit(values: CustomerFormValues) {
-    if (!data) return;
+    if (!customer) return;
     try {
       await updateCustomer({
-        id: data.customer.id,
+        id: customer.id,
         name: values.name.trim(),
         phone: values.phone?.trim() || undefined,
         address: values.address?.trim() || undefined,
@@ -93,11 +104,11 @@ function CustomerDetailsPage() {
   }
 
   async function handleDeleteCustomer() {
-    if (!data) return;
+    if (!customer) return;
     const confirmed = window.confirm("Deseja realmente excluir este cliente? Esta ação não pode ser desfeita.");
     if (!confirmed) return;
     try {
-      await deleteCustomer({ id: data.customer.id, organizationId: organization!.id });
+      await deleteCustomer({ id: customer.id, organizationId: organization!.id });
       await navigate({ to: "/app/customers" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao excluir cliente.");
@@ -109,8 +120,8 @@ function CustomerDetailsPage() {
 
       {/* Header */}
       <div className="sticky top-0 z-20 flex flex-nowrap items-center justify-between gap-3 bg-background pt-[calc(env(safe-area-inset-top)+1.25rem)] mb-6 md:static md:top-auto md:z-auto md:bg-transparent">
-        <AppTitle>{data?.customer.name ?? "Cliente"}</AppTitle>
-        {data && (
+        <AppTitle>{customer?.name ?? "Cliente"}</AppTitle>
+        {customer && (
           <DropdownMenu>
             <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" })}>
               <EllipsisVerticalIcon />
@@ -136,30 +147,30 @@ function CustomerDetailsPage() {
 
       {isError ? <p className="text-destructive text-sm">{error.message}</p> : null}
 
-      {data && (
-        <div className="space-y-8">
+      {customer && metrics && (
+        <div className={`space-y-8 ${selectedOrderIds.size > 0 ? "pb-24" : ""}`}>
           <div className="divide-y md:border md:py-1 md:px-5 md:rounded-2xl md:card">
-            {data.customer.phone && (
+            {customer.phone && (
               <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Telefone</p>
                 <p className="text-base text-muted-foreground">
-                  {data.customer.phone}
+                  {customer.phone}
                 </p>
               </div>
             )}
-            {data.customer.address && (
+            {customer.address && (
               <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Endereço</p>
                 <p className="text-base text-muted-foreground">
-                  {data.customer.address}
+                  {customer.address}
                 </p>
               </div>
             )}
-            {data.customer.note && (
+            {customer.note && (
               <div className="max-md:space-y-1 py-4 md:flex md:justify-between md:flex-wrap">
                 <p className="font-heading text-base font-medium">Observação</p>
                 <p className="text-base text-muted-foreground">
-                  {data.customer.note}
+                  {customer.note}
                 </p>
               </div>
             )}
@@ -169,74 +180,91 @@ function CustomerDetailsPage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-2xl border p-4 space-y-1">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total faturado</p>
-              <p className="font-heading text-lg font-semibold">{currencyFormatter.format(filteredMetrics.totalInvoiced)}</p>
+              <p className="font-heading text-lg font-semibold">{currencyFormatter.format(metrics.totalInvoiced)}</p>
             </div>
             <div className="rounded-2xl border p-4 space-y-1">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total pago</p>
-              <p className="font-heading text-lg font-semibold text-green-700">{currencyFormatter.format(filteredMetrics.totalPaid)}</p>
+              <p className="font-heading text-lg font-semibold text-green-700">{currencyFormatter.format(metrics.totalPaid)}</p>
             </div>
-            <div className={`rounded-2xl border p-4 space-y-1 ${filteredMetrics.totalPending > 0 ? "border-amber-300 bg-amber-400/10" : ""}`}>
+            <div className={`rounded-2xl border p-4 space-y-1 ${metrics.totalPending > 0 ? "border-amber-300 bg-amber-400/10" : ""}`}>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">A receber</p>
-              <p className={`font-heading text-lg font-semibold ${filteredMetrics.totalPending > 0 ? "text-amber-700" : ""}`}>
-                {currencyFormatter.format(filteredMetrics.totalPending)}
+              <p className={`font-heading text-lg font-semibold ${metrics.totalPending > 0 ? "text-amber-700" : ""}`}>
+                {currencyFormatter.format(metrics.totalPending)}
               </p>
             </div>
           </div>
 
           {/* Pedidos */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <h2 className="font-heading text-base font-medium">Pedidos ({filteredOrders.length})</h2>
-              {data.orders.length > 0 && (
-                <Select value={selectedMonth} onValueChange={(v) => v && setSelectedMonth(v)}>
-                  <SelectTrigger size="sm">
-                    <SelectValue>
-                      {selectedMonth === ALL_MONTHS
-                        ? "Todos os meses"
-                        : monthOptions.find((o) => o.value === selectedMonth)?.label}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL_MONTHS}>Todos os meses</SelectItem>
-                    {monthOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            {filteredOrders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {data.orders.length === 0 ? "Este cliente ainda não possui pedidos." : "Nenhum pedido neste período."}
-              </p>
+            <h2 className="font-heading text-base font-medium">Pedidos ({metrics.totalOrders})</h2>
+            {orders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Este cliente ainda não possui pedidos.</p>
             ) : (
               <div className="space-y-2">
-                {filteredOrders.map((order) => (
-                  <Item key={order.id} variant="outline" className="items-start" render={<Link to="/app/orders/$orderId" params={{ orderId: order.id }} />}>
-                    <ItemContent>
-                      <div className="flex justify-between items-center">
-                        <ItemTitle>{formatFullDate(toExactDatetime(order.orderedAt))}</ItemTitle>
-                        <div className="flex gap-1 items-center">
-                          {currencyFormatter.format(order.itemTotal)}
-                          <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
-                            {order.isPaid ? "Pago" : "Pendente"}
-                          </Badge>
+                {orders.map((order) => (
+                  <Item key={order.id} variant="outline" className="items-start">
+                    {!order.isPaid && (
+                      <ItemMedia className="pt-0.5">
+                        <Checkbox
+                          checked={selectedOrderIds.has(order.id)}
+                          onCheckedChange={(checked) => toggleOrderSelection(order.id, checked === true)}
+                          aria-label="Selecionar pedido"
+                        />
+                      </ItemMedia>
+                    )}
+                    <Link to="/app/orders/$orderId" params={{ orderId: order.id }} className="contents">
+                      <ItemContent>
+                        <div className="flex justify-between items-center">
+                          <ItemTitle>{formatFullDate(toExactDatetime(order.orderedAt))}</ItemTitle>
+                          <div className="flex gap-1 items-center">
+                            {currencyFormatter.format(order.itemTotal)}
+                            <Badge className={order.isPaid ? "bg-green-500/15 text-green-700 border-green-200" : "bg-amber-400/20 text-amber-700 border-amber-300"}>
+                              {order.isPaid ? "Pago" : "Pendente"}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                      {order.note && <ItemDescription>{order.note}</ItemDescription>}
-                      <ItemSeparator />
-                      {order.items.map((item) => (
-                        <ItemDescription key={item.id}>
-                          <span className="text-foreground">{item.quantity}x</span> {[item.description, item.note].filter(i => !!i).join(' • ')}
-                        </ItemDescription>
-                      ))}
-                    </ItemContent>
+                        {order.note && <ItemDescription>{order.note}</ItemDescription>}
+                        <ItemSeparator />
+                        {order.items.map((item) => (
+                          <ItemDescription key={item.id}>
+                            <span className="text-foreground">{item.quantity}x</span> {[item.description, item.note].filter(i => !!i).join(' • ')}
+                          </ItemDescription>
+                        ))}
+                      </ItemContent>
+                    </Link>
                   </Item>
                 ))}
+                {hasNextPage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={isFetchingNextPage}
+                    onClick={() => fetchNextPage()}
+                  >
+                    {isFetchingNextPage ? "Carregando..." : "Carregar mais"}
+                  </Button>
+                )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {selectedOrderIds.size > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+          <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
+            <p className="text-sm font-medium">
+              {selectedOrderIds.size} {selectedOrderIds.size === 1 ? "pedido selecionado" : "pedidos selecionados"}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedOrderIds(new Set())}>
+                Cancelar
+              </Button>
+              <Button type="button" size="sm" disabled={isMarkingOrdersPaid} onClick={handleMarkSelectedAsPaid}>
+                Marcar como pago
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -248,12 +276,12 @@ function CustomerDetailsPage() {
         errorMessage=""
         successMessage=""
         initialValues={
-          data
+          customer
             ? {
-                name: data.customer.name,
-                phone: data.customer.phone ?? "",
-                address: data.customer.address ?? "",
-                note: data.customer.note ?? "",
+                name: customer.name,
+                phone: customer.phone ?? "",
+                address: customer.address ?? "",
+                note: customer.note ?? "",
               }
             : undefined
         }
