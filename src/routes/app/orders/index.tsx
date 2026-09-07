@@ -113,6 +113,13 @@ function getDateKeysInRange(startDateKey: string, endDateKeyExclusive: string) {
 type ViewMode = "day" | "week" | "month";
 type DisplayDay = { date: string; groups: DayGroups };
 
+function getDayStats(groups: DayGroups) {
+  return {
+    count: groups.length,
+    total: groups.reduce((sum, group) => sum + group.order.total, 0),
+  };
+}
+
 const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: "day", label: "Dia" },
   { value: "week", label: "Semana" },
@@ -162,6 +169,7 @@ function OrderPage() {
   });
 
   const dayGroups = data?.days.find((d) => d.date === referenceDate)?.groups ?? [];
+  const dayStats = getDayStats(dayGroups);
 
   // Week/month views list every day in the period, even ones with no orders,
   // so the schedule reads as a complete calendar instead of skipping gaps.
@@ -177,7 +185,7 @@ function OrderPage() {
 
   const inProgressDays = displayDays.map((d) => ({
     date: d.date,
-    groups: d.groups.filter((g) => !g.items.every((i) => i.isDelivered) || !g.order.isPaid),
+    groups: d.groups.filter((g) => !g.items.every((i) => i.isDelivered)),
   }));
 
   const inProgressCount = inProgressDays.reduce((sum, d) => sum + d.groups.length, 0);
@@ -279,14 +287,22 @@ function OrderPage() {
               </Button>
             </div>
           )}
+        </div>
 
-          <label className="ml-auto flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-muted-foreground">
+        <div className="px-5 flex flex-wrap items-center gap-2">
+          <label className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-muted-foreground">
             <Checkbox
               checked={onlyInProgress}
               onCheckedChange={(checked) => setOnlyInProgress(checked === true)}
             />
             Em andamento{inProgressCount > 0 ? ` (${inProgressCount})` : ""}
           </label>
+
+          {viewMode === "day" && dayStats.count > 0 && (
+            <span className="ml-auto text-sm text-muted-foreground">
+              {dayStats.count} {dayStats.count === 1 ? "pedido" : "pedidos"} • {currencyFormatter.format(dayStats.total)}
+            </span>
+          )}
         </div>
 
         {(isLoading || !startDate) && (
@@ -306,26 +322,34 @@ function OrderPage() {
                 {emptyPeriodMessage}
               </p>
             ) : (
-              visibleDays.map((day) => (
-                <div key={day.date}>
-                  {viewMode !== "day" && (
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10">
-                      {formatDayLabel(toExactDatetime(day.date))}
-                    </p>
-                  )}
-                  {day.groups.length === 0 ? (
-                    <p className={viewMode === "day" ? "text-base text-muted-foreground p-2 max-md:p-4 text-center" : "text-sm text-muted-foreground p-2 max-md:p-4"}>
-                      {viewMode === "day" ? emptyPeriodMessage : emptyDayMessage}
-                    </p>
-                  ) : (
-                    <div className="md:space-y-2">
-                      {day.groups.map((group) => (
-                        <OrderItem key={group.key} group={group} organizationId={organization!.id} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))
+              visibleDays.map((day) => {
+                const dayLabelStats = getDayStats(data.days.find((d) => d.date === day.date)?.groups ?? []);
+                return (
+                  <div key={day.date}>
+                    {viewMode !== "day" && (
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-5 pt-5 pb-2 md:px-0 max-md:bg-border bg-white sticky md:top-14 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10 flex items-center justify-between gap-2">
+                        <span>{formatDayLabel(toExactDatetime(day.date))}</span>
+                        {dayLabelStats.count > 0 && (
+                          <span className="normal-case tracking-normal font-medium">
+                            {dayLabelStats.count} {dayLabelStats.count === 1 ? "pedido" : "pedidos"} • {currencyFormatter.format(dayLabelStats.total)}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    {day.groups.length === 0 ? (
+                      <p className={viewMode === "day" ? "text-base text-muted-foreground p-2 max-md:p-4 text-center" : "text-sm text-muted-foreground p-2 max-md:p-4"}>
+                        {viewMode === "day" ? emptyPeriodMessage : emptyDayMessage}
+                      </p>
+                    ) : (
+                      <div className="md:space-y-2">
+                        {day.groups.map((group) => (
+                          <OrderItem key={group.key} group={group} organizationId={organization!.id} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         )}
