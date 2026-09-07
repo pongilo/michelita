@@ -1,9 +1,9 @@
 import { ChevronLeftIcon } from "lucide-react";
-import { useRouter, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
 export function AppTitle({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const isHome = useRouterState({ select: (s) => s.location.pathname === "/app" });
 
   return (
@@ -14,7 +14,7 @@ export function AppTitle({ children }: { children: React.ReactNode }) {
           variant="ghost"
           size="icon"
           className="md:hidden"
-          onClick={() => router.history.back()}
+          onClick={() => navigate({ to: "/app" })}
         >
           <ChevronLeftIcon className="size-5" />
           <span className="sr-only">Voltar</span>
