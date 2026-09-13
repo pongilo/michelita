@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeftIcon, ChevronDownIcon, ChevronRightIcon, MoreVerticalIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, MoreVerticalIcon, PlusIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -163,15 +163,20 @@ function RecipeChecklistRow({
         {entry && (
           <ChecklistItem.Quantity value={entry.quantity} unit={recipe.yieldUnit} onChange={onQuantityChange} />
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setIsExpanded((value) => !value)}
-          aria-label={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
-        >
-          {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon-sm" />}>
+            <MoreVerticalIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEditRecipe(recipe)}>Editar receita</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsExpanded((value) => !value)}>
+              {isExpanded ? "Ocultar ingredientes" : "Ver ingredientes"}
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={() => onDeleteRecipe(recipe)} disabled={isDeleting}>
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </ChecklistItem.Row>
 
       {isExpanded && (
@@ -208,28 +213,6 @@ function RecipeChecklistRow({
             <span className="font-medium">
               {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
             </span>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onEditRecipe(recipe)}
-            >
-              Editar receita
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              onClick={() => onDeleteRecipe(recipe)}
-              disabled={isDeleting}
-            >
-              Excluir
-            </Button>
           </div>
         </ChecklistItem.Details>
       )}

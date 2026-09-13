@@ -1,10 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { InfoIcon } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { unitCostFormatter } from "@/lib/utils/formatter";
 import { UNIT_OPTIONS } from "@/lib/constants/units";
 
@@ -76,7 +78,27 @@ export function SupplyForm({
         </Field>
 
         <Field>
-          <FieldLabel>Preço da compra (R$)</FieldLabel>
+          <div className="flex items-center gap-1.5">
+            <FieldLabel>Preço da compra (R$)</FieldLabel>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="Custo por unidade"
+                  />
+                }
+              >
+                <InfoIcon className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent>
+                {costPerUnit !== null
+                  ? `Custo por unidade: ${unitCostFormatter.format(costPerUnit)} / ${unit?.trim() || "unidade"}`
+                  : "Informe o preço e a quantidade da compra para calcular o custo por unidade"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <Input
             type="number"
             step="0.01"
@@ -120,16 +142,6 @@ export function SupplyForm({
             <FieldError>{errors.unit?.message}</FieldError>
           </Field>
         </div>
-
-        <Field>
-          <FieldLabel>Custo por unidade</FieldLabel>
-          <div className="rounded-2xl border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-            {costPerUnit !== null
-              ? `${unitCostFormatter.format(costPerUnit)} / ${unit?.trim() || "unidade"}`
-              : "Informe o preço e a quantidade da compra"}
-          </div>
-          <FieldDescription>Calculado automaticamente a partir do preço e da quantidade comprada.</FieldDescription>
-        </Field>
       </FieldGroup>
 
       <div className="flex items-center justify-end gap-2">

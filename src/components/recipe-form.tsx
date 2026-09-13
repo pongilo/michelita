@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChecklistItem, ChecklistList } from "@/components/ui/checklist-item";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SupplyForm, type SupplyFormValues } from "@/components/supply-form";
@@ -67,6 +68,7 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [hasSeeded, setHasSeeded] = useState(mode === "create");
   const [supplySearch, setSupplySearch] = useState("");
+  const [showOnlySelected, setShowOnlySelected] = useState(mode === "edit");
   const [subView, setSubView] = useState<"recipe" | "create-supply">("recipe");
 
   useEffect(() => {
@@ -84,9 +86,11 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
 
   const filteredSupplies = useMemo(() => {
     const term = normalize(supplySearch.trim());
-    if (!term) return allSupplies;
-    return allSupplies.filter((supply) => normalize(supply.name).includes(term));
-  }, [allSupplies, supplySearch]);
+    let list = allSupplies;
+    if (term) list = list.filter((supply) => normalize(supply.name).includes(term));
+    if (showOnlySelected) list = list.filter((supply) => supply.id in selected);
+    return list;
+  }, [allSupplies, supplySearch, showOnlySelected, selected]);
 
   const { data: existingData, isLoading: isLoadingExisting } = useGetRecipeSupplies({ recipeId });
   const existingItems = useMemo(() => existingData?.items ?? [], [existingData]);
@@ -183,7 +187,7 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
     }
   }
 
-  const isLoadingIngredients = isLoadingSupplies || (mode === "edit" && isLoadingExisting);
+  const isLoadingIngredients = isLoadingSupplies || (mode === "edit" && (isLoadingExisting || !hasSeeded));
 
   if (subView === "create-supply") {
     return (
@@ -265,38 +269,57 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
           </div>
         )}
 
+        {!isLoadingIngredients && allSupplies.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="recipe-only-selected"
+              checked={showOnlySelected}
+              onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
+            />
+            <Label htmlFor="recipe-only-selected" className="cursor-pointer text-sm text-muted-foreground">
+              Filtrar selecionados ({Object.keys(selected).length})
+            </Label>
+          </div>
+        )}
+
         {isLoadingIngredients ? (
           <LoadingState label="Carregando ingredientes..." />
         ) : allSupplies.length === 0 ? (
           <p className="text-sm text-muted-foreground">Você ainda não tem ingredientes cadastrados.</p>
         ) : filteredSupplies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum ingrediente encontrado para "{supplySearch}".</p>
+          <p className="text-sm text-muted-foreground">
+            {supplySearch
+              ? `Nenhum ingrediente encontrado para "${supplySearch}".`
+              : "Nenhum ingrediente selecionado."}
+          </p>
         ) : (
-          <ChecklistList>
-            {filteredSupplies.map((supply) => {
-              const quantity = selected[supply.id];
-              const isChecked = quantity !== undefined;
-              return (
-                <ChecklistItem key={supply.id} selected={isChecked}>
-                  <ChecklistItem.Row>
-                    <Checkbox
-                      id={`recipe-supply-${supply.id}`}
-                      checked={isChecked}
-                      onCheckedChange={() => toggleSupply(supply.id)}
-                    />
-                    <ChecklistItem.Label htmlFor={`recipe-supply-${supply.id}`} title={supply.name} />
-                    {isChecked && (
-                      <ChecklistItem.Quantity
-                        value={quantity}
-                        unit={supply.unit}
-                        onChange={(value) => setSupplyQuantity(supply.id, value)}
+          <div className="-mx-5">
+            <ChecklistList>
+              {filteredSupplies.map((supply) => {
+                const quantity = selected[supply.id];
+                const isChecked = quantity !== undefined;
+                return (
+                  <ChecklistItem key={supply.id} selected={isChecked}>
+                    <ChecklistItem.Row>
+                      <Checkbox
+                        id={`recipe-supply-${supply.id}`}
+                        checked={isChecked}
+                        onCheckedChange={() => toggleSupply(supply.id)}
                       />
-                    )}
-                  </ChecklistItem.Row>
-                </ChecklistItem>
-              );
-            })}
-          </ChecklistList>
+                      <ChecklistItem.Label htmlFor={`recipe-supply-${supply.id}`} title={supply.name} />
+                      {isChecked && (
+                        <ChecklistItem.Quantity
+                          value={quantity}
+                          unit={supply.unit}
+                          onChange={(value) => setSupplyQuantity(supply.id, value)}
+                        />
+                      )}
+                    </ChecklistItem.Row>
+                  </ChecklistItem>
+                );
+              })}
+            </ChecklistList>
+          </div>
         )}
       </div>
 

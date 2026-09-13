@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 function ChecklistList({ children }: { children: ReactNode }) {
-  return <div className="md:p-5">{children}</div>;
+  return <div className="md:px-5">{children}</div>;
 }
 
 function ChecklistItemRoot({ children, selected }: { children: ReactNode; selected?: boolean }) {
