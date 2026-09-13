@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SuppliesManager } from "@/components/supplies-manager";
 import { RecipesManager } from "@/components/recipes-manager";
@@ -79,21 +78,20 @@ function SupplyChecklistRow({
   const key = `supply:${supply.id}`;
 
   return (
-    <TableRow>
-      <TableCell className="w-0">
+    <div className="border-b border-border p-3 last:border-b-0 hover:bg-muted/50">
+      <div className="flex items-center gap-2">
         <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
-      </TableCell>
-      <TableCell className="max-w-32 truncate sm:max-w-none">
-        <label htmlFor={`edit-item-${key}`} className="flex cursor-pointer items-baseline gap-2">
+        <label
+          htmlFor={`edit-item-${key}`}
+          className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2"
+        >
           <span className="truncate font-heading font-medium">{supply.name}</span>
-          <span className="shrink-0 text-xs text-muted-foreground">
+          <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
             {supply.purchaseQuantity} {supply.unit} • {currencyFormatter.format(supply.purchasePrice)}
           </span>
         </label>
-      </TableCell>
-      <TableCell className="text-right">
         {entry && (
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Input
               type="number"
               step="0.001"
@@ -107,8 +105,6 @@ function SupplyChecklistRow({
             <span className="text-xs text-muted-foreground">{supply.unit}</span>
           </div>
         )}
-      </TableCell>
-      <TableCell className="w-0">
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon-sm" />}>
             <MoreVerticalIcon />
@@ -123,8 +119,8 @@ function SupplyChecklistRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </div>
+    </div>
   );
 }
 
@@ -163,113 +159,104 @@ function RecipeChecklistRow({
   const key = `recipe:${recipe.id}`;
 
   return (
-    <>
-      <TableRow>
-        <TableCell className="w-0">
-          <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
-        </TableCell>
-        <TableCell className="max-w-32 truncate sm:max-w-none">
-          <label htmlFor={`edit-item-${key}`} className="flex cursor-pointer items-baseline gap-2">
-            <span className="truncate font-heading font-medium">{recipe.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
-            </span>
-          </label>
-        </TableCell>
-        <TableCell className="text-right">
-          {entry && (
-            <div className="flex items-center justify-end gap-1">
-              <Input
-                type="number"
-                step="0.001"
-                min="0"
-                placeholder="Qtd."
-                autoFocus
-                className="h-8 w-20"
-                value={entry.quantity}
-                onChange={(event) => onQuantityChange(event.target.value)}
-              />
-              <span className="text-xs text-muted-foreground">{recipe.yieldUnit}</span>
-            </div>
-          )}
-        </TableCell>
-        <TableCell className="w-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setIsExpanded((value) => !value)}
-            aria-label={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
-          >
-            {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
-          </Button>
-        </TableCell>
-      </TableRow>
+    <div className="border-b border-border p-3 last:border-b-0 hover:bg-muted/50">
+      <div className="flex items-center gap-2">
+        <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
+        <label
+          htmlFor={`edit-item-${key}`}
+          className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2"
+        >
+          <span className="truncate font-heading font-medium">{recipe.name}</span>
+          <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
+            {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
+          </span>
+        </label>
+        {entry && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Input
+              type="number"
+              step="0.001"
+              min="0"
+              placeholder="Qtd."
+              autoFocus
+              className="h-8 w-20"
+              value={entry.quantity}
+              onChange={(event) => onQuantityChange(event.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">{recipe.yieldUnit}</span>
+          </div>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setIsExpanded((value) => !value)}
+          aria-label={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
+        >
+          {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+        </Button>
+      </div>
 
       {isExpanded && (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={4} className="bg-muted/30 py-3">
-            <div className="space-y-2 text-sm">
-              {recipe.ingredients.length === 0 ? (
-                <p className="text-muted-foreground">Nenhum ingrediente cadastrado.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {recipe.ingredients.map((ingredient) => {
-                    const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
-                    return (
-                      <li
-                        key={ingredient.id}
-                        className="flex items-center justify-between gap-3 text-muted-foreground"
-                      >
-                        <span className="truncate">{ingredient.supply.name}</span>
-                        <span className="shrink-0">
-                          {ingredient.quantity} {ingredient.supply.unit}
-                          {" · "}
-                          <span className="font-medium text-foreground">
-                            {currencyFormatter.format(ingredientCost)}
-                          </span>
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+        <div className="mt-3 space-y-2 rounded-xl bg-muted/30 p-3 text-sm">
+          {recipe.ingredients.length === 0 ? (
+            <p className="text-muted-foreground">Nenhum ingrediente cadastrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {recipe.ingredients.map((ingredient) => {
+                const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
+                return (
+                  <li
+                    key={ingredient.id}
+                    className="flex items-center justify-between gap-3 text-muted-foreground"
+                  >
+                    <span className="truncate">{ingredient.supply.name}</span>
+                    <span className="shrink-0">
+                      {ingredient.quantity} {ingredient.supply.unit}
+                      {" · "}
+                      <span className="font-medium text-foreground">
+                        {currencyFormatter.format(ingredientCost)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
-              <div className="border-t border-border" />
+          <div className="border-t border-border" />
 
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Total</span>
-                <span className="font-medium">
-                  {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
-                </span>
-              </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-medium">
+              {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
+            </span>
+          </div>
 
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onEditRecipe(recipe)}
-                >
-                  Editar receita
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onDeleteRecipe(recipe)}
-                  disabled={isDeleting}
-                >
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          </TableCell>
-        </TableRow>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => onEditRecipe(recipe)}
+            >
+              Editar receita
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="flex-1"
+              onClick={() => onDeleteRecipe(recipe)}
+              disabled={isDeleting}
+            >
+              Excluir
+            </Button>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -318,22 +305,18 @@ function RecipeChecklistTab({
           </p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-background">
-            <Table>
-              <TableBody>
-                {recipes.map((recipe) => (
-                  <RecipeChecklistRow
-                    key={recipe.id}
-                    recipe={recipe}
-                    entry={selected[`recipe:${recipe.id}`]}
-                    onToggle={() => onToggle(recipe.id)}
-                    onQuantityChange={(quantity) => onQuantityChange(recipe.id, quantity)}
-                    onEditRecipe={onEditRecipe}
-                    onDeleteRecipe={onDeleteRecipe}
-                    isDeleting={isDeleting}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+            {recipes.map((recipe) => (
+              <RecipeChecklistRow
+                key={recipe.id}
+                recipe={recipe}
+                entry={selected[`recipe:${recipe.id}`]}
+                onToggle={() => onToggle(recipe.id)}
+                onQuantityChange={(quantity) => onQuantityChange(recipe.id, quantity)}
+                onEditRecipe={onEditRecipe}
+                onDeleteRecipe={onDeleteRecipe}
+                isDeleting={isDeleting}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -396,24 +379,20 @@ function SupplyChecklistTab({
           <p className="text-sm text-muted-foreground">{search ? noResultsLabel : emptyLabel}</p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-background">
-            <Table>
-              <TableBody>
-                {supplies.map((supply) => (
-                  <SupplyChecklistRow
-                    key={supply.id}
-                    supply={supply}
-                    entry={selected[`supply:${supply.id}`]}
-                    onToggle={() => onToggle(supply.id)}
-                    onQuantityChange={(quantity) => onQuantityChange(supply.id, quantity)}
-                    onEditSupply={onEditSupply}
-                    onDeleteSupply={onDeleteSupply}
-                    isDeleting={isDeleting}
-                    onMoveSupply={onMoveSupply}
-                    isMoving={isMoving}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+            {supplies.map((supply) => (
+              <SupplyChecklistRow
+                key={supply.id}
+                supply={supply}
+                entry={selected[`supply:${supply.id}`]}
+                onToggle={() => onToggle(supply.id)}
+                onQuantityChange={(quantity) => onQuantityChange(supply.id, quantity)}
+                onEditSupply={onEditSupply}
+                onDeleteSupply={onDeleteSupply}
+                isDeleting={isDeleting}
+                onMoveSupply={onMoveSupply}
+                isMoving={isMoving}
+              />
+            ))}
           </div>
         )}
       </div>
