@@ -47,11 +47,8 @@ function SupplyDisplayRow({ item }: { item: SupplyItem }) {
   return (
     <div className="flex items-center gap-2 p-3">
       <div className="min-w-0 flex-1 truncate font-heading font-medium">{item.supply.name}</div>
-      <div className="shrink-0 text-right text-sm text-muted-foreground">
-        {item.quantity} {item.supply.unit}
-      </div>
-      <div className="hidden shrink-0 text-right text-sm font-medium md:block">
-        {currencyFormatter.format(lineCost)}
+      <div className="shrink-0 text-right text-sm">
+        <span className="text-muted-foreground">{item.quantity} {item.supply.unit} •</span> {currencyFormatter.format(lineCost)}
       </div>
     </div>
   );
@@ -79,11 +76,8 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
             ))}
           <span className="truncate font-heading font-medium">{item.recipe.name}</span>
         </button>
-        <div className="shrink-0 text-right text-sm text-muted-foreground">
-          {item.quantity} {item.recipe.yieldUnit}
-        </div>
-        <div className="hidden shrink-0 text-right text-sm font-medium md:block">
-          {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
+        <div className="shrink-0 text-right text-sm">
+          <span className="text-muted-foreground">{item.quantity} {item.recipe.yieldUnit} •</span> {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
         </div>
       </div>
 
