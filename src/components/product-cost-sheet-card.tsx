@@ -225,7 +225,7 @@ export function ProductCostSheetCard({
           {combinedRows.length > 0 && (
             <div className="space-y-2 rounded-2xl border px-4 py-3">
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Custo total (CMV)</span>
+                <span className="text-muted-foreground">Custo total</span>
                 <span className="font-medium">{currencyFormatter.format(totalCost)}</span>
               </div>
 
