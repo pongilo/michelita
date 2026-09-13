@@ -6,10 +6,10 @@ import { PlusIcon } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChecklistItem, ChecklistList } from "@/components/ui/checklist-item";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SupplyForm, type SupplyFormValues } from "@/components/supply-form";
 import { useGetSupplies } from "@/hooks/tanstack/supply/use-get-supplies";
@@ -272,49 +272,31 @@ export function RecipeForm({ organizationId, mode, recipe, onCancel, onSubViewCh
         ) : filteredSupplies.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum ingrediente encontrado para "{supplySearch}".</p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-border bg-background">
-            <Table>
-              <TableBody>
-                {filteredSupplies.map((supply) => {
-                  const quantity = selected[supply.id];
-                  const isChecked = quantity !== undefined;
-                  return (
-                    <TableRow key={supply.id}>
-                      <TableCell className="w-0">
-                        <Checkbox
-                          id={`recipe-supply-${supply.id}`}
-                          checked={isChecked}
-                          onCheckedChange={() => toggleSupply(supply.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="max-w-32 truncate sm:max-w-none">
-                        <label htmlFor={`recipe-supply-${supply.id}`} className="cursor-pointer font-heading font-medium">
-                          {supply.name}
-                        </label>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isChecked && (
-                          <div className="flex items-center justify-end gap-1">
-                            <Input
-                              type="number"
-                              step="0.001"
-                              min="0"
-                              placeholder="Qtd."
-                              autoFocus
-                              className="h-8 w-20"
-                              value={quantity}
-                              onChange={(event) => setSupplyQuantity(supply.id, event.target.value)}
-                            />
-                            <span className="text-xs text-muted-foreground">{supply.unit}</span>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <ChecklistList>
+            {filteredSupplies.map((supply) => {
+              const quantity = selected[supply.id];
+              const isChecked = quantity !== undefined;
+              return (
+                <ChecklistItem key={supply.id} selected={isChecked}>
+                  <ChecklistItem.Row>
+                    <Checkbox
+                      id={`recipe-supply-${supply.id}`}
+                      checked={isChecked}
+                      onCheckedChange={() => toggleSupply(supply.id)}
+                    />
+                    <ChecklistItem.Label htmlFor={`recipe-supply-${supply.id}`} title={supply.name} />
+                    {isChecked && (
+                      <ChecklistItem.Quantity
+                        value={quantity}
+                        unit={supply.unit}
+                        onChange={(value) => setSupplyQuantity(supply.id, value)}
+                      />
+                    )}
+                  </ChecklistItem.Row>
+                </ChecklistItem>
+              );
+            })}
+          </ChecklistList>
         )}
       </div>
 

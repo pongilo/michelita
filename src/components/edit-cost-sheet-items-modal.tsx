@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChecklistItem, ChecklistList } from "@/components/ui/checklist-item";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SuppliesManager } from "@/components/supplies-manager";
@@ -78,32 +79,20 @@ function SupplyChecklistRow({
   const key = `supply:${supply.id}`;
 
   return (
-    <div className="border-b border-border p-3 last:border-b-0 hover:bg-muted/50">
-      <div className="flex items-center gap-2">
+    <ChecklistItem selected={!!entry}>
+      <ChecklistItem.Row>
         <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
-        <label
+        <ChecklistItem.Label
           htmlFor={`edit-item-${key}`}
-          className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2"
-        >
-          <span className="truncate font-heading font-medium">{supply.name}</span>
-          <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
-            {supply.purchaseQuantity} {supply.unit} • {currencyFormatter.format(supply.purchasePrice)}
-          </span>
-        </label>
+          title={supply.name}
+          info={
+            <>
+              {supply.purchaseQuantity} {supply.unit} • {currencyFormatter.format(supply.purchasePrice)}
+            </>
+          }
+        />
         {entry && (
-          <div className="flex shrink-0 items-center gap-1">
-            <Input
-              type="number"
-              step="0.001"
-              min="0"
-              placeholder="Qtd."
-              autoFocus
-              className="h-8 w-20"
-              value={entry.quantity}
-              onChange={(event) => onQuantityChange(event.target.value)}
-            />
-            <span className="text-xs text-muted-foreground">{supply.unit}</span>
-          </div>
+          <ChecklistItem.Quantity value={entry.quantity} unit={supply.unit} onChange={onQuantityChange} />
         )}
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon-sm" />}>
@@ -119,8 +108,8 @@ function SupplyChecklistRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-    </div>
+      </ChecklistItem.Row>
+    </ChecklistItem>
   );
 }
 
@@ -159,32 +148,20 @@ function RecipeChecklistRow({
   const key = `recipe:${recipe.id}`;
 
   return (
-    <div className="border-b border-border p-3 last:border-b-0 hover:bg-muted/50">
-      <div className="flex items-center gap-2">
+    <ChecklistItem selected={!!entry}>
+      <ChecklistItem.Row>
         <Checkbox id={`edit-item-${key}`} checked={!!entry} onCheckedChange={onToggle} />
-        <label
+        <ChecklistItem.Label
           htmlFor={`edit-item-${key}`}
-          className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2"
-        >
-          <span className="truncate font-heading font-medium">{recipe.name}</span>
-          <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
-            {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
-          </span>
-        </label>
+          title={recipe.name}
+          info={
+            <>
+              {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
+            </>
+          }
+        />
         {entry && (
-          <div className="flex shrink-0 items-center gap-1">
-            <Input
-              type="number"
-              step="0.001"
-              min="0"
-              placeholder="Qtd."
-              autoFocus
-              className="h-8 w-20"
-              value={entry.quantity}
-              onChange={(event) => onQuantityChange(event.target.value)}
-            />
-            <span className="text-xs text-muted-foreground">{recipe.yieldUnit}</span>
-          </div>
+          <ChecklistItem.Quantity value={entry.quantity} unit={recipe.yieldUnit} onChange={onQuantityChange} />
         )}
         <Button
           type="button"
@@ -195,10 +172,10 @@ function RecipeChecklistRow({
         >
           {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
         </Button>
-      </div>
+      </ChecklistItem.Row>
 
       {isExpanded && (
-        <div className="mt-3 space-y-2 rounded-xl bg-muted/30 p-3 text-sm">
+        <ChecklistItem.Details>
           {recipe.ingredients.length === 0 ? (
             <p className="text-muted-foreground">Nenhum ingrediente cadastrado.</p>
           ) : (
@@ -254,9 +231,9 @@ function RecipeChecklistRow({
               Excluir
             </Button>
           </div>
-        </div>
+        </ChecklistItem.Details>
       )}
-    </div>
+    </ChecklistItem>
   );
 }
 
@@ -298,13 +275,13 @@ function RecipeChecklistTab({
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-3">
+      <div className="flex-1 overflow-y-auto pb-3">
         {recipes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="px-5 text-sm text-muted-foreground">
             {search ? `Nenhuma receita encontrada para "${search}".` : "Nenhuma receita cadastrada."}
           </p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-border bg-background">
+          <ChecklistList>
             {recipes.map((recipe) => (
               <RecipeChecklistRow
                 key={recipe.id}
@@ -317,7 +294,7 @@ function RecipeChecklistTab({
                 isDeleting={isDeleting}
               />
             ))}
-          </div>
+          </ChecklistList>
         )}
       </div>
     </>
@@ -374,11 +351,11 @@ function SupplyChecklistTab({
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-3">
+      <div className="flex-1 overflow-y-auto pb-3">
         {supplies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{search ? noResultsLabel : emptyLabel}</p>
+          <p className="px-5 text-sm text-muted-foreground">{search ? noResultsLabel : emptyLabel}</p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-border bg-background">
+          <ChecklistList>
             {supplies.map((supply) => (
               <SupplyChecklistRow
                 key={supply.id}
@@ -393,7 +370,7 @@ function SupplyChecklistTab({
                 isMoving={isMoving}
               />
             ))}
-          </div>
+          </ChecklistList>
         )}
       </div>
     </>
