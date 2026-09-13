@@ -676,14 +676,29 @@ export function EditCostSheetItemsModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex h-[80vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="p-5 pb-3">
-          <div className="flex items-center gap-2">
-            {mode === "catalog" && (
-              <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack} aria-label="Voltar">
-                <ArrowLeftIcon />
-              </Button>
+        <DialogHeader className="p-5 pb-3 pr-14">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {mode === "catalog" && (
+                <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack} aria-label="Voltar">
+                  <ArrowLeftIcon />
+                </Button>
+              )}
+              <DialogTitle>{headerTitle}</DialogTitle>
+            </div>
+
+            {mode === "items" && !isLoading && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="show-only-selected"
+                  checked={showOnlySelected}
+                  onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
+                />
+                <Label htmlFor="show-only-selected" className="cursor-pointer text-sm text-muted-foreground">
+                  Filtrar selecionados ({selectedCount})
+                </Label>
+              </div>
             )}
-            <DialogTitle>{headerTitle}</DialogTitle>
           </div>
         </DialogHeader>
 
@@ -706,17 +721,6 @@ export function EditCostSheetItemsModal({
                       <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
                       <TabsTrigger value="others">Outros</TabsTrigger>
                     </TabsList>
-
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="show-only-selected"
-                        checked={showOnlySelected}
-                        onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
-                      />
-                      <Label htmlFor="show-only-selected" className="cursor-pointer text-sm text-muted-foreground">
-                        Filtrar selecionados ({selectedCount})
-                      </Label>
-                    </div>
                   </div>
 
                   <TabsContent value="recipes" className="flex min-h-0 flex-1 flex-col">
