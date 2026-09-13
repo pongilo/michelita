@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
@@ -46,81 +45,80 @@ function SupplyDisplayRow({ item }: { item: SupplyItem }) {
   const lineCost = item.quantity * item.supply.costPerUnit;
 
   return (
-    <TableRow>
-      <TableCell className="max-w-24 truncate font-heading font-medium md:max-w-40">{item.supply.name}</TableCell>
-      <TableCell className="text-right">
+    <div className="flex items-center gap-2 p-3">
+      <div className="min-w-0 flex-1 truncate font-heading font-medium">{item.supply.name}</div>
+      <div className="shrink-0 text-right text-sm text-muted-foreground">
         {item.quantity} {item.supply.unit}
-      </TableCell>
-      <TableCell className="hidden text-right font-medium md:table-cell">{currencyFormatter.format(lineCost)}</TableCell>
-    </TableRow>
+      </div>
+      <div className="hidden shrink-0 text-right text-sm font-medium md:block">
+        {currencyFormatter.format(lineCost)}
+      </div>
+    </div>
   );
 }
 
 function RecipeDisplayRow({ item }: { item: RecipeItem }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const lineCost = item.recipe.costPerYield !== null ? item.quantity * item.recipe.costPerYield : null;
+  const hasIngredients = item.recipe.ingredients.length > 0;
 
   return (
-    <>
-      <TableRow>
-        <TableCell className="max-w-24 truncate font-heading font-medium md:max-w-40">
-          <button
-            type="button"
-            onClick={() => setIsExpanded((value) => !value)}
-            disabled={item.recipe.ingredients.length === 0}
-            className="flex items-center gap-1 disabled:cursor-default"
-          >
-            {item.recipe.ingredients.length > 0 &&
-              (isExpanded ? (
-                <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
-              ) : (
-                <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
-              ))}
-            <span className="truncate">{item.recipe.name}</span>
-          </button>
-        </TableCell>
-        <TableCell className="text-right">
+    <div className="p-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setIsExpanded((value) => !value)}
+          disabled={!hasIngredients}
+          className="flex min-w-0 flex-1 items-center gap-1 disabled:cursor-default"
+        >
+          {hasIngredients &&
+            (isExpanded ? (
+              <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+            ))}
+          <span className="truncate font-heading font-medium">{item.recipe.name}</span>
+        </button>
+        <div className="shrink-0 text-right text-sm text-muted-foreground">
           {item.quantity} {item.recipe.yieldUnit}
-        </TableCell>
-        <TableCell className="hidden text-right font-medium md:table-cell">
+        </div>
+        <div className="hidden shrink-0 text-right text-sm font-medium md:block">
           {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
-        </TableCell>
-      </TableRow>
+        </div>
+      </div>
 
-      {isExpanded && item.recipe.ingredients.length > 0 && (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={3} className="bg-muted/30 py-2">
-            <ul className="space-y-1 pl-5 text-sm text-muted-foreground">
-              {item.recipe.ingredients.map((ingredient) => {
-                const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
-                return (
-                  <li key={ingredient.id} className="flex items-center justify-between gap-3">
-                    <span className="truncate">{ingredient.supply.name}</span>
-                    <span className="shrink-0">
-                      {ingredient.quantity} {ingredient.supply.unit}
-                      {" · "}
-                      <span className="font-medium text-foreground">
-                        {currencyFormatter.format(ingredientCost)}
-                      </span>
+      {isExpanded && hasIngredients && (
+        <div className="mt-3 space-y-2 rounded-xl bg-muted/30 p-3 text-sm">
+          <ul className="space-y-1 text-muted-foreground">
+            {item.recipe.ingredients.map((ingredient) => {
+              const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
+              return (
+                <li key={ingredient.id} className="flex items-center justify-between gap-3">
+                  <span className="truncate">{ingredient.supply.name}</span>
+                  <span className="shrink-0">
+                    {ingredient.quantity} {ingredient.supply.unit}
+                    {" · "}
+                    <span className="font-medium text-foreground">
+                      {currencyFormatter.format(ingredientCost)}
                     </span>
-                  </li>
-                );
-              })}
-            </ul>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
 
-            <div className="my-2 border-t border-border pl-5" />
+          <div className="border-t border-border" />
 
-            <div className="flex items-center justify-between gap-3 pl-5 text-sm">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-medium">
-                {item.recipe.yieldQuantity} {item.recipe.yieldUnit} •{" "}
-                {currencyFormatter.format(item.recipe.costTotal)}
-              </span>
-            </div>
-          </TableCell>
-        </TableRow>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-medium">
+              {item.recipe.yieldQuantity} {item.recipe.yieldUnit} •{" "}
+              {currencyFormatter.format(item.recipe.costTotal)}
+            </span>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -213,25 +211,14 @@ export function ProductCostSheetCard({
       ) : (
         <>
           {combinedRows.length > 0 && (
-            <div className="overflow-hidden rounded-2xl border border-border bg-background">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>Insumo</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="hidden text-right md:table-cell">Custo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {combinedRows.map((row) =>
-                    row.kind === "supply" ? (
-                      <SupplyDisplayRow key={`supply-${row.item.id}`} item={row.item} />
-                    ) : (
-                      <RecipeDisplayRow key={`recipe-${row.item.id}`} item={row.item} />
-                    ),
-                  )}
-                </TableBody>
-              </Table>
+            <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-background">
+              {combinedRows.map((row) =>
+                row.kind === "supply" ? (
+                  <SupplyDisplayRow key={`supply-${row.item.id}`} item={row.item} />
+                ) : (
+                  <RecipeDisplayRow key={`recipe-${row.item.id}`} item={row.item} />
+                ),
+              )}
             </div>
           )}
 

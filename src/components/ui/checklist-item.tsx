@@ -19,14 +19,24 @@ function ChecklistItemLabel({
   title,
   info,
 }: {
-  htmlFor: string;
+  htmlFor?: string;
   title: ReactNode;
   info?: ReactNode;
 }) {
-  return (
-    <label htmlFor={htmlFor} className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2">
+  const content = (
+    <>
       <span className="truncate font-heading font-medium">{title}</span>
       {info && <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">{info}</span>}
+    </>
+  );
+
+  if (!htmlFor) {
+    return <div className="flex min-w-0 flex-1 items-baseline gap-2">{content}</div>;
+  }
+
+  return (
+    <label htmlFor={htmlFor} className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2">
+      {content}
     </label>
   );
 }
