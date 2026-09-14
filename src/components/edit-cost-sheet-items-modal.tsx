@@ -144,7 +144,6 @@ function RecipeChecklistRow({
   onDeleteRecipe: (recipe: RecipeOption) => void;
   isDeleting: boolean;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const key = `recipe:${recipe.id}`;
 
   return (
@@ -169,53 +168,12 @@ function RecipeChecklistRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEditRecipe(recipe)}>Editar receita</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsExpanded((value) => !value)}>
-              {isExpanded ? "Ocultar ingredientes" : "Ver ingredientes"}
-            </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={() => onDeleteRecipe(recipe)} disabled={isDeleting}>
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ChecklistItem.Row>
-
-      {isExpanded && (
-        <ChecklistItem.Details>
-          {recipe.ingredients.length === 0 ? (
-            <p className="text-muted-foreground">Nenhum ingrediente cadastrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {recipe.ingredients.map((ingredient) => {
-                const ingredientCost = ingredient.quantity * ingredient.supply.costPerUnit;
-                return (
-                  <li
-                    key={ingredient.id}
-                    className="flex items-center justify-between gap-3 text-muted-foreground"
-                  >
-                    <span className="truncate">{ingredient.supply.name}</span>
-                    <span className="shrink-0">
-                      {ingredient.quantity} {ingredient.supply.unit}
-                      {" · "}
-                      <span className="font-medium text-foreground">
-                        {currencyFormatter.format(ingredientCost)}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <div className="border-t border-border" />
-
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Total</span>
-            <span className="font-medium">
-              {recipe.yieldQuantity} {recipe.yieldUnit} • {currencyFormatter.format(recipe.costTotal)}
-            </span>
-          </div>
-        </ChecklistItem.Details>
-      )}
     </ChecklistItem>
   );
 }
