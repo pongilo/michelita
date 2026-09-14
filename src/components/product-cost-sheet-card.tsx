@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon, PencilIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
@@ -192,12 +193,13 @@ export function ProductCostSheetCard({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-heading text-sm text-muted-foreground">Itens da ficha técnica</h3>
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsEditItemsOpen(true)}>
-          <PencilIcon />
-          Editar
-        </Button>
+      <div className="flex items-center justify-end gap-2">
+        {!isLoading && combinedRows.length > 0 && (
+          <Button type="button" variant="outline" size="sm" onClick={() => setIsEditItemsOpen(true)}>
+            <PencilIcon />
+            Editar
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -225,7 +227,7 @@ export function ProductCostSheetCard({
 
               <div className="flex items-center justify-between gap-3">
                 <label htmlFor="product-multiplier" className="text-sm text-muted-foreground">
-                  Multiplicador desejado
+                  Multiplicador
                 </label>
                 <div className="flex items-center gap-1">
                   <Input
@@ -274,7 +276,19 @@ export function ProductCostSheetCard({
           )}
 
           {combinedRows.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum insumo ou receita adicionado ainda.</p>
+            <EmptyState compact>
+              <EmptyState.Icon>🧾</EmptyState.Icon>
+              <EmptyState.Title>Nenhum item na ficha técnica</EmptyState.Title>
+              <EmptyState.Description>
+                Adicione os insumos ou receitas usados neste produto para calcular o custo automaticamente.
+              </EmptyState.Description>
+              <EmptyState.Action>
+                <Button size="sm" onClick={() => setIsEditItemsOpen(true)}>
+                  <PlusIcon />
+                  Adicionar
+                </Button>
+              </EmptyState.Action>
+            </EmptyState>
           )}
         </>
       )}
