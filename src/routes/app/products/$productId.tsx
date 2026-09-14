@@ -75,24 +75,6 @@ function ProductDetailsPage() {
     }
   }
 
-  async function handleApplySuggestedPrice(price: number) {
-    if (!product) return;
-    try {
-      await updateProduct({
-        id: product.id,
-        name: product.name,
-        description: product.description ?? undefined,
-        imageUrl: product.imageUrl ?? undefined,
-        price,
-        multiplier: product.multiplier ?? undefined,
-        categoryId: product.categoryId ?? undefined,
-      });
-      toast.success("Preço atualizado com sucesso.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao atualizar preço.");
-    }
-  }
-
   if (isLoading) {
     return (
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
@@ -166,7 +148,6 @@ function ProductDetailsPage() {
             productPrice={product.price}
             multiplier={product.multiplier}
             onMultiplierChange={handleMultiplierChange}
-            onApplySuggestedPrice={handleApplySuggestedPrice}
           />
         </TabsContent>
       </Tabs>

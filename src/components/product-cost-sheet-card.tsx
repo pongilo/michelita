@@ -15,7 +15,6 @@ type ProductCostSheetCardProps = {
   productPrice: number;
   multiplier: number | null;
   onMultiplierChange: (multiplier: number | null) => Promise<void> | void;
-  onApplySuggestedPrice: (price: number) => Promise<void> | void;
 };
 
 type SupplyItem = {
@@ -132,7 +131,6 @@ export function ProductCostSheetCard({
   productPrice,
   multiplier,
   onMultiplierChange,
-  onApplySuggestedPrice,
 }: ProductCostSheetCardProps) {
   const [multiplierInput, setMultiplierInput] = useState(multiplier !== null ? String(multiplier) : "");
   const [isEditItemsOpen, setIsEditItemsOpen] = useState(false);
@@ -186,11 +184,6 @@ export function ProductCostSheetCard({
     await onMultiplierChange(parsed);
   }
 
-  async function handleApplySuggestedPrice() {
-    if (suggestedPrice === null) return;
-    await onApplySuggestedPrice(Number(suggestedPrice.toFixed(2)));
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-2">
@@ -241,7 +234,6 @@ export function ProductCostSheetCard({
                     onChange={(event) => setMultiplierInput(event.target.value)}
                     onBlur={handleMultiplierBlur}
                   />
-                  <span className="text-sm text-muted-foreground">x</span>
                 </div>
               </div>
 
@@ -253,23 +245,16 @@ export function ProductCostSheetCard({
               {suggestedPrice !== null && priceDiff !== null && (
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">Preço sugerido</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {currencyFormatter.format(suggestedPrice)}
-                      {Math.abs(priceDiff) > 0.005 && (
-                        <span className={priceDiff > 0 ? "text-amber-700" : "text-muted-foreground"}>
-                          {" "}
-                          ({priceDiff > 0 ? "+" : "-"}
-                          {currencyFormatter.format(Math.abs(priceDiff))})
-                        </span>
-                      )}
-                    </span>
+                  <span className="font-medium">
+                    {currencyFormatter.format(suggestedPrice)}
                     {Math.abs(priceDiff) > 0.005 && (
-                      <Button type="button" size="sm" variant="outline" onClick={handleApplySuggestedPrice}>
-                        Usar este preço
-                      </Button>
+                      <span className={priceDiff > 0 ? "text-amber-700" : "text-muted-foreground"}>
+                        {" "}
+                        ({priceDiff > 0 ? "+" : "-"}
+                        {currencyFormatter.format(Math.abs(priceDiff))})
+                      </span>
                     )}
-                  </div>
+                  </span>
                 </div>
               )}
             </div>
