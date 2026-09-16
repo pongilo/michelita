@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ChevronDownIcon, ChevronRightIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -6,8 +7,15 @@ import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
+import { useUpdateProductSupply } from "@/hooks/tanstack/product-supply/use-update-product-supply";
 import { useGetProductRecipes } from "@/hooks/tanstack/product-recipe/use-get-product-recipes";
+import { useUpdateProductRecipe } from "@/hooks/tanstack/product-recipe/use-update-product-recipe";
 import { currencyFormatter } from "@/lib/utils/formatter";
+
+function parseQuantityInput(value: string): number | null {
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
 
 type ProductCostSheetCardProps = {
   productId: string;
@@ -41,20 +49,58 @@ type RecipeItem = {
   };
 };
 
-function SupplyDisplayRow({ item }: { item: SupplyItem }) {
+function SupplyDisplayRow({
+  item,
+  isEditing,
+  quantityValue,
+  onQuantityChange,
+}: {
+  item: SupplyItem;
+  isEditing: boolean;
+  quantityValue: string;
+  onQuantityChange: (value: string) => void;
+}) {
   const lineCost = item.quantity * item.supply.costPerUnit;
 
   return (
     <div className="flex items-center gap-2 p-3">
       <div className="min-w-0 flex-1 truncate font-heading font-medium">{item.supply.name}</div>
-      <div className="shrink-0 text-right text-sm">
-        <span className="text-muted-foreground">{item.quantity} {item.supply.unit} •</span> {currencyFormatter.format(lineCost)}
-      </div>
+      {isEditing ? (
+        <div className="flex shrink-0 items-center gap-1">
+          <Input
+            type="number"
+            step="0.001"
+            min="0"
+            placeholder="Qtd."
+            className="h-8 w-20"
+            value={quantityValue}
+            onChange={(event) => onQuantityChange(event.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">{item.supply.unit}</span>
+        </div>
+      ) : (
+        <div className="shrink-0 text-right text-sm">
+          <span className="text-muted-foreground">
+            {item.quantity} {item.supply.unit} •
+          </span>{" "}
+          {currencyFormatter.format(lineCost)}
+        </div>
+      )}
     </div>
   );
 }
 
-function RecipeDisplayRow({ item }: { item: RecipeItem }) {
+function RecipeDisplayRow({
+  item,
+  isEditing,
+  quantityValue,
+  onQuantityChange,
+}: {
+  item: RecipeItem;
+  isEditing: boolean;
+  quantityValue: string;
+  onQuantityChange: (value: string) => void;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const lineCost = item.recipe.costPerYield !== null ? item.quantity * item.recipe.costPerYield : null;
   const hasIngredients = item.recipe.ingredients.length > 0;
@@ -76,9 +122,27 @@ function RecipeDisplayRow({ item }: { item: RecipeItem }) {
             ))}
           <span className="truncate font-heading font-medium">{item.recipe.name}</span>
         </button>
-        <div className="shrink-0 text-right text-sm">
-          <span className="text-muted-foreground">{item.quantity} {item.recipe.yieldUnit} •</span> {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
-        </div>
+        {isEditing ? (
+          <div className="flex shrink-0 items-center gap-1">
+            <Input
+              type="number"
+              step="0.001"
+              min="0"
+              placeholder="Qtd."
+              className="h-8 w-20"
+              value={quantityValue}
+              onChange={(event) => onQuantityChange(event.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">{item.recipe.yieldUnit}</span>
+          </div>
+        ) : (
+          <div className="shrink-0 text-right text-sm">
+            <span className="text-muted-foreground">
+              {item.quantity} {item.recipe.yieldUnit} •
+            </span>{" "}
+            {lineCost !== null ? currencyFormatter.format(lineCost) : "—"}
+          </div>
+        )}
       </div>
 
       {isExpanded && hasIngredients && (
@@ -133,13 +197,19 @@ export function ProductCostSheetCard({
   onMultiplierChange,
 }: ProductCostSheetCardProps) {
   const [multiplierInput, setMultiplierInput] = useState(multiplier !== null ? String(multiplier) : "");
-  const [isEditItemsOpen, setIsEditItemsOpen] = useState(false);
+  const [isAddItemsOpen, setIsAddItemsOpen] = useState(false);
+  const [isEditingQuantities, setIsEditingQuantities] = useState(false);
+  const [editedQuantities, setEditedQuantities] = useState<Record<string, string>>({});
+  const [isSavingQuantities, setIsSavingQuantities] = useState(false);
 
   const { data: productSuppliesData, isLoading: isLoadingSupplies } = useGetProductSupplies({ productId });
   const supplyItems = useMemo(() => productSuppliesData?.items ?? [], [productSuppliesData]);
 
   const { data: productRecipesData, isLoading: isLoadingRecipes } = useGetProductRecipes({ productId });
   const recipeItems = useMemo(() => productRecipesData?.items ?? [], [productRecipesData]);
+
+  const { mutateAsync: updateProductSupply } = useUpdateProductSupply({ productId });
+  const { mutateAsync: updateProductRecipe } = useUpdateProductRecipe({ productId });
 
   const isLoading = isLoadingSupplies || isLoadingRecipes;
 
@@ -168,6 +238,22 @@ export function ProductCostSheetCard({
     setMultiplierInput(multiplier !== null ? String(multiplier) : "");
   }, [multiplier]);
 
+  useEffect(() => {
+    if (!isEditingQuantities) return;
+    setEditedQuantities((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const row of combinedRows) {
+        const key = `${row.kind}:${row.item.id}`;
+        if (!(key in next)) {
+          next[key] = String(row.item.quantity);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [combinedRows, isEditingQuantities]);
+
   async function handleMultiplierBlur() {
     const trimmed = multiplierInput.trim();
     if (trimmed === "") {
@@ -184,14 +270,76 @@ export function ProductCostSheetCard({
     await onMultiplierChange(parsed);
   }
 
+  function handleStartEditQuantities() {
+    const seed: Record<string, string> = {};
+    for (const row of combinedRows) {
+      seed[`${row.kind}:${row.item.id}`] = String(row.item.quantity);
+    }
+    setEditedQuantities(seed);
+    setIsEditingQuantities(true);
+  }
+
+  function handleCancelEditQuantities() {
+    setEditedQuantities({});
+    setIsEditingQuantities(false);
+  }
+
+  async function handleSaveQuantities() {
+    const writes: Promise<unknown>[] = [];
+
+    for (const row of combinedRows) {
+      const key = `${row.kind}:${row.item.id}`;
+      const parsed = parseQuantityInput(editedQuantities[key] ?? "");
+      if (parsed === null) {
+        toast.error("Informe uma quantidade válida para todos os itens.");
+        return;
+      }
+      if (parsed === row.item.quantity) continue;
+      if (row.kind === "supply") {
+        writes.push(updateProductSupply({ id: row.item.id, quantity: parsed }));
+      } else {
+        writes.push(updateProductRecipe({ id: row.item.id, quantity: parsed }));
+      }
+    }
+
+    setIsSavingQuantities(true);
+    try {
+      await Promise.all(writes);
+      toast.success("Ficha técnica atualizada com sucesso.");
+      setIsEditingQuantities(false);
+      setEditedQuantities({});
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao salvar alterações.");
+    } finally {
+      setIsSavingQuantities(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-2">
-        {!isLoading && combinedRows.length > 0 && (
-          <Button type="button" variant="outline" size="sm" onClick={() => setIsEditItemsOpen(true)}>
+        {!isLoading && combinedRows.length > 0 && !isEditingQuantities && (
+          <Button type="button" variant="outline" size="sm" onClick={handleStartEditQuantities}>
             <PencilIcon />
             Editar
           </Button>
+        )}
+
+        {isEditingQuantities && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelEditQuantities}
+              disabled={isSavingQuantities}
+            >
+              Cancelar
+            </Button>
+            <Button type="button" size="sm" onClick={handleSaveQuantities} disabled={isSavingQuantities}>
+              {isSavingQuantities ? "Salvando..." : "Salvar"}
+            </Button>
+          </>
         )}
       </div>
 
@@ -201,13 +349,34 @@ export function ProductCostSheetCard({
         <>
           {combinedRows.length > 0 && (
             <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-background">
-              {combinedRows.map((row) =>
-                row.kind === "supply" ? (
-                  <SupplyDisplayRow key={`supply-${row.item.id}`} item={row.item} />
+              {combinedRows.map((row) => {
+                const key = `${row.kind}:${row.item.id}`;
+                return row.kind === "supply" ? (
+                  <SupplyDisplayRow
+                    key={key}
+                    item={row.item}
+                    isEditing={isEditingQuantities}
+                    quantityValue={editedQuantities[key] ?? ""}
+                    onQuantityChange={(value) => setEditedQuantities((prev) => ({ ...prev, [key]: value }))}
+                  />
                 ) : (
-                  <RecipeDisplayRow key={`recipe-${row.item.id}`} item={row.item} />
-                ),
-              )}
+                  <RecipeDisplayRow
+                    key={key}
+                    item={row.item}
+                    isEditing={isEditingQuantities}
+                    quantityValue={editedQuantities[key] ?? ""}
+                    onQuantityChange={(value) => setEditedQuantities((prev) => ({ ...prev, [key]: value }))}
+                  />
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setIsAddItemsOpen(true)}
+                className="flex w-full items-center justify-center gap-2 p-3 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              >
+                <PlusIcon className="size-4" />
+                Adicionar
+              </button>
             </div>
           )}
 
@@ -268,7 +437,7 @@ export function ProductCostSheetCard({
                 Adicione os insumos ou receitas usados neste produto para calcular o custo automaticamente.
               </EmptyState.Description>
               <EmptyState.Action>
-                <Button size="sm" onClick={() => setIsEditItemsOpen(true)}>
+                <Button size="sm" onClick={() => setIsAddItemsOpen(true)}>
                   <PlusIcon />
                   Adicionar
                 </Button>
@@ -279,10 +448,10 @@ export function ProductCostSheetCard({
       )}
 
       <EditCostSheetItemsModal
-        isOpen={isEditItemsOpen}
+        isOpen={isAddItemsOpen}
         productId={productId}
         organizationId={organizationId}
-        onClose={() => setIsEditItemsOpen(false)}
+        onClose={() => setIsAddItemsOpen(false)}
       />
     </div>
   );

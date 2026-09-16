@@ -4,7 +4,6 @@ import { ArrowLeftIcon, MoreVerticalIcon, PlusIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -331,7 +330,6 @@ export function EditCostSheetItemsModal({
   const [recipeSearch, setRecipeSearch] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [otherSearch, setOtherSearch] = useState("");
-  const [showOnlySelected, setShowOnlySelected] = useState(false);
 
   const [mode, setMode] = useState<"items" | "catalog">("items");
   const [catalogTarget, setCatalogTarget] = useState<CatalogTarget>("ingredients");
@@ -343,48 +341,47 @@ export function EditCostSheetItemsModal({
   const [suppliesForm, setSuppliesForm] = useState<CatalogFormMeta | null>(null);
   const [recipesForm, setRecipesForm] = useState<CatalogFormMeta | null>(null);
 
-  const { data: suppliesData, isLoading: isLoadingSupplies } = useGetSupplies({ organizationId });
-  const allIngredients = useMemo(
-    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient),
-    [suppliesData],
-  );
-  const allOthers = useMemo(
-    () => (suppliesData?.supplies ?? []).filter((supply) => !supply.isIngredient),
-    [suppliesData],
-  );
-
-  const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes({ organizationId });
-  const allRecipes = useMemo(() => recipesData?.recipes ?? [], [recipesData]);
-
-  const filteredIngredients = useMemo(() => {
-    const term = normalize(ingredientSearch.trim());
-    let list = allIngredients;
-    if (term) list = list.filter((supply) => normalize(supply.name).includes(term));
-    if (showOnlySelected) list = list.filter((supply) => selected[`supply:${supply.id}`]);
-    return list;
-  }, [allIngredients, ingredientSearch, showOnlySelected, selected]);
-
-  const filteredOthers = useMemo(() => {
-    const term = normalize(otherSearch.trim());
-    let list = allOthers;
-    if (term) list = list.filter((supply) => normalize(supply.name).includes(term));
-    if (showOnlySelected) list = list.filter((supply) => selected[`supply:${supply.id}`]);
-    return list;
-  }, [allOthers, otherSearch, showOnlySelected, selected]);
-
-  const filteredRecipes = useMemo(() => {
-    const term = normalize(recipeSearch.trim());
-    let list = allRecipes;
-    if (term) list = list.filter((recipe) => normalize(recipe.name).includes(term));
-    if (showOnlySelected) list = list.filter((recipe) => selected[`recipe:${recipe.id}`]);
-    return list;
-  }, [allRecipes, recipeSearch, showOnlySelected, selected]);
-
   const { data: productSuppliesData, isLoading: isLoadingProductSupplies } = useGetProductSupplies({ productId });
   const supplyItems = useMemo(() => productSuppliesData?.items ?? [], [productSuppliesData]);
+  const addedSupplyIds = useMemo(() => new Set(supplyItems.map((item) => item.supply.id)), [supplyItems]);
 
   const { data: productRecipesData, isLoading: isLoadingProductRecipes } = useGetProductRecipes({ productId });
   const recipeItems = useMemo(() => productRecipesData?.items ?? [], [productRecipesData]);
+  const addedRecipeIds = useMemo(() => new Set(recipeItems.map((item) => item.recipe.id)), [recipeItems]);
+
+  const { data: suppliesData, isLoading: isLoadingSupplies } = useGetSupplies({ organizationId });
+  const allIngredients = useMemo(
+    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient && !addedSupplyIds.has(supply.id)),
+    [suppliesData, addedSupplyIds],
+  );
+  const allOthers = useMemo(
+    () => (suppliesData?.supplies ?? []).filter((supply) => !supply.isIngredient && !addedSupplyIds.has(supply.id)),
+    [suppliesData, addedSupplyIds],
+  );
+
+  const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes({ organizationId });
+  const allRecipes = useMemo(
+    () => (recipesData?.recipes ?? []).filter((recipe) => !addedRecipeIds.has(recipe.id)),
+    [recipesData, addedRecipeIds],
+  );
+
+  const filteredIngredients = useMemo(() => {
+    const term = normalize(ingredientSearch.trim());
+    if (!term) return allIngredients;
+    return allIngredients.filter((supply) => normalize(supply.name).includes(term));
+  }, [allIngredients, ingredientSearch]);
+
+  const filteredOthers = useMemo(() => {
+    const term = normalize(otherSearch.trim());
+    if (!term) return allOthers;
+    return allOthers.filter((supply) => normalize(supply.name).includes(term));
+  }, [allOthers, otherSearch]);
+
+  const filteredRecipes = useMemo(() => {
+    const term = normalize(recipeSearch.trim());
+    if (!term) return allRecipes;
+    return allRecipes.filter((recipe) => normalize(recipe.name).includes(term));
+  }, [allRecipes, recipeSearch]);
 
   const isLoading = isLoadingSupplies || isLoadingRecipes || isLoadingProductSupplies || isLoadingProductRecipes;
 
@@ -395,7 +392,6 @@ export function EditCostSheetItemsModal({
       setIngredientSearch("");
       setOtherSearch("");
       setItemsTab("recipes");
-      setShowOnlySelected(false);
       setMode("items");
       setSuppliesForm(null);
       setRecipesForm(null);
@@ -550,8 +546,6 @@ export function EditCostSheetItemsModal({
     }
   }
 
-  const selectedCount = Object.keys(selected).length;
-
   async function handleSave() {
     const entries = Object.entries(selected);
 
@@ -634,29 +628,14 @@ export function EditCostSheetItemsModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex h-[80vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="p-5 pb-3 pr-14">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {mode === "catalog" && (
-                <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack} aria-label="Voltar">
-                  <ArrowLeftIcon />
-                </Button>
-              )}
-              <DialogTitle>{headerTitle}</DialogTitle>
-            </div>
-
-            {mode === "items" && !isLoading && (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="show-only-selected"
-                  checked={showOnlySelected}
-                  onCheckedChange={(checked) => setShowOnlySelected(!!checked)}
-                />
-                <Label htmlFor="show-only-selected" className="cursor-pointer text-sm text-muted-foreground">
-                  Filtrar selecionados ({selectedCount})
-                </Label>
-              </div>
+        <DialogHeader className="p-5 pb-3">
+          <div className="flex items-center gap-2">
+            {mode === "catalog" && (
+              <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack} aria-label="Voltar">
+                <ArrowLeftIcon />
+              </Button>
             )}
+            <DialogTitle>{headerTitle}</DialogTitle>
           </div>
         </DialogHeader>
 
