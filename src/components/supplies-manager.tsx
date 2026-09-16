@@ -47,9 +47,10 @@ export function SuppliesManager({
   const [view, setView] = useState<"list" | "form">(autoCreate || initialEditSupply ? "form" : "list");
   const [editingSupply, setEditingSupply] = useState<Supply | null>(initialEditSupply);
 
-  const createTitle = "Novo insumo";
+  const createTitle =
+    context === "ingredient" ? "Novo ingrediente" : context === "other" ? "Novo material" : "Novo insumo";
   const editTitle =
-    context === "ingredient" ? "Editar ingrediente" : context === "other" ? "Editar item" : "Editar insumo";
+    context === "ingredient" ? "Editar ingrediente" : context === "other" ? "Editar material" : "Editar insumo";
 
   useEffect(() => {
     if (view === "form") {

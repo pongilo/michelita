@@ -100,7 +100,7 @@ function SupplyChecklistRow({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEditSupply(supply)}>Editar insumo</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onMoveSupply(supply)} disabled={isMoving}>
-              {supply.isIngredient ? "Mover para outros" : "Mover para ingredientes"}
+              {supply.isIngredient ? "Mudar para material" : "Mudar para ingrediente"}
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={() => onDeleteSupply(supply)} disabled={isDeleting}>
               Excluir
@@ -343,27 +343,22 @@ export function EditCostSheetItemsModal({
 
   const { data: productSuppliesData, isLoading: isLoadingProductSupplies } = useGetProductSupplies({ productId });
   const supplyItems = useMemo(() => productSuppliesData?.items ?? [], [productSuppliesData]);
-  const addedSupplyIds = useMemo(() => new Set(supplyItems.map((item) => item.supply.id)), [supplyItems]);
 
   const { data: productRecipesData, isLoading: isLoadingProductRecipes } = useGetProductRecipes({ productId });
   const recipeItems = useMemo(() => productRecipesData?.items ?? [], [productRecipesData]);
-  const addedRecipeIds = useMemo(() => new Set(recipeItems.map((item) => item.recipe.id)), [recipeItems]);
 
   const { data: suppliesData, isLoading: isLoadingSupplies } = useGetSupplies({ organizationId });
   const allIngredients = useMemo(
-    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient && !addedSupplyIds.has(supply.id)),
-    [suppliesData, addedSupplyIds],
+    () => (suppliesData?.supplies ?? []).filter((supply) => supply.isIngredient),
+    [suppliesData],
   );
   const allOthers = useMemo(
-    () => (suppliesData?.supplies ?? []).filter((supply) => !supply.isIngredient && !addedSupplyIds.has(supply.id)),
-    [suppliesData, addedSupplyIds],
+    () => (suppliesData?.supplies ?? []).filter((supply) => !supply.isIngredient),
+    [suppliesData],
   );
 
   const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes({ organizationId });
-  const allRecipes = useMemo(
-    () => (recipesData?.recipes ?? []).filter((recipe) => !addedRecipeIds.has(recipe.id)),
-    [recipesData, addedRecipeIds],
-  );
+  const allRecipes = useMemo(() => recipesData?.recipes ?? [], [recipesData]);
 
   const filteredIngredients = useMemo(() => {
     const term = normalize(ingredientSearch.trim());
@@ -431,7 +426,7 @@ export function EditCostSheetItemsModal({
         purchaseQuantity: supply.purchaseQuantity,
         isIngredient: !supply.isIngredient,
       });
-      toast.success(supply.isIngredient ? "Insumo movido para outros." : "Insumo movido para ingredientes.");
+      toast.success(supply.isIngredient ? "Insumo movido para materiais." : "Insumo movido para ingredientes.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao mover insumo.");
     }
@@ -618,30 +613,29 @@ export function EditCostSheetItemsModal({
       : catalogEditSupply
         ? catalogTarget === "ingredients"
           ? "Editar ingrediente"
-          : "Editar item"
+          : "Editar material"
         : catalogTarget === "ingredients"
           ? "Novo ingrediente"
-          : "Novo item";
-  const headerTitle =
-    mode === "catalog" ? (activeCatalogForm?.title ?? catalogFallbackTitle) : "Ficha técnica";
+          : "Novo material";
+  const headerTitle = activeCatalogForm?.title ?? catalogFallbackTitle;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex h-[80vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="p-5 pb-3">
-          <div className="flex items-center gap-2">
-            {mode === "catalog" && (
+        {mode === "catalog" && (
+          <DialogHeader className="p-5 pb-3">
+            <div className="flex items-center gap-2">
               <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack} aria-label="Voltar">
                 <ArrowLeftIcon />
               </Button>
-            )}
-            <DialogTitle>{headerTitle}</DialogTitle>
-          </div>
-        </DialogHeader>
+              <DialogTitle>{headerTitle}</DialogTitle>
+            </div>
+          </DialogHeader>
+        )}
 
         {mode === "items" ? (
           <>
-            <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col pt-5">
               {isLoading ? (
                 <div className="px-5 pb-3">
                   <LoadingState label="Carregando..." />
@@ -656,7 +650,7 @@ export function EditCostSheetItemsModal({
                     <TabsList className="w-fit">
                       <TabsTrigger value="recipes">Receitas</TabsTrigger>
                       <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
-                      <TabsTrigger value="others">Outros</TabsTrigger>
+                      <TabsTrigger value="others">Materiais</TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -709,11 +703,11 @@ export function EditCostSheetItemsModal({
                       isDeleting={isDeletingSupply}
                       onMoveSupply={handleMoveSupply}
                       isMoving={isMovingSupply}
-                      searchPlaceholder="Buscar item"
-                      emptyLabel="Nenhum item cadastrado."
-                      noResultsLabel={`Nenhum item encontrado para "${otherSearch}".`}
+                      searchPlaceholder="Buscar material"
+                      emptyLabel="Nenhum material cadastrado."
+                      noResultsLabel={`Nenhum material encontrado para "${otherSearch}".`}
                       onCreate={() => openCatalog("others", { autoCreate: true })}
-                      createLabel="Novo item"
+                      createLabel="Novo material"
                     />
                   </TabsContent>
                 </Tabs>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDownIcon, ChevronRightIcon, PencilIcon, PlusIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, NotebookIcon, PencilIcon, PlusIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -391,12 +391,18 @@ export function ProductCostSheetCard({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {!isLoading && combinedRows.length > 0 && !isEditingQuantities && (
-          <Button type="button" variant="outline" size="sm" onClick={handleStartEditQuantities}>
-            <PencilIcon />
-            Editar
-          </Button>
+          <>
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsAddItemsOpen(true)}>
+              <NotebookIcon />
+              Receitas e insumos
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={handleStartEditQuantities}>
+              <PencilIcon />
+              Editar
+            </Button>
+          </>
         )}
 
         {isEditingQuantities && (
@@ -447,14 +453,6 @@ export function ProductCostSheetCard({
                   />
                 );
               })}
-              <button
-                type="button"
-                onClick={() => setIsAddItemsOpen(true)}
-                className="flex w-full items-center justify-center gap-2 p-3 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              >
-                <PlusIcon className="size-4" />
-                Adicionar
-              </button>
             </div>
           )}
 
