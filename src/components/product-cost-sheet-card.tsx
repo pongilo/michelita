@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDownIcon, ChevronRightIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, PencilIcon, PlusIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,11 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EditCostSheetItemsModal } from "@/components/edit-cost-sheet-items-modal";
 import { useGetProductSupplies } from "@/hooks/tanstack/product-supply/use-get-product-supplies";
 import { useUpdateProductSupply } from "@/hooks/tanstack/product-supply/use-update-product-supply";
+import { useRemoveProductSupply } from "@/hooks/tanstack/product-supply/use-remove-product-supply";
 import { useGetProductRecipes } from "@/hooks/tanstack/product-recipe/use-get-product-recipes";
 import { useUpdateProductRecipe } from "@/hooks/tanstack/product-recipe/use-update-product-recipe";
+import { useRemoveProductRecipe } from "@/hooks/tanstack/product-recipe/use-remove-product-recipe";
+import { cn } from "@/lib/utils";
 import { currencyFormatter } from "@/lib/utils/formatter";
 
 function parseQuantityInput(value: string): number | null {
@@ -54,30 +57,52 @@ function SupplyDisplayRow({
   isEditing,
   quantityValue,
   onQuantityChange,
+  isMarkedForRemoval,
+  onToggleRemove,
 }: {
   item: SupplyItem;
   isEditing: boolean;
   quantityValue: string;
   onQuantityChange: (value: string) => void;
+  isMarkedForRemoval: boolean;
+  onToggleRemove: () => void;
 }) {
   const lineCost = item.quantity * item.supply.costPerUnit;
 
   return (
     <div className="flex items-center gap-2 p-3">
-      <div className="min-w-0 flex-1 truncate font-heading font-medium">{item.supply.name}</div>
+      <div
+        className={cn(
+          "min-w-0 flex-1 truncate font-heading font-medium",
+          isMarkedForRemoval && "text-muted-foreground line-through",
+        )}
+      >
+        {item.supply.name}
+      </div>
       {isEditing ? (
-        <div className="flex shrink-0 items-center gap-1">
-          <Input
-            type="number"
-            step="0.001"
-            min="0"
-            placeholder="Qtd."
-            className="h-8 w-20"
-            value={quantityValue}
-            onChange={(event) => onQuantityChange(event.target.value)}
-          />
-          <span className="text-xs text-muted-foreground">{item.supply.unit}</span>
-        </div>
+        isMarkedForRemoval ? (
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onToggleRemove} aria-label="Desfazer remoção">
+            <RotateCcwIcon />
+          </Button>
+        ) : (
+          <>
+            <div className="flex shrink-0 items-center gap-1">
+              <Input
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="Qtd."
+                className="h-8 w-20"
+                value={quantityValue}
+                onChange={(event) => onQuantityChange(event.target.value)}
+              />
+              <span className="text-xs text-muted-foreground">{item.supply.unit}</span>
+            </div>
+            <Button type="button" variant="ghost" size="icon-sm" onClick={onToggleRemove} aria-label="Remover item">
+              <Trash2Icon />
+            </Button>
+          </>
+        )
       ) : (
         <div className="shrink-0 text-right text-sm">
           <span className="text-muted-foreground">
@@ -95,11 +120,15 @@ function RecipeDisplayRow({
   isEditing,
   quantityValue,
   onQuantityChange,
+  isMarkedForRemoval,
+  onToggleRemove,
 }: {
   item: RecipeItem;
   isEditing: boolean;
   quantityValue: string;
   onQuantityChange: (value: string) => void;
+  isMarkedForRemoval: boolean;
+  onToggleRemove: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const lineCost = item.recipe.costPerYield !== null ? item.quantity * item.recipe.costPerYield : null;
@@ -120,21 +149,39 @@ function RecipeDisplayRow({
             ) : (
               <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
             ))}
-          <span className="truncate font-heading font-medium">{item.recipe.name}</span>
+          <span
+            className={cn(
+              "truncate font-heading font-medium",
+              isMarkedForRemoval && "text-muted-foreground line-through",
+            )}
+          >
+            {item.recipe.name}
+          </span>
         </button>
         {isEditing ? (
-          <div className="flex shrink-0 items-center gap-1">
-            <Input
-              type="number"
-              step="0.001"
-              min="0"
-              placeholder="Qtd."
-              className="h-8 w-20"
-              value={quantityValue}
-              onChange={(event) => onQuantityChange(event.target.value)}
-            />
-            <span className="text-xs text-muted-foreground">{item.recipe.yieldUnit}</span>
-          </div>
+          isMarkedForRemoval ? (
+            <Button type="button" variant="ghost" size="icon-sm" onClick={onToggleRemove} aria-label="Desfazer remoção">
+              <RotateCcwIcon />
+            </Button>
+          ) : (
+            <>
+              <div className="flex shrink-0 items-center gap-1">
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  placeholder="Qtd."
+                  className="h-8 w-20"
+                  value={quantityValue}
+                  onChange={(event) => onQuantityChange(event.target.value)}
+                />
+                <span className="text-xs text-muted-foreground">{item.recipe.yieldUnit}</span>
+              </div>
+              <Button type="button" variant="ghost" size="icon-sm" onClick={onToggleRemove} aria-label="Remover item">
+                <Trash2Icon />
+              </Button>
+            </>
+          )
         ) : (
           <div className="shrink-0 text-right text-sm">
             <span className="text-muted-foreground">
@@ -200,6 +247,7 @@ export function ProductCostSheetCard({
   const [isAddItemsOpen, setIsAddItemsOpen] = useState(false);
   const [isEditingQuantities, setIsEditingQuantities] = useState(false);
   const [editedQuantities, setEditedQuantities] = useState<Record<string, string>>({});
+  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
   const [isSavingQuantities, setIsSavingQuantities] = useState(false);
 
   const { data: productSuppliesData, isLoading: isLoadingSupplies } = useGetProductSupplies({ productId });
@@ -210,6 +258,8 @@ export function ProductCostSheetCard({
 
   const { mutateAsync: updateProductSupply } = useUpdateProductSupply({ productId });
   const { mutateAsync: updateProductRecipe } = useUpdateProductRecipe({ productId });
+  const { mutateAsync: removeProductSupply } = useRemoveProductSupply({ productId });
+  const { mutateAsync: removeProductRecipe } = useRemoveProductRecipe({ productId });
 
   const isLoading = isLoadingSupplies || isLoadingRecipes;
 
@@ -281,7 +331,20 @@ export function ProductCostSheetCard({
 
   function handleCancelEditQuantities() {
     setEditedQuantities({});
+    setPendingRemovals(new Set());
     setIsEditingQuantities(false);
+  }
+
+  function handleToggleRemove(key: string) {
+    setPendingRemovals((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   }
 
   async function handleSaveQuantities() {
@@ -289,6 +352,16 @@ export function ProductCostSheetCard({
 
     for (const row of combinedRows) {
       const key = `${row.kind}:${row.item.id}`;
+
+      if (pendingRemovals.has(key)) {
+        if (row.kind === "supply") {
+          writes.push(removeProductSupply({ id: row.item.id, productId }));
+        } else {
+          writes.push(removeProductRecipe({ id: row.item.id, productId }));
+        }
+        continue;
+      }
+
       const parsed = parseQuantityInput(editedQuantities[key] ?? "");
       if (parsed === null) {
         toast.error("Informe uma quantidade válida para todos os itens.");
@@ -308,6 +381,7 @@ export function ProductCostSheetCard({
       toast.success("Ficha técnica atualizada com sucesso.");
       setIsEditingQuantities(false);
       setEditedQuantities({});
+      setPendingRemovals(new Set());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar alterações.");
     } finally {
@@ -358,6 +432,8 @@ export function ProductCostSheetCard({
                     isEditing={isEditingQuantities}
                     quantityValue={editedQuantities[key] ?? ""}
                     onQuantityChange={(value) => setEditedQuantities((prev) => ({ ...prev, [key]: value }))}
+                    isMarkedForRemoval={pendingRemovals.has(key)}
+                    onToggleRemove={() => handleToggleRemove(key)}
                   />
                 ) : (
                   <RecipeDisplayRow
@@ -366,6 +442,8 @@ export function ProductCostSheetCard({
                     isEditing={isEditingQuantities}
                     quantityValue={editedQuantities[key] ?? ""}
                     onQuantityChange={(value) => setEditedQuantities((prev) => ({ ...prev, [key]: value }))}
+                    isMarkedForRemoval={pendingRemovals.has(key)}
+                    onToggleRemove={() => handleToggleRemove(key)}
                   />
                 );
               })}
