@@ -57,7 +57,6 @@ function ChecklistItemQuantity({
         step="0.001"
         min="0"
         placeholder="Qtd."
-        autoFocus
         className="h-8 w-20"
         value={value}
         onChange={(event) => onChange(event.target.value)}
