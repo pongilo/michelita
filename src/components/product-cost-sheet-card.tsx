@@ -391,35 +391,12 @@ export function ProductCostSheetCard({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {!isLoading && combinedRows.length > 0 && !isEditingQuantities && (
-          <>
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsAddItemsOpen(true)}>
-              <NotebookIcon />
-              Receitas e insumos
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={handleStartEditQuantities}>
-              <PencilIcon />
-              Editar
-            </Button>
-          </>
-        )}
-
-        {isEditingQuantities && (
-          <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleCancelEditQuantities}
-              disabled={isSavingQuantities}
-            >
-              Cancelar
-            </Button>
-            <Button type="button" size="sm" onClick={handleSaveQuantities} disabled={isSavingQuantities}>
-              {isSavingQuantities ? "Salvando..." : "Salvar"}
-            </Button>
-          </>
+      <div className="flex items-center justify-end gap-2">
+        {!isLoading && combinedRows.length > 0 && (
+          <Button type="button" variant="outline" size="sm" onClick={() => setIsAddItemsOpen(true)}>
+            <NotebookIcon />
+            Receitas e insumos
+          </Button>
         )}
       </div>
 
@@ -453,6 +430,38 @@ export function ProductCostSheetCard({
                   />
                 );
               })}
+              {isEditingQuantities ? (
+                <div className="flex items-center gap-2 p-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleCancelEditQuantities}
+                    disabled={isSavingQuantities}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleSaveQuantities}
+                    disabled={isSavingQuantities}
+                  >
+                    {isSavingQuantities ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStartEditQuantities}
+                  className="flex w-full items-center justify-center gap-2 p-3 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                >
+                  <PencilIcon className="size-4" />
+                  Editar
+                </button>
+              )}
             </div>
           )}
 
